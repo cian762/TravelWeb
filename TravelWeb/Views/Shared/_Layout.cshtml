@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,7 +22,7 @@
               "Font Awesome 5 Brands",
               "simple-line-icons",
             ],
-            urls: ["~/css/assets/css/fonts.min.css"],
+            urls: ["../css/assets/css/fonts.min.css"],
           },
           active: function () {
             sessionStorage.fonts = true;
@@ -152,19 +152,19 @@
                             <li class="nav-item">
                                 <a data-bs-toggle="collapse" href="#sidebarLayouts">
                                     <i class="fas fa-th-list"></i>
-                                    <p>Sidebar Layouts</p>
+                                <p>社群管理</p>
                                     <span class="caret"></span>
                                 </a>
                                 <div class="collapse" id="sidebarLayouts">
                                     <ul class="nav nav-collapse">
                                         <li>
-                                            <a href="sidebar-style-2.html">
-                                                <span class="sub-item">Sidebar Style 2</span>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Board" asp-action="ReportManager">
+                                                <span class="sub-item">貼文檢舉管理中心</span>
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="icon-menu.html">
-                                                <span class="sub-item">Icon Menu</span>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Board" asp-action="ArticleManager">
+                                            <span class="sub-item">文章推薦管理</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -173,14 +173,14 @@
                             <li class="nav-item">
                                 <a data-bs-toggle="collapse" href="#forms">
                                     <i class="fas fa-pen-square"></i>
-                                    <p>Forms</p>
+                                    <p>行程</p>
                                     <span class="caret"></span>
                                 </a>
                                 <div class="collapse" id="forms">
                                     <ul class="nav nav-collapse">
                                         <li>
-                                            <a href="forms/forms.html">
-                                                <span class="sub-item">Basic Form</span>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Itinerary" asp-action="">
+                                                <span class="sub-item">行程管理</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -231,19 +231,19 @@
                             <li class="nav-item">
                                 <a data-bs-toggle="collapse" href="#charts">
                                     <i class="far fa-chart-bar"></i>
-                                    <p>Charts</p>
+                                    <p>景點</p>
                                     <span class="caret"></span>
                                 </a>
                                 <div class="collapse" id="charts">
                                     <ul class="nav nav-collapse">
                                         <li>
-                                            <a href="charts/charts.html">
-                                                <span class="sub-item">Chart Js</span>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Attraction" asp-action="">
+                                                <span class="sub-item">景點管理</span>
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="charts/sparkline.html">
-                                                <span class="sub-item">Sparkline</span>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Attraction" asp-action="">
+                                                <span class="sub-item">景點票管理</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -252,9 +252,20 @@
                             <li class="nav-item">
                                 <a href="widgets.html">
                                     <i class="fas fa-desktop"></i>
-                                    <p>Widgets</p>
+                                    <p>行程商品</p>
                                     <span class="badge badge-success">4</span>
                                 </a>
+                            <div class="collapse" id="charts">
+                                <ul class="nav nav-collapse">
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Trip" asp-action="">
+                                            <span class="sub-item">商品行程管理</span>
+                                        </a>
+                                    </li>
+                                  
+                                </ul>
+                            </div>
+
                             </li>
                             <li class="nav-item">
                                 <a href="../../documentation/index.html">
@@ -776,6 +787,13 @@
                     </div>
                   </div>
                 </div>-->
+            <div class="container">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+            
+            
             </div>
 
             <footer class="footer">
@@ -1001,11 +1019,7 @@
             });
         </script>
     
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    
 
     <footer class="border-top footer text-muted">
         <div class="container">
