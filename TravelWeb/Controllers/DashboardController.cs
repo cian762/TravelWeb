@@ -13,6 +13,7 @@ namespace TravelWeb.Controllers
 
         {
             return View();
+
         }
 
         public IActionResult GetTicketStatistics()
