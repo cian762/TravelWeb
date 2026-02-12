@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace TravelWeb.Models.ItineraryGenericRepository
+namespace TravelWeb.Areas.Itinerary.Models.ItineraryGenericRepository
 {
     public class ItineraryRepository<table> : IItineraryGenericRepository<table> where table : class
     {
-        private readonly ItineraryDBContext.TravelContext _context;
+        private readonly TravelWeb.Models.ItineraryDBContext.TravelContext _context;
         private readonly DbSet<table> _dbset;
-        public ItineraryRepository(ItineraryDBContext.TravelContext context)
+        public ItineraryRepository(TravelWeb.Models.ItineraryDBContext.TravelContext context)
         {
             _context = context;
             _dbset = _context.Set<table>();

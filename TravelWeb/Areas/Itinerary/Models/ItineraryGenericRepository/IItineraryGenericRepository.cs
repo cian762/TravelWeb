@@ -1,4 +1,4 @@
-﻿namespace TravelWeb.Models.ItineraryGenericRepository
+﻿namespace TravelWeb.Areas.Itinerary.Models.ItineraryGenericRepository
 {
     public interface IItineraryGenericRepository<Table> where Table : class
     {

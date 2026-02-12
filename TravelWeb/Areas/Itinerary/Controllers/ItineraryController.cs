@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace TravelWeb.Controllers
+namespace TravelWeb.Areas.Itinerary.Controllers
 {
     public class ItineraryController : Controller
     {
