@@ -832,7 +832,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Activity\Controllers\" />
     <Folder Include="Areas\Activity\Data\" />
     <Folder Include="Areas\Activity\Models\" />
     <Folder Include="Areas\Activity\Views\" />

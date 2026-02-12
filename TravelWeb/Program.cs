@@ -20,6 +20,9 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+
+app.MapAreaControllerRoute("app", "Activity", "{controller}/{action}");
+
 // Area 路由設定 (必須放在預設路由上方)
 app.MapControllerRoute(
     name: "MyAreas",
