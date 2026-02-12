@@ -28,7 +28,7 @@ namespace TravelWeb.Models.ItineraryGenericRepository
         }
 
         public void Update(table Entity)
-        {
+    {
             _dbset.Update(Entity);
         }
 
