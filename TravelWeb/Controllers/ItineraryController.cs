@@ -4,8 +4,24 @@ namespace TravelWeb.Controllers
 {
     public class ItineraryController : Controller
     {
-        [Route("Itinerary/{action}")]
-        public IActionResult Index()
+
+        public IActionResult AIRuleManage()
+        {
+            return View();
+        }
+        public IActionResult ItineraryErrorManage()
+        {
+            return View();
+        }
+        public IActionResult ItineraryErrorManageDetail()
+        {
+            return View();
+        }
+        public IActionResult ItineraryCompareManage()
+        {
+            return View();
+        }
+        public IActionResult ItineraryAlgorithm()
         {
             return View();
         }
