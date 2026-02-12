@@ -179,8 +179,33 @@
                             <div class="collapse" id="forms">
                                 <ul class="nav nav-collapse">
                                     <li>
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Itinerary" asp-action="">
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryIndex">
+                                            <span class="sub-item">行程總覽 Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryManage">
                                             <span class="sub-item">行程管理</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryVersionManage">
+                                            <span class="sub-item">版本管理</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryError">
+                                            <span class="sub-item">行程錯誤管理</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryCompareAnalyze">
+                                            <span class="sub-item">行程比較分析</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="AIAnalyze">
+                                            <span class="sub-item">AI監控</span>
                                         </a>
                                     </li>
                                 </ul>
