@@ -4,7 +4,7 @@ namespace TravelWeb.Controllers
 {
     public class TripController : Controller
     {
-        public IActionResult Index()
+        public IActionResult TripIndex()
         {
             return View();
         }
