@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace TravelWeb.Controllers
+namespace TravelWeb.Areas.Attractions.Controllers
 {
-    public class ItineraryController : Controller
+    public class AttractionAssetsController : Controller
     {
-        [Route("Itinerary/{action}")]
         public IActionResult Index()
         {
             return View();

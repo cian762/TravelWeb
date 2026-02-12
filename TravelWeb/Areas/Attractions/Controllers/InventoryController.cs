@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace TravelWeb.Controllers
+namespace TravelWeb.Areas.Attractions.Controllers
 {
-    public class TripController : Controller
+    public class InventoryController : Controller
     {
         public IActionResult TripIndex()
         {

@@ -831,4 +831,25 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Areas\Activity\Controllers\" />
+    <Folder Include="Areas\Activity\Data\" />
+    <Folder Include="Areas\Activity\Models\" />
+    <Folder Include="Areas\Activity\Views\" />
+    <Folder Include="Areas\Attractions\Views\Shared\" />
+    <Folder Include="Areas\BoardManagement\Data\" />
+    <Folder Include="Areas\BoardManagement\Models\" />
+    <Folder Include="Areas\Itinerary\Data\" />
+    <Folder Include="Areas\Itinerary\Views\" />
+    <Folder Include="Areas\Itinerary\Models\ItineraryDBContext\" />
+    <Folder Include="Areas\Member\Controllers\" />
+    <Folder Include="Areas\Member\Data\" />
+    <Folder Include="Areas\Member\Models\" />
+    <Folder Include="Areas\Member\Views\" />
+    <Folder Include="Areas\TripProduct\Controllers\" />
+    <Folder Include="Areas\TripProduct\Data\" />
+    <Folder Include="Areas\TripProduct\Models\" />
+    <Folder Include="Areas\TripProduct\Views\" />
+  </ItemGroup>
+
 </Project>
