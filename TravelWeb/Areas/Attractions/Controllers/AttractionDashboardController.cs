@@ -3,7 +3,7 @@
 namespace TravelWeb.Areas.Attractions.Controllers
 {
     [Area("Attractions")]
-    public class AttractionController : Controller
+    public class AttractionDashboardController : Controller
     {
         public IActionResult Index()
         {

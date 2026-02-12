@@ -20,6 +20,12 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+// Area 路由設定 (必須放在預設路由上方)
+app.MapControllerRoute(
+    name: "MyAreas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+// 原本的預設路由
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
