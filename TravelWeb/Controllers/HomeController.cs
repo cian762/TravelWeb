@@ -20,7 +20,7 @@ namespace TravelWeb.Controllers
 
         public IActionResult Privacy()
         {
-            int i;//kadfjklasdjfjasdfljdasjdasf
+            int i;//123
             return View();
         }
 
