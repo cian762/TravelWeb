@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBContext;
+namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 
 public partial class TravelContext : DbContext
 {

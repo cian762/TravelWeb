@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace TravelWeb.Areas.Itinerary.Models.ItineraryGenericRepository
+namespace TravelWeb.Areas.Itinerary.Repository
 {
     public class ItineraryRepository<table> : IItineraryGenericRepository<table> where table : class
     {
