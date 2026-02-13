@@ -1,0 +1,29 @@
+﻿@* 告訴網頁，我們要接收的是一組「景點 (Attraction)」的清單 *@
+@model IEnumerable<TravelWeb.Areas.Attractions.Models.Attraction>
+
+@{
+    ViewData["Title"] = "景點列表";
+}
+
+
+<h1>景點管理</h1>
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>景點編號</th>
+            <th>景點名稱</th>
+            @* 你可以根據 Attraction.cs 裡的欄位繼續增加 <th> *@
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                @* 這裡的欄位名稱必須跟你的資料庫表/Model 屬性完全一樣 *@
+                <td>@item.AttractionId</td>
+                <td>@item.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
