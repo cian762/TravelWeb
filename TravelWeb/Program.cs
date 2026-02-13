@@ -1,7 +1,18 @@
+using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Attractions.Models;//景點的
+
+
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//景點連線DI-----------------------------------------------------------------
+builder.Services.AddDbContext<AttractionsContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+//-----------------------------------------------------------------------------
+
 
 var app = builder.Build();
 
