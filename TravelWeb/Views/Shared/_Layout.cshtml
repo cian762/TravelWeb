@@ -208,7 +208,7 @@
                                 </ul>
                             </div>
                         </li>
-                        <li class="nav-item">
+                        @* <li class="nav-item">
                             <a data-bs-toggle="collapse" href="#maps">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <p>Maps</p>
@@ -228,7 +228,7 @@
                                     </li>
                                 </ul>
                             </div>
-                        </li>
+                        </li> *@
                         <li class="nav-item">
                             <a data-bs-toggle="collapse" href="#charts">
                                 <i class="far fa-chart-bar"></i>
@@ -245,6 +245,42 @@
                                     <li>
                                         <a class="nav-link text-dark" asp-area="" asp-controller="Attraction" asp-action="">
                                             <span class="sub-item">景點票管理</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a data-bs-toggle="collapse" href="#maps">
+                                <i class="far fa-chart-bar"></i>
+                                <p>活動管理</p>
+                                <span class="caret"></span>
+                            </a>
+                            <div class="collapse" id="maps">
+                                <ul class="nav nav-collapse">
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="Index">
+                                            <span class="sub-item">活動總覽</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="TicketManage">
+                                            <span class="sub-item">活動票卷管理</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="ActivitySetUp">
+                                            <span class="sub-item">活動刊登排程</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="">
+                                            <span class="sub-item">活動熱度分析</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="">
+                                            <span class="sub-item">活動編輯紀錄</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -514,8 +550,8 @@
             </div>
             </nav>
             </div>
-            <div class="container vh-100">
-                <main role="main" class="pt-5 h-100">
+            <div class="container">
+                <main role="main" class="pt-3">
                     @RenderBody()
                 </main>
             </div>

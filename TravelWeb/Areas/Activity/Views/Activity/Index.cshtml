@@ -1,2 +1,89 @@
-﻿
-<h1>這是Index 頁面</h1>
+﻿@model IEnumerable<TravelWeb.Areas.Activity.Models.EFModel.Activity>
+
+@{
+    ViewData["Title"] = "活動 | 活動總覽";
+}
+
+<div class="container-fluid px-5">
+
+    <h1>活動總覽</h1>
+
+    <p>
+        <a asp-action="Create">Create New</a>
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Title)
+                </th>
+                <th>
+                   區域標籤
+                </th>
+                <th>
+                    類型標籤
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.StartTime)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.EndTime)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Address)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.OfficialLink)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.UpdateAt)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </td>
+                    <td>
+                        區域分類
+                    </td>
+                    <td>
+                        類型分類
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.StartTime)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.EndTime)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Address)
+                    </td>
+                    <td>
+                        <a href="@Html.DisplayFor(modelItem => item.OfficialLink)"  target="_blank">  
+                            前往連結
+                        </a>
+                       
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.UpdateAt)
+                    </td>
+
+                    <td>
+                        <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityEdit" asp-route-id="@item.ActivityId">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.ActivityId">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.ActivityId">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+</div>
+
+

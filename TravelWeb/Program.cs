@@ -1,7 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Activity.Models.EFModel;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//ActivityDBcontext ªA°Èµù¥U 260213_³¯«a¨j
+builder.Services.AddDbContext<ActivityDbContext>(options => 
+options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
+);
+
 
 var app = builder.Build();
 

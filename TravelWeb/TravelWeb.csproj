@@ -833,7 +833,6 @@
 
   <ItemGroup>
     <Folder Include="Areas\Activity\Data\" />
-    <Folder Include="Areas\Activity\Models\" />
     <Folder Include="Areas\Activity\Repository\IActivityRepositories\" />
     <Folder Include="Areas\Activity\Repository\ActivityRepositories\" />
     <Folder Include="Areas\Activity\Service\IActivityServices\" />
