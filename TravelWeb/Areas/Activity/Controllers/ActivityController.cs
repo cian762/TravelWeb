@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models.EFModel;
+using TravelWeb.Areas.Activity.Models.ViewModels;
 
 namespace TravelWeb.Areas.Activity.Controllers
 {
@@ -30,19 +31,36 @@ namespace TravelWeb.Areas.Activity.Controllers
         [HttpGet("Edit/{id}")]
         public IActionResult ActivityEdit(int id) 
         {
-            var result = _dbContext.Activities.FirstOrDefault(m=> m.ActivityId == id);
-            if (result == null)
+            //下拉式選單填入資料
+            var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
+            var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
+            ViewData["Type"] = Type;
+            ViewData["Region"] = Region;
+
+
+            //撈取活動總表資料,並包裝成 ViewModel
+            var act = _dbContext.Activities
+                .Where(m => m.ActivityId == id)
+                .Select(m => new ActivityEditViewModel 
+                {
+                    ActivityInfo = m,
+                    RegoinName = m.Regions.Select(r => r.RegionName).ToList(),
+                    TypeName = m.Types.Select(t => t.ActivityType).ToList()
+                }).FirstOrDefault();
+            
+            if (act == null)
             {
                 return NotFound();
             }
-            return View("Edit",result);
+
+            return View("Edit",act);
         }
 
         [HttpPost("Edit/{id}")]
-        public IActionResult ActivityEdit(int id, TravelWeb.Areas.Activity.Models.EFModel.Activity activity)
+        public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm)
         {
             // 1. 安全檢查：確保網址 ID 與表單內容一致
-            if (id != activity.ActivityId)
+            if (id != vm.ActivityInfo.ActivityId)
             {
                 return BadRequest();
             }
@@ -50,20 +68,55 @@ namespace TravelWeb.Areas.Activity.Controllers
             
             if (ModelState.IsValid)
             {
-                try
-                {
-                    activity.UpdateAt = DateTime.Now;
-                    _dbContext.Update(activity);
-                    _dbContext.SaveChanges();
+                var act = await _dbContext.Activities
+            .Include(a => a.Types)
+            .Include(a => a.Regions)
+            .FirstOrDefaultAsync(a => a.ActivityId == vm.ActivityInfo.ActivityId);
 
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (Exception ex)
+                if (act == null) return NotFound();
+
+                // 2. 更新基本欄位 (解包 ViewModel)
+                act.Title = vm.ActivityInfo.Title;
+                act.StartTime = vm.ActivityInfo.StartTime;
+                act.EndTime = vm.ActivityInfo.EndTime;
+                act.OfficialLink = vm.ActivityInfo.OfficialLink;
+                act.Address = vm.ActivityInfo.Address;
+                act.Description = vm.ActivityInfo.Description;
+
+                // 3. 處理標籤更新 (重要！)
+                // 先清空舊有的關聯 (如果是多對多)
+                act.Types.Clear();
+
+                // 根據 ViewModel 的內容，去資料庫找出對應的標籤物件
+                // 假設 vm.TypeName 現在是 List<string> 或單一字串
+                var selectedTypes = await _dbContext.TagsActivityTypes
+                            .Where(t => vm.TypeName.Contains(t.ActivityType))
+                            .ToListAsync();
+
+                foreach (var t in selectedTypes)
                 {
-                    ModelState.AddModelError("", "更新失敗：" + ex.Message);
+                    act.Types.Add(t); // 加入新的關聯
                 }
+
+                act.Regions.Clear();
+
+                var selectedRegions = await _dbContext.TagsRegions
+            .Where(r => vm.RegoinName.Contains(r.RegionName))
+            .ToListAsync();
+
+
+                foreach (var r in selectedRegions)
+                {
+                    act.Regions.Add(r); // 加入新的關聯
+                }
+
+                // 4. 儲存
+                act.UpdateAt = DateTime.Now;
+                await _dbContext.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
             }
-            return View("Edit", activity);
+            return View("Edit", vm);
         }
 
         //活動票卷設定
