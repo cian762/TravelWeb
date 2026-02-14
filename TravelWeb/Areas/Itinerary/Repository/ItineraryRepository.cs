@@ -1,12 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 
 namespace TravelWeb.Areas.Itinerary.Repository
 {
     public class ItineraryRepository<table> : IItineraryGenericRepository<table> where table : class
     {
-        private readonly ItineraryDBContext.TravelContext _context;
+        private readonly TravelContext _context;
         private readonly DbSet<table> _dbset;
-        public ItineraryRepository(ItineraryDBContext.TravelContext context)
+        public ItineraryRepository(TravelContext context)
         {
             _context = context;
             _dbset = _context.Set<table>();
@@ -21,6 +22,7 @@ namespace TravelWeb.Areas.Itinerary.Repository
         {
             return _dbset.Find(id);
         }
+       
 
         public void Add(table Entity)
         {

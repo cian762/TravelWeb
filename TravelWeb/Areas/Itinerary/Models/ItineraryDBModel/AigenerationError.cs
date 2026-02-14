@@ -19,7 +19,7 @@ public partial class AigenerationError
 
     public int? RelatedItemId { get; set; }
 
-    public bool? IsConfirmed { get; set; }
+    public bool IsConfirmed { get; set; }
 
     public DateTime? CreateTime { get; set; }
 

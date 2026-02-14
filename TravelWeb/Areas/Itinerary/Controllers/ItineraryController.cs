@@ -1,9 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TravelWeb.Areas.Itinerary.Models.Service;
 
 namespace TravelWeb.Areas.Itinerary
 {
+    [Area("Itinerary")]
     public class ItineraryController : Controller
     {
+        private readonly IDashBoardService _dashboardService;
+        public ItineraryController(IDashBoardService dashBoardService)
+        {
+            _dashboardService = dashBoardService;
+        }
         public IActionResult ItineraryError()
         {
             return View();
@@ -12,9 +19,10 @@ namespace TravelWeb.Areas.Itinerary
         {
             return View();
         }
-        public IActionResult ItineraryIndex()
+        public IActionResult ItineraryDashBoard()
         {
-            return View();
+            var model =_dashboardService.GetDashboardData();
+            return View(model);
         }
         public IActionResult ItineraryManage()
         {

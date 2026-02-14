@@ -1,7 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
+using TravelWeb.Areas.Itinerary.Models.Service;
+using TravelWeb.Areas.Itinerary.Repository;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<TravelContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+builder.Services.AddScoped(typeof(IItineraryGenericRepository<>), typeof(ItineraryRepository<>));
+builder.Services.AddScoped<IItineraryGenericRepository<Itinerary>, ItineraryRepository<Itinerary>>();
+builder.Services.AddScoped<IItineraryGenericRepository<ItineraryVersion>, ItineraryRepository<ItineraryVersion>>();
+builder.Services.AddScoped<IItineraryGenericRepository<Aianalysis>, ItineraryRepository<Aianalysis>>();
+builder.Services.AddScoped<IItineraryGenericRepository<AigenerationError>, ItineraryRepository<AigenerationError>>();
+builder.Services.AddScoped<IDashBoardService, DashBoardService>();
+
+
 
 var app = builder.Build();
 
