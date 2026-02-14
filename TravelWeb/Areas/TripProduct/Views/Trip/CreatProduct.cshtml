@@ -1,0 +1,82 @@
+﻿@model TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelProducts
+
+@{
+    // 強制套用公版
+    Layout = "_Layout";
+    ViewData["Title"] = "新增旅遊行程";
+}
+
+<div class="container">
+    <h2>新增旅遊商品</h2>
+
+    <form asp-action="CreatProduct" method="post" enctype="multipart/form-data">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <label asp-for="ProductName" class="control-label"></label>
+                <input asp-for="ProductName" class="form-control" />
+                <span asp-validation-for="ProductName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DurationDays" class="control-label"></label>
+                <input asp-for="DurationDays" class="form-control" />
+                <span asp-validation-for="DurationDays" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DisplayPrice" class="control-label"></label>
+                <input asp-for="DisplayPrice" class="form-control" />
+                <span asp-validation-for="DisplayPrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for=" ImageFile" class="control-label"></label>
+                <input asp-for=" ImageFile" class="form-control" />
+                <span asp-validation-for=" ImageFile" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PolicyId" class="control-label"></label>
+                <select asp-for="PolicyId" asp-items="Model.PolicyOptions" class="form-control">
+                    <option value="">-- 請選擇退款規定 --</option>
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label class="control-label">行程標籤 (可多選，找不到可直接輸入名稱)</label>
+                <select asp-for="SelectedTags"
+                        asp-items="Model.TagOptions"
+                        class="form-control select2-tag-input"
+                        multiple="multiple">
+                </select>
+                <span asp-validation-for="SelectedTags" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RegionId" class="control-label"></label>
+                <select asp-for="RegionId" asp-items="Model.RegionOptions" class="form-control">
+                    <option value="">-- 請選擇地區 --</option>
+                </select>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="儲存產品" class="btn btn-primary" />
+            </div>
+        </div>
+    </form>
+</div>
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // 驅動您的標籤輸入框
+            $('.select2-tag-input').select2({
+                tags: true,                // 允許手動輸入新名稱
+                tokenSeparators: [',', ' '],
+                placeholder: "請選擇或輸入標籤",
+                width: '100%'
+            });
+        });
+    </script>
+}
