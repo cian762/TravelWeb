@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 
@@ -120,15 +121,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @* @foreach (var item in Model.RecentActivities)
+                            @foreach (var item in Model.RecentActivities)
                             {
                                 <tr>
                                     <td>@item.Time.ToString("yyyy/MM/dd HH:mm")</td>
-                                    <td>@item.Type</td>
-                                    <td>@item.Description</td>
-                                    <td>@item.UserName</td>
+                                    <td>@item.UserID</td>
                                 </tr>
-                            } *@
+                            }
                         </tbody>
                     </table>
                 </div>
