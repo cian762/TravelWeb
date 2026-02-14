@@ -1,0 +1,45 @@
+﻿@model TravelWeb.Areas.Attractions.Models.Attraction
+
+@{
+    ViewData["Title"] = "新增景點";
+}
+
+<div class="page-inner">
+    <div class="page-header">
+        <h4 class="page-title">新增景點</h4>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        @* 這裡只放需要填寫的欄位，像 CreatedAt 這種自動產生的就刪掉 *@
+                        <div class="form-group">
+                            <label asp-for="Name">景點名稱</label>
+                            <input asp-for="Name" class="form-control" placeholder="請輸入景點名稱" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Address">地址</label>
+                            <input asp-for="Address" class="form-control" />
+                        </div>
+
+                        @* 這裡先手動輸入一個 ID，之後再教你做下拉選單 *@
+                        <div class="form-group">
+                            <label asp-for="RegionId">區域 ID (暫時手填)</label>
+                            <input asp-for="RegionId" class="form-control" value="1" />
+                        </div>
+
+                        <div class="card-action">
+                            <button type="submit" class="btn btn-success">儲存景點</button>
+                            <a asp-action="Index" class="btn btn-danger">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

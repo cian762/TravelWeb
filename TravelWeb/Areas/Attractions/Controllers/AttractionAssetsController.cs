@@ -4,10 +4,10 @@ using TravelWeb.Areas.Attractions.Models; // 步驟 1: 引用你產生的 Model 
 namespace TravelWeb.Areas.Attractions.Controllers
 {
 
-    [Area("Attractions")] // 建議補上這行，確保路由正確指向 Attractions 區域
+    [Area("Attractions")] // 確保路由正確指向 Attractions 區域
     public class AttractionAssetsController : Controller
     {
-        // 步驟 2: 宣告一個私有的「管家」變數（慣例會加底線 _）
+        // 步驟 2: 宣告一個私有的「管家」變數（底線 _）
         private readonly AttractionsContext _context;
 
         // 步驟 3: 【DI 建構子注入】
@@ -19,10 +19,33 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
         public IActionResult Index()
         {
-            // 測試：從資料庫抓取所有景點，並傳送給 View
+            // 從資料庫抓取所有景點，並傳送給 View
             var data = _context.Attractions.ToList();
 
             return View(data);
+        }
+
+
+        //新增景點
+        // 1. 顯示新增頁面 (Get)
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // 2. 接收表單資料 (Post)
+        [HttpPost]
+        [ValidateAntiForgeryToken] // 防止跨站請求攻擊的安全機制
+        public IActionResult Create(Attraction attraction)
+        {
+            if (ModelState.IsValid)// 檢查填寫的資料是否符合 Model 規範
+            {
+                attraction.CreatedAt = DateTime.Now; // 設定建立時間
+                _context.Attractions.Add(attraction);// 把資料交給管家
+                _context.SaveChanges(); // 叫管家寫入資料庫
+                return RedirectToAction(nameof(Index)); // 存完回到列表頁
+            }
+            return View(attraction);// 如果填錯了，留在原地並顯示錯誤訊息
         }
     }
 }
