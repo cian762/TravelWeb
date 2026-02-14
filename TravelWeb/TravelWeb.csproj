@@ -847,6 +847,7 @@
     <Folder Include="Areas\Member\Models\" />
     <Folder Include="Areas\Member\Views\" />
     <Folder Include="Areas\TripProduct\Data\" />
+    <Folder Include="wwwroot\PImages\" />
   </ItemGroup>
 
 </Project>

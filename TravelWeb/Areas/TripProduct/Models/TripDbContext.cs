@@ -434,11 +434,11 @@ public partial class TripDbContext : DbContext
                     "TravelandProductRelation",
                     r => r.HasOne<TravelTag>().WithMany()
                         .HasForeignKey("TravelTagid")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("FK_TravelandProductRelation_TravelTags"),
                     l => l.HasOne<TripProduct>().WithMany()
                         .HasForeignKey("TripProductId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("FK_TravelandProductRelation_TripProducts"),
                     j =>
                     {

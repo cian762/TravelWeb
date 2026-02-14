@@ -14,9 +14,11 @@ namespace TravelWeb.Areas.TripProduct.Controllers
         { 
          _context = context;
         }
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            
+            var products = await _context.GetAllForIndex();
+            return View(products);
         }
         [HttpGet]
         public async Task<IActionResult> CreatProduct()
@@ -24,11 +26,15 @@ namespace TravelWeb.Areas.TripProduct.Controllers
             var viewmodel = await _context.GetCreateViewModelAsync();
             return View(viewmodel);
         }
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public IActionResult CreatProduct()
-        //{
-        //    return View();
-        //}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatProduct(ViewModelProducts products)
+        {
+            if (ModelState.IsValid && await _context.Create(products))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            return View(products);
+        }
     }
 }

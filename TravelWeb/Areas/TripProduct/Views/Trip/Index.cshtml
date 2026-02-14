@@ -1,84 +1,118 @@
-﻿@model IEnumerable<TravelWeb.Areas.TripProduct.Models.TripProduct>
+﻿@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.TripIndexViewModel>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "行程商品管理";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index</h1>
+@* 💡 使用內聯樣式確保優先權最高，不被 Layout 或 Bootstrap 覆蓋 *@
+<style>
+    .btn-xs {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+        line-height: 1;
+        border-radius: 0.2rem;
+    }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ProductName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DurationDays)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CoverImage)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DisplayPrice)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ClickTimes)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.RegionId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Policy)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProductName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DurationDays)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CoverImage)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DisplayPrice)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ClickTimes)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RegionId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Policy.PolicyId)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.TripProductId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.TripProductId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.TripProductId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    .align-middle td {
+        vertical-align: middle !important;
+    }
+    /* 讓圖片變色有個小動畫，看起來比較高級 */
+    .grayscale-img {
+        transition: 0.3s;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4 fw-bold">行程商品管理</h1>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-middle bg-dark text-white py-3">
+            <div class="fs-5"><i class="fas fa-table me-2"></i>行程商品清單</div>
+            <a asp-area="TripProduct" asp-controller="Trip" asp-action="CreatProduct" class="btn btn-success btn-sm px-3">
+                <i class="fas fa-plus"></i> 新增行程
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 80px;">ID</th>
+                        <th style="width: 140px;">預覽圖</th>
+                        <th>行程名稱</th>
+                        <th>地區</th>
+                        <th>價格</th>
+                        <th>狀態</th>
+                        <th class="text-center" style="width: 220px;">管理與細項</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        @* 💡 判斷是否為下架狀態 *@
+                        bool isInactive = item.Status != "上架";
+
+                        @* 💡 直接在 tr 加上樣式：如果是下架就給灰色背景與灰色文字 *@
+                        <tr style="@(isInactive ? "background-color: #f2f2f2 !important; color: #888888 !important;" : "")">
+                            <td class="ps-3 fw-bold">@item.TripProductId</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.ImagePath))
+                                {
+                                    @* 💡 下架圖片套用黑白濾鏡 *@
+                                    <img src="@item.ImagePath"
+                                         class="img-thumbnail shadow-sm grayscale-img"
+                                         style="width: 120px; height: 80px; object-fit: cover; @(isInactive ? "filter: grayscale(100%); opacity: 0.5;" : "")" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center rounded" style="width: 120px; height: 80px; font-size: 0.8rem;">無圖片</div>
+                                }
+                            </td>
+                            <td>
+                                @* 💡 下架商品名稱不顯示為藍色 *@
+                                <div class="fw-bold @(isInactive ? "" : "text-primary")">@item.ProductName</div>
+                            </td>
+                            <td>
+                                <span class="badge @(isInactive ? "bg-secondary text-white" : "bg-info text-dark")">@item.RegionName</span>
+                            </td>
+                            <td class="fw-bold @(isInactive ? "" : "text-danger")">@item.DisplayPrice</td>
+                            <td>
+                                @if (!isInactive)
+                                {
+                                    <span class="badge rounded-pill bg-success px-3 shadow-sm">上架中</span>
+                                }
+                                else
+                                {
+                                    <span class="badge rounded-pill bg-dark px-3 shadow-sm">已下架</span>
+                                }
+                            </td>
+                            <td class="px-3">
+                                @* 💡 下架時將按鈕區塊整體淡化 *@
+                                <div style="@(isInactive ? "opacity: 0.6;" : "")">
+                                    <div class="d-flex justify-content-center gap-1 mb-2">
+                                        <a asp-action="Edit" asp-route-id="@item.TripProductId" class="btn btn-xs btn-outline-warning">修改</a>
+                                        <a asp-action="Details" asp-route-id="@item.TripProductId" class="btn btn-xs btn-outline-info">詳細</a>
+                                        <a asp-action="Delete" asp-route-id="@item.TripProductId" class="btn btn-xs btn-outline-danger">刪除</a>
+                                    </div>
+                                    <div class="d-grid gap-1">
+                                        <button class="btn btn-xs @(isInactive ? "btn-secondary" : "btn-dark")" onclick="openSchedule(@item.TripProductId)">📅 管理檔期</button>
+                                        <button class="btn btn-xs @(isInactive ? "btn-secondary" : "btn-primary")" onclick="openItinerary(@item.TripProductId)">📍 管理行程</button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openSchedule(id) {
+        alert('正在開啟商品 ID: ' + id + ' 的檔期管理視窗');
+    }
+    function openItinerary(id) {
+        alert('正在開啟商品 ID: ' + id + ' 的行程管理視窗');
+    }
+</script>

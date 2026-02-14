@@ -9,6 +9,7 @@ namespace TravelWeb.Areas.TripProduct.Services.InterSer
         
        Task <bool> Update(ViewModelProducts vm);
        Task <bool> Delete(int id);
-       
+       Task<IEnumerable<TravelWeb.Areas.TripProduct.Models.TripProduct>> GetAll();
+       Task<IEnumerable<TripIndexViewModel>> GetAllForIndex();
     }
 }

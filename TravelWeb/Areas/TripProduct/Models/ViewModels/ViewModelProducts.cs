@@ -15,6 +15,7 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
         public string? Description { get; set; }
         [DisplayName("行程天數")]
         [Required(ErrorMessage = "請輸入行程天數")]
+        [Range(1,15)]
         public int? DurationDays { get; set; }
         [DisplayName("預設價格")]
         [Required(ErrorMessage = "請輸入價格")]
