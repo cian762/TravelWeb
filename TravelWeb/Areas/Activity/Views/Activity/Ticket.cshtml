@@ -1,0 +1,82 @@
+﻿@model List<TravelWeb.Areas.Activity.Models.ViewModels.ActivityTicketViewModel>
+
+@{
+    ViewData["Title"] = "活動 | 商品總覽";
+}
+
+<div class="container-fluid px-5">
+
+    <h1>活動商品總覽</h1>
+
+    <p>
+        <a asp-action="ActivityCreate" class="btn btn-primary">創建新商品</a>
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].ProductCode)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].ProductName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].TicketCategoryName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].StartDate)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].ExpiryDate)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].CurrentPrice)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].Status)
+                </th>     
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ProductCode)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ProductName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TicketCategoryName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.StartDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ExpiryDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CurrentPrice)
+                    </td>
+                    <td>
+                        @if (item.Status == "預告中")
+                        {
+                            <span class="badge bg-warning fs-5">預告中</span>
+                        }
+                        else if(item.Status == "販售中")
+                        {
+                            <span class="badge bg-success fs-5">販售中</span>
+                        }
+                        else if(item.Status == "已下架")
+                        {
+                            <span class="badge bg-danger fs-5">已下架</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+

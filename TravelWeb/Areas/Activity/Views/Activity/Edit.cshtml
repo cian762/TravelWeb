@@ -80,16 +80,19 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-3" asp-for="Title">活動名稱</label>
                         <input type="text" class="form-control" asp-for="Title">
+                        <span class="text-danger" asp-validation-for="Title"></span>
                     </div>
 
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label class="form-label fw-bold fs-3" asp-for="StartTime">開始時間</label>
                             <input type="date" class="form-control" asp-for="StartTime">
+                            <span class="text-danger" asp-validation-for="StartTime"></span>
                         </div>
                         <div class="col-6 mb-3">
                             <label class="form-label fw-bold fs-3" asp-for="EndTime">結束時間</label>
                             <input type="date" class="form-control" asp-for="EndTime">
+                            <span class="text-danger" asp-validation-for="EndTime"></span>
                         </div>
                     </div>
                     <div class="row">
@@ -138,16 +141,19 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-3" asp-for="Address"></label>
                         <input type="text" class="form-control" asp-for="Address">
+                        <span class="text-danger" asp-validation-for="Address"></span>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-3" asp-for="OfficialLink"></label>
                         <input type="text" class="form-control text-primary" asp-for="OfficialLink">
+                        <span class="text-danger" asp-validation-for="OfficialLink"></span>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-3" asp-for="Description"></label>
                         <textarea class="form-control" asp-for="Description" rows="5"></textarea>
+                        <span class="text-danger" asp-validation-for="Description"></span>
                     </div>
 
                     <div class="mb-3">

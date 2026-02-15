@@ -25,5 +25,7 @@ public partial class AcitivityTicket
 
     public virtual ActivityTicketDetail ProductCodeNavigation { get; set; } = null!;
 
+    public virtual TicketCategory? TicketCategory { get; set; }
+
     public virtual ICollection<ActivityTicketDiscount> Discounts { get; set; } = new List<ActivityTicketDiscount>();
 }

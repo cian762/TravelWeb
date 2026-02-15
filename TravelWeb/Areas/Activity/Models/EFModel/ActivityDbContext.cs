@@ -39,16 +39,15 @@ public partial class ActivityDbContext : DbContext
 
     public virtual DbSet<TagsRegion> TagsRegions { get; set; }
 
+    public virtual DbSet<TicketCategory> TicketCategories { get; set; }
+
     public virtual DbSet<UserFavorite> UserFavorites { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured) 
-        {
-            //已經在 appsetting.json 設定連線字串
-        }
-    }
+    { 
     
+    }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,6 +66,10 @@ public partial class ActivityDbContext : DbContext
                 .HasForeignKey<AcitivityTicket>(d => d.ProductCode)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_商品代碼總表_活動商品表細節");
+
+            entity.HasOne(d => d.TicketCategory).WithMany(p => p.AcitivityTickets)
+                .HasForeignKey(d => d.TicketCategoryId)
+                .HasConstraintName("FK_Acitivity_Tickets_TicketCategories");
 
             entity.HasMany(d => d.Discounts).WithMany(p => p.ProductCodes)
                 .UsingEntity<Dictionary<string, object>>(
@@ -286,6 +289,15 @@ public partial class ActivityDbContext : DbContext
             entity.HasOne(d => d.UidNavigation).WithMany(p => p.InverseUidNavigation)
                 .HasForeignKey(d => d.Uid)
                 .HasConstraintName("FK_Tags_Regions_Tags_Regions");
+        });
+
+        modelBuilder.Entity<TicketCategory>(entity =>
+        {
+            entity.HasKey(e => e.TicketCategoryId).HasName("PK__TicketCa__C84589E67C04231C");
+
+            entity.ToTable("TicketCategories", "product");
+
+            entity.Property(e => e.CategoryName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<UserFavorite>(entity =>

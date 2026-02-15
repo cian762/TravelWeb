@@ -54,8 +54,6 @@ namespace TravelWeb.Areas.Activity.Controllers
             return View("Create");
         }
 
-
-
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActivityCreate(ActivityEditViewModel vm)
@@ -118,6 +116,8 @@ namespace TravelWeb.Areas.Activity.Controllers
             }
         }
 
+
+
         //活動內容修改
         [HttpGet("Edit/{id}")]
         public IActionResult ActivityEdit(int id) 
@@ -157,11 +157,6 @@ namespace TravelWeb.Areas.Activity.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm)
         {
-            var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
-            var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
-            ViewData["Type"] = Type;
-            ViewData["Region"] = Region;
-
             // 1. 安全檢查：確保網址 ID 與表單內容一致
             if (id != vm.ActivityId)
             {
@@ -170,7 +165,10 @@ namespace TravelWeb.Areas.Activity.Controllers
             
             if (!ModelState.IsValid)
             {
-
+                var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
+                var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
+                ViewData["Type"] = Type;
+                ViewData["Region"] = Region;
                 return View("Edit", vm);
             }
 
@@ -231,11 +229,24 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
 
+
         //活動票卷設定
         [HttpGet("Ticket")]
-        public IActionResult TicketManage() 
+        public async Task<IActionResult> TicketManage() 
         {
-            return View();
+            var vm = await _dbContext.AcitivityTickets
+                .Select(t => new ActivityTicketViewModel
+                {
+                    ProductCode = t.ProductCode,
+                    ProductName = t.ProductName,
+                    TicketCategoryName = t.TicketCategory.CategoryName,
+                    StartDate = t.StartDate,
+                    ExpiryDate = t.ExpiryDate,
+                    CurrentPrice = t.CurrentPrice,
+                    Status = t.Status,
+                }).ToListAsync();
+
+            return View("Ticket",vm);
         }
 
         [HttpPost("TicketEdit")]
@@ -243,6 +254,9 @@ namespace TravelWeb.Areas.Activity.Controllers
         {
             return RedirectToAction(nameof(TicketManage));
         }
+
+
+
 
         // 活動排程設定
         [HttpGet("Schedule")]
