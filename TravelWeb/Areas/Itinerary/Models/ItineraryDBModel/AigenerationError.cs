@@ -8,6 +8,7 @@ namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 public partial class AigenerationError
 {
     public int ErrorId { get; set; }
+    public int ItineraryId {  get; set; }
 
     public int? VersionId { get; set; }
 
@@ -20,8 +21,8 @@ public partial class AigenerationError
     public int? RelatedItemId { get; set; }
 
     public bool IsConfirmed { get; set; }
-
+    public string AdminResponse {  get; set; }
     public DateTime? CreateTime { get; set; }
-
+    public string ErrorReason {  get; set; }
     public virtual ItineraryVersion Version { get; set; }
 }

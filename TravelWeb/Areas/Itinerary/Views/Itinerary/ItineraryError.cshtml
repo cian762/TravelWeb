@@ -1,7 +1,60 @@
-﻿
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+    @model ErrorViewModel
 @{
     ViewData["Title"] = "ItineraryError";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ItineraryError</h1>
+<div class="container mt-4">
+    <h2 class="mb-4">行程錯誤管理</h2>
 
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <table class="table table-hover">
+                <thead class="table-danger">
+                    <tr>
+                        <th>錯誤類型</th>
+                        <th>錯誤訊息</th>
+                        <th>建立時間</th>
+                        <th>狀態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Errors)
+                    {
+                        <tr>
+                            <td>@item.ErrorType</td>
+                            <td>@item.ErrorMessage</td>
+                            <td>@item.CreatedTime.ToString("yyyy-MM-dd HH:mm")</td>
+
+                            <td>
+                                @if (item.IsConfirmed)
+                                {
+                                    <span class="badge bg-success">已處理</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">待處理</span>
+                                }
+                            </td>
+
+                            <td>
+                                <a class="btn btn-sm btn-primary"
+                                asp-area="Itinerary"
+                                   asp-action="ItineraryErrorEdit"
+                                   asp-route-id="@item.ErrorId">
+                                    管理
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+</div>

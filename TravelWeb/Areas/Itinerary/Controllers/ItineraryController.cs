@@ -9,14 +9,22 @@ namespace TravelWeb.Areas.Itinerary
     {
         private readonly IDashBoardService _dashboardService;
         private readonly IItineraryService _itineraryService;
-        public ItineraryController(IDashBoardService dashBoardService,IItineraryService itineraryService)
+        private readonly IItineraryErrorSevice _errorSevice;
+        public ItineraryController(IDashBoardService dashBoardService,IItineraryService itineraryService,IItineraryErrorSevice errorSevice)
         {
             _dashboardService = dashBoardService;
             _itineraryService = itineraryService;
+            _errorSevice = errorSevice;
         }
-        public IActionResult ItineraryError()
+        public async Task<IActionResult> ItineraryError()
         {
-            return View();
+            var model =await  _errorSevice.GetAllErrorsAsync();
+            return View(model);
+        }
+        public async Task< IActionResult >ItineraryErrorEdit(int id)
+        {
+        var model = await _errorSevice.GetErrorByIdAsync(id);
+            return View(model);
         }
         public IActionResult ItineraryCompareAnalyze()
         {
