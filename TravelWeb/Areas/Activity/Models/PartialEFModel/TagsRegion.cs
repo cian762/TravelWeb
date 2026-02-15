@@ -16,4 +16,6 @@ public partial class TagsRegion
     public virtual TagsRegion? UidNavigation { get; set; }
 
     public virtual ICollection<Activity> Activities { get; set; } = new List<Activity>();
+
+
 }

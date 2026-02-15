@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TravelWeb.Areas.Activity.Models.EFModel.Activity>
+﻿@model List<TravelWeb.Areas.Activity.Models.ViewModels.ActivityEditViewModel>
 
 @{
     ViewData["Title"] = "活動 | 活動總覽";
@@ -9,36 +9,39 @@
     <h1>活動總覽</h1>
 
     <p>
-        <a asp-action="Create">Create New</a>
+        <a asp-action="ActivityCreate" class="btn btn-primary">創建新活動</a>
     </p>
     <table class="table">
         <thead>
             <tr>
                 <th>
-                    @Html.DisplayNameFor(model => model.Title)
+                    @Html.DisplayNameFor(model => model[0].Title)
                 </th>
                 <th>
-                   區域標籤
+                    @Html.DisplayNameFor(model => model[0].RegionName)
                 </th>
                 <th>
-                    類型標籤
+                    @Html.DisplayNameFor(model => model[0].TypeName)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.StartTime)
+                    @Html.DisplayNameFor(model => model[0].StartTime)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.EndTime)
+                    @Html.DisplayNameFor(model => model[0].EndTime)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.Address)
+                    @Html.DisplayNameFor(model => model[0].Address)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.OfficialLink)
+                    @Html.DisplayNameFor(model => model[0].OfficialLink)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.UpdateAt)
+                    上架狀態
                 </th>
-                <th></th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].UpdateAt)
+                </th>
+                    
             </tr>
         </thead>
         <tbody>
@@ -46,13 +49,21 @@
             {
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Title)
+                        <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityEdit" asp-route-id="@item.ActivityId">@Html.DisplayFor(modelItem => item.Title)</a>
+                       
                     </td>
                     <td>
-                        區域分類
+                        @foreach (var _ in item.RegionName)
+                        {
+                            <span class="badge rounded-pill bg-primary text-light"> @_</span>
+                        }
+
                     </td>
                     <td>
-                        類型分類
+                        @foreach (var _ in item.TypeName)
+                        {
+                            <span class="badge rounded-pill bg-success text-light"> @_</span>
+                        }
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.StartTime)
@@ -70,13 +81,10 @@
                        
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.UpdateAt)
-                    </td>
-
-                    <td>
-                        <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityEdit" asp-route-id="@item.ActivityId">Edit</a> |
-                        <a asp-action="Details" asp-route-id="@item.ActivityId">Details</a> |
                         <a asp-action="Delete" asp-route-id="@item.ActivityId">Delete</a>
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.UpdateAt)
                     </td>
                 </tr>
             }

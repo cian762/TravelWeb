@@ -20,31 +20,127 @@ namespace TravelWeb.Areas.Activity.Controllers
 
         //活動總覽
         [HttpGet("Overview")]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-             var result = _dbContext.Activities;
-            return View(result);
+            var acts = await _dbContext.Activities.Select(m => new ActivityEditViewModel
+            {
+                ActivityId = m.ActivityId,
+                Title = m.Title,
+                StartTime = m.StartTime,
+                EndTime = m.EndTime,
+                Address = m.Address,
+                Description = m.Description,
+                OfficialLink = m.OfficialLink,
+                UpdateAt = m.UpdateAt,
+                RegionName = m.Regions.Select(r => r.RegionName).ToList(),
+                TypeName = m.Types.Select(t => t.ActivityType).ToList()
+            }).ToListAsync();
+
+            return View(acts);
         }
 
-        //活動內容設定
 
-        [HttpGet("Edit/{id}")]
-        public IActionResult ActivityEdit(int id) 
+
+        //新增活動
+        [HttpGet("Create")]
+        public IActionResult ActivityCreate() 
         {
-            //下拉式選單填入資料
+            //Checkbox 填入資料用
             var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
             var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
             ViewData["Type"] = Type;
             ViewData["Region"] = Region;
 
+            return View("Create");
+        }
+
+
+
+        [HttpPost("Create")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ActivityCreate(ActivityEditViewModel vm)
+        {
+            // 1. 如果驗證失敗，立即準備下拉選單資料並回傳
+            if (!ModelState.IsValid)
+            { 
+                ViewData["Type"] = await _dbContext.TagsActivityTypes.Select(m => m.ActivityType).ToListAsync();
+                ViewData["Region"] = await _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName).ToListAsync();
+                return View("Create", vm);
+            }
+
+            try
+            {
+                // 2. 建立 Entity 實體
+                var act = new Models.EFModel.Activity()
+                {
+                    Title = vm.Title,
+                    StartTime = vm.StartTime,
+                    EndTime = vm.EndTime,
+                    Address = vm.Address,
+                    OfficialLink = vm.OfficialLink,
+                    Description = vm.Description,
+                    UpdateAt = DateTime.Now,
+                };
+
+                // 3. 處理多對多關聯 - 類型
+                if (vm.TypeName != null && vm.TypeName.Any())
+                {
+                    var selectedTypes = await _dbContext.TagsActivityTypes
+                                            .Where(t => vm.TypeName.Contains(t.ActivityType))
+                                            .ToListAsync();
+                    foreach (var t in selectedTypes) act.Types.Add(t);
+                }
+
+                // 4. 處理多對多關聯 - 區域
+                if (vm.RegionName != null && vm.RegionName.Any())
+                {
+                    var selectedRegions = await _dbContext.TagsRegions
+                                              .Where(r => vm.RegionName.Contains(r.RegionName))
+                                              .ToListAsync();
+                    foreach (var r in selectedRegions) act.Regions.Add(r);
+                }
+
+                // 5. 存檔
+                _dbContext.Activities.Add(act);
+                await _dbContext.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                // 建議記錄錯誤訊息 ex.Message，方便除錯
+                ModelState.AddModelError("", "資料庫存檔失敗：" + ex.Message);
+
+                // 重新填入 ViewData 供頁面顯示
+                ViewData["Type"] = await _dbContext.TagsActivityTypes.Select(m => m.ActivityType).ToListAsync();
+                ViewData["Region"] = await _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName).ToListAsync();
+                return View("Create", vm);
+            }
+        }
+
+        //活動內容修改
+        [HttpGet("Edit/{id}")]
+        public IActionResult ActivityEdit(int id) 
+        {
+            //Checkbox 填入資料用
+            var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
+            var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
+            ViewData["Type"] = Type;
+            ViewData["Region"] = Region;
 
             //撈取活動總表資料,並包裝成 ViewModel
             var act = _dbContext.Activities
                 .Where(m => m.ActivityId == id)
                 .Select(m => new ActivityEditViewModel 
                 {
-                    ActivityInfo = m,
-                    RegoinName = m.Regions.Select(r => r.RegionName).ToList(),
+                    ActivityId = m.ActivityId,
+                    Title = m.Title,
+                    StartTime = m.StartTime,
+                    EndTime = m.EndTime,
+                    Address = m.Address,
+                    Description = m.Description,
+                    OfficialLink = m.OfficialLink,
+                    RegionName = m.Regions.Select(r => r.RegionName).ToList(),
                     TypeName = m.Types.Select(t => t.ActivityType).ToList()
                 }).FirstOrDefault();
             
@@ -56,68 +152,84 @@ namespace TravelWeb.Areas.Activity.Controllers
             return View("Edit",act);
         }
 
+
         [HttpPost("Edit/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm)
         {
+            var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
+            var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
+            ViewData["Type"] = Type;
+            ViewData["Region"] = Region;
+
             // 1. 安全檢查：確保網址 ID 與表單內容一致
-            if (id != vm.ActivityInfo.ActivityId)
+            if (id != vm.ActivityId)
             {
                 return BadRequest();
             }
-
             
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var act = await _dbContext.Activities
-            .Include(a => a.Types)
-            .Include(a => a.Regions)
-            .FirstOrDefaultAsync(a => a.ActivityId == vm.ActivityInfo.ActivityId);
 
-                if (act == null) return NotFound();
+                return View("Edit", vm);
+            }
 
-                // 2. 更新基本欄位 (解包 ViewModel)
-                act.Title = vm.ActivityInfo.Title;
-                act.StartTime = vm.ActivityInfo.StartTime;
-                act.EndTime = vm.ActivityInfo.EndTime;
-                act.OfficialLink = vm.ActivityInfo.OfficialLink;
-                act.Address = vm.ActivityInfo.Address;
-                act.Description = vm.ActivityInfo.Description;
+            var act = await _dbContext.Activities
+                    .Include(a => a.Types)
+                    .Include(a => a.Regions)
+                    .FirstOrDefaultAsync(a => a.ActivityId == vm.ActivityId);
 
-                // 3. 處理標籤更新 (重要！)
-                // 先清空舊有的關聯 (如果是多對多)
-                act.Types.Clear();
+            if (act == null) return NotFound();
 
-                // 根據 ViewModel 的內容，去資料庫找出對應的標籤物件
-                // 假設 vm.TypeName 現在是 List<string> 或單一字串
+            // 2. 更新基本欄位 (解包 ViewModel)
+            //act.ActivityId = vm.ActivityId;
+            act.Title = vm.Title;
+            act.StartTime = vm.StartTime;
+            act.EndTime = vm.EndTime;
+            act.OfficialLink = vm.OfficialLink;
+            act.Address = vm.Address;
+            act.Description = vm.Description;
+
+            // 3. 處理標籤更新 (重要！)
+            // 先清空舊有的關聯 (如果是多對多)
+            act.Types.Clear();
+
+            // 根據 ViewModel 的內容，去資料庫找出對應的標籤物件
+            // 假設 vm.TypeName 現在是 List<string> 或單一字串
+            if (vm.TypeName != null && vm.TypeName.Any()) 
+            {
                 var selectedTypes = await _dbContext.TagsActivityTypes
-                            .Where(t => vm.TypeName.Contains(t.ActivityType))
-                            .ToListAsync();
+                .Where(t => vm.TypeName.Contains(t.ActivityType))
+                .ToListAsync();
 
                 foreach (var t in selectedTypes)
                 {
                     act.Types.Add(t); // 加入新的關聯
                 }
+            }
 
-                act.Regions.Clear();
-
+            act.Regions.Clear();
+            if (vm.RegionName != null && vm.RegionName.Any()) 
+            {
                 var selectedRegions = await _dbContext.TagsRegions
-            .Where(r => vm.RegoinName.Contains(r.RegionName))
-            .ToListAsync();
-
+                .Where(r => vm.RegionName.Contains(r.RegionName))
+                .ToListAsync();
 
                 foreach (var r in selectedRegions)
                 {
                     act.Regions.Add(r); // 加入新的關聯
                 }
-
-                // 4. 儲存
-                act.UpdateAt = DateTime.Now;
-                await _dbContext.SaveChangesAsync();
-
-                return RedirectToAction(nameof(Index));
             }
-            return View("Edit", vm);
+
+            // 4. 儲存
+            act.UpdateAt = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
+
+
+
+
 
         //活動票卷設定
         [HttpGet("Ticket")]
