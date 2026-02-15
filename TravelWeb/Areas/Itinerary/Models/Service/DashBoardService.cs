@@ -42,6 +42,7 @@ namespace TravelWeb.Areas.Itinerary.Models.Service
                 UnconfirmedErrors = _AigenerationError
                     .GetAll()
                     .Count(x => !x.IsConfirmed),
+
                 RecentActivities = _Version.GetAll().Join(_Itinerary.GetAll(), V => V.ItineraryId, I => I.ItineraryId, (V, I) => new ActivityViewModel
                 {
                     Time = V.CreateTime.Value,

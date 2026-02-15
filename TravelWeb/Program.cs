@@ -15,6 +15,7 @@ builder.Services.AddScoped<IItineraryGenericRepository<ItineraryVersion>, Itiner
 builder.Services.AddScoped<IItineraryGenericRepository<Aianalysis>, ItineraryRepository<Aianalysis>>();
 builder.Services.AddScoped<IItineraryGenericRepository<AigenerationError>, ItineraryRepository<AigenerationError>>();
 builder.Services.AddScoped<IDashBoardService, DashBoardService>();
+builder.Services.AddScoped<IItineraryService, ItineraryService>();
 
 
 

@@ -7,9 +7,11 @@ namespace TravelWeb.Areas.Itinerary
     public class ItineraryController : Controller
     {
         private readonly IDashBoardService _dashboardService;
-        public ItineraryController(IDashBoardService dashBoardService)
+        private readonly IItineraryService _itineraryService;
+        public ItineraryController(IDashBoardService dashBoardService,IItineraryService itineraryService)
         {
             _dashboardService = dashBoardService;
+            _itineraryService = itineraryService;
         }
         public IActionResult ItineraryError()
         {
@@ -26,10 +28,12 @@ namespace TravelWeb.Areas.Itinerary
         }
         public IActionResult ItineraryManage()
         {
-            return View();
+            var model = _itineraryService.GetItineraryManagementAsync();
+            return View(model);
         }
-        public IActionResult ItineraryVersionManage()
+        public IActionResult ItineraryVersionManage(int id)
         {
+            var model = _itineraryService.GetVersionManagementAsync(id);
             return View();
         }
         public IActionResult AIAnalyze()

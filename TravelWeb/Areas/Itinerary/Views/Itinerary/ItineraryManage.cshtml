@@ -1,0 +1,51 @@
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+@model ItineraryDetailViewModel
+@{
+    ViewData["Title"] = "ItineraryManage";
+}
+<div class="container mt-4">
+    <h2 class="mb-4">行程管理</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>行程名稱</th>
+                        <th>目前版本</th>
+                        <th>狀態</th>
+                        <th>版本數量</th>
+                        <th>建立時間</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Itineraries)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td>V @item.CurrentVersionNumber</td>
+                            <td>
+                                <span class="badge bg-success">
+                                    @item.CurrentUsageStatus
+                                </span>
+                            </td>
+                            <td>@item.VersionCount</td>
+                            <td>@item.CreatedTime.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <a class="btn btn-sm btn-primary"
+                                   asp-area="Itinerary"
+                                   asp-controller="Itinerary"
+                                   asp-action="ItineraryVersionManage"
+                                   asp-route-itineraryId="@item.ItineraryId">
+                                    查看版本
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
