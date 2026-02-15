@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 using TravelWeb.Areas.Itinerary.Models.Service;
 
 namespace TravelWeb.Areas.Itinerary
@@ -23,17 +24,17 @@ namespace TravelWeb.Areas.Itinerary
         }
         public IActionResult ItineraryDashBoard()
         {
-            var model =_dashboardService.GetDashboardData();
+            var model = _dashboardService.GetDashboardData();
             return View(model);
         }
-        public IActionResult ItineraryManage()
+        public async Task< IActionResult> ItineraryManage()
         {
-            var model = _itineraryService.GetItineraryManagementAsync();
+            var model = await  _itineraryService.GetItineraryManagementAsync();
             return View(model);
         }
-        public IActionResult ItineraryVersionManage(int id)
+        public async Task< IActionResult> ItineraryVersionManage(int id)
         {
-            var model = _itineraryService.GetVersionManagementAsync(id);
+            var model = await _itineraryService.GetVersionManagementAsync(id);
             return View();
         }
         public IActionResult AIAnalyze()
