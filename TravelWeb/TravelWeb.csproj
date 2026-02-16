@@ -819,6 +819,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CloudinaryDotNet" Version="1.28.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -835,8 +836,6 @@
     <Folder Include="Areas\Activity\Data\" />
     <Folder Include="Areas\Activity\Repository\IActivityRepositories\" />
     <Folder Include="Areas\Activity\Repository\ActivityRepositories\" />
-    <Folder Include="Areas\Activity\Service\IActivityServices\" />
-    <Folder Include="Areas\Activity\Service\ActivityServices\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Data\" />
     <Folder Include="Areas\BoardManagement\Models\" />

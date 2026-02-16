@@ -46,6 +46,7 @@ namespace TravelWeb.Areas.Activity.Models.ViewModels
         [Display(Name = "類型標籤")]
         public List<string>? TypeName { get; set; }
 
+        public List<string>? ImgUrls { get; set; }
 
     }
 }

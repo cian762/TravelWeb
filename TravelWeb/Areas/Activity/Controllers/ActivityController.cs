@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models.EFModel;
 using TravelWeb.Areas.Activity.Models.ViewModels;
+using TravelWeb.Areas.Activity.Service.IActivityServices;
 
 namespace TravelWeb.Areas.Activity.Controllers
 {
@@ -11,10 +12,12 @@ namespace TravelWeb.Areas.Activity.Controllers
     {
 
         private readonly ActivityDbContext _dbContext;
+        private readonly IPhotoService _photoService;
 
-        public ActivityController(ActivityDbContext dbContext)
+        public ActivityController(ActivityDbContext dbContext,IPhotoService photoService)
         {
             _dbContext = dbContext;
+            _photoService = photoService;
         }
 
 
@@ -56,7 +59,7 @@ namespace TravelWeb.Areas.Activity.Controllers
 
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ActivityCreate(ActivityEditViewModel vm)
+        public async Task<IActionResult> ActivityCreate(ActivityEditViewModel vm, List<IFormFile> images)
         {
             // 1. 如果驗證失敗，立即準備下拉選單資料並回傳
             if (!ModelState.IsValid)
@@ -98,10 +101,24 @@ namespace TravelWeb.Areas.Activity.Controllers
                     foreach (var r in selectedRegions) act.Regions.Add(r);
                 }
 
+                //照片存取到雲端，資料庫只存網址
+                if (images !=null && images.Count > 0) 
+                {
+                    foreach (var image in images)
+                    {
+                        var result = await _photoService.AddPhotoAsync(image);
+
+                        act.ActivityImages.Add(new ActivityImage
+                        {
+                            ImageUrl = result.SecureUrl.AbsoluteUri,
+                            PublicId = result.PublicId,
+                        });
+                    }
+                }
+
                 // 5. 存檔
                 _dbContext.Activities.Add(act);
                 await _dbContext.SaveChangesAsync();
-
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -129,6 +146,9 @@ namespace TravelWeb.Areas.Activity.Controllers
             ViewData["Region"] = Region;
 
             //撈取活動總表資料,並包裝成 ViewModel
+            
+
+
             var act = _dbContext.Activities
                 .Where(m => m.ActivityId == id)
                 .Select(m => new ActivityEditViewModel 
@@ -141,8 +161,12 @@ namespace TravelWeb.Areas.Activity.Controllers
                     Description = m.Description,
                     OfficialLink = m.OfficialLink,
                     RegionName = m.Regions.Select(r => r.RegionName).ToList(),
-                    TypeName = m.Types.Select(t => t.ActivityType).ToList()
+                    TypeName = m.Types.Select(t => t.ActivityType).ToList(),
+                    ImgUrls = m.ActivityImages.Where(i => i.ActivityId == m.ActivityId).Select(u => u.ImageUrl).ToList(),
                 }).FirstOrDefault();
+
+
+
             
             if (act == null)
             {
@@ -239,7 +263,7 @@ namespace TravelWeb.Areas.Activity.Controllers
                 {
                     ProductCode = t.ProductCode,
                     ProductName = t.ProductName,
-                    TicketCategoryName = t.TicketCategory.CategoryName,
+                    TicketCategoryName = t.TicketCategory!.CategoryName,
                     StartDate = t.StartDate,
                     ExpiryDate = t.ExpiryDate,
                     CurrentPrice = t.CurrentPrice,

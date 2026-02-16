@@ -43,9 +43,8 @@ public partial class ActivityDbContext : DbContext
 
     public virtual DbSet<UserFavorite> UserFavorites { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    { 
-    
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
+    {
     }
 
 
@@ -182,6 +181,7 @@ public partial class ActivityDbContext : DbContext
 
             entity.Property(e => e.ImageSetId).HasColumnName("ImageSetID");
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
+            entity.Property(e => e.PublicId).HasColumnName("PublicID");
 
             entity.HasOne(d => d.Activity).WithMany(p => p.ActivityImages)
                 .HasForeignKey(d => d.ActivityId)

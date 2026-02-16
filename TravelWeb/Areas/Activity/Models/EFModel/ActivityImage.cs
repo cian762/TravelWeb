@@ -9,6 +9,8 @@ public partial class ActivityImage
 
     public int? ActivityId { get; set; }
 
+    public string? PublicId { get; set; }
+
     public string? ImageUrl { get; set; }
 
     public virtual Activity? Activity { get; set; }
