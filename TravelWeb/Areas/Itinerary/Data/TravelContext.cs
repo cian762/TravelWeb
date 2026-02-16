@@ -26,6 +26,7 @@ public partial class TravelContext : DbContext
     public virtual DbSet<ItineraryItem> ItineraryItems { get; set; }
 
     public virtual DbSet<ItineraryVersion> ItineraryVersions { get; set; }
+    public virtual DbSet<Member_Information> Member_Information { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

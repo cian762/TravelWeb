@@ -840,7 +840,6 @@
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Data\" />
     <Folder Include="Areas\BoardManagement\Models\" />
-    <Folder Include="Areas\Itinerary\Models\ItineraryDBModel\" />
     <Folder Include="Areas\Member\Controllers\" />
     <Folder Include="Areas\Member\Data\" />
     <Folder Include="Areas\Member\Models\" />
