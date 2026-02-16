@@ -24,7 +24,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-                    Transformation = new Transformation().Height(500).Width(500).Crop("fill")
+                    Transformation = new Transformation().Width(1000).Crop("fit")
                 };
                 uploadResult = await _cloudinary.UploadAsync(uploadParams);
             }

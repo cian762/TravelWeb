@@ -2,39 +2,30 @@
 
 
 
+@section Styles{
+    <style>
+        .thumb-wrapper {
+            transition: 0.3s;
+            opacity: 0.6;
+            border: 2px solid transparent !important;
+        }
 
-<style>
-    .thumb-wrapper {
-        transition: 0.3s;
-        opacity: 0.6;
-        border: 2px solid transparent !important;
-    }
+            .thumb-wrapper:hover {
+                opacity: 1;
+                border-color: #0d6efd !important;
+            }
 
-        .thumb-wrapper:hover {
+        .active-thumb {
             opacity: 1;
             border-color: #0d6efd !important;
         }
+    </style>
+}
 
-    .active-thumb {
-        opacity: 1;
-        border-color: #0d6efd !important;
-    }
-</style>
 
-<script>
-    function changeImage(element, newSrc) {
-        // 1. 更換主圖路徑
-        document.getElementById('mainImg').src = newSrc;
 
-        // 2. 移除所有縮圖的選取狀態
-        document.querySelectorAll('.thumb-wrapper').forEach(el => {
-            el.classList.remove('active-thumb');
-        });
 
-        // 3. 幫點擊的縮圖加上選取狀態
-        element.classList.add('active-thumb');
-    }
-</script>
+
 
 
 
@@ -46,18 +37,13 @@
             <div class="d-flex flex-column h-100">
                 <div class="border rounded-3 shadow-sm bg-white mb-3 overflow-hidden"
                      style="height: 800px; flex-shrink: 0;">
-                    <img id="mainImg" src="~/Img/pngtree-beautiful-summer-mountain-river-nature-scenery-wallpaper-ai-image-image_16196332.jpg"
+                    <img id="mainImg"
                          class="w-100 h-100"
                          style="object-fit: contain; background-color: #f8f9fa;">
                 </div>
 
-                <div class="d-flex justify-content-start gap-2 overflow-auto  border rounded-3 shadow-sm bg-white" style="height: 150px; flex-shrink: 0;">
-                    <div class="thumb-wrapper border rounded-2 p-1 active-thumb" onclick="changeImage(this, '/Img/VpwLZZg.png')">
-                        <img src="~/Img/VpwLZZg.png" style="width: 120px; height: 120px; object-fit: cover;">
-                    </div>
-                    <div class="thumb-wrapper border rounded-2 p-1 active-thumb" onclick="changeImage(this, '/Img/pngtree-beautiful-summer-mountain-river-nature-scenery-wallpaper-ai-image-image_16196332.jpg')">
-                        <img src="~/Img/pngtree-beautiful-summer-mountain-river-nature-scenery-wallpaper-ai-image-image_16196332.jpg" style="width: 120px; height: 120px; object-fit: cover;">
-                    </div>
+                <div id="previewContainer" class="d-flex justify-content-start gap-2 overflow-auto  border rounded-3 shadow-sm bg-white" style="height: 150px; flex-shrink: 0;">
+                   
                 </div>
             </div>
         </div>
@@ -167,4 +153,104 @@
 
 
 </section>
+
+
+@section Scripts {
+    <script>
+        // 1. 將追蹤陣列放在最外層
+        let currentFiles = [];
+
+        document.getElementById('formFileMultiple').addEventListener('change', function (event) {
+            const container = document.getElementById('previewContainer');
+            const mainImg = document.getElementById('mainImg');
+            const files = event.target.files;
+
+            // 每次選擇時先清空畫面
+            container.innerHTML = "";
+            // 將 FileList 轉為真正的陣列存入 currentFiles
+            currentFiles = Array.from(files);
+
+            if (currentFiles.length > 0) {
+                currentFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        const imgSrc = e.target.result;
+
+                        // 初始化第一張為主圖
+                        if (index === 0) {
+                            mainImg.src = imgSrc;
+                        }
+
+                        // 建立縮圖容器
+                        const thumbDiv = document.createElement('div');
+                        thumbDiv.className = 'thumb-wrapper border rounded-2 p-1 d-flex flex-column ' + (index === 0 ? ' active-thumb' : '');
+
+                        // 點擊切換圖片
+                        thumbDiv.onclick = function() {
+                            changeImage(this, imgSrc);
+                        };
+
+                        // 建立圖片
+                        const img = document.createElement('img');
+                        img.src = imgSrc;
+                        img.style.cssText = 'width: 120px; height: 120px; object-fit: contain; pointer-events: none;';
+
+                        // 建立移除按鈕
+                        const btn = document.createElement('button');
+                        btn.textContent = '移除';
+                        btn.type = 'button'; // 重要：避免按鈕觸發表單送出
+                        btn.className = 'btn btn-danger btn-sm mt-1';
+
+                        // --- 移除邏輯 ---
+                        btn.onclick = function (e) {
+                            e.stopPropagation(); // 阻止觸發縮圖的點擊事件
+
+                            // A. 從陣列中過濾掉被刪除的這個 file
+                            currentFiles = currentFiles.filter(f => f !== file);
+
+                            // B. 更新 Input 標籤的顯示文字 (利用 DataTransfer)
+                            const dt = new DataTransfer();
+                            currentFiles.forEach(f => dt.items.add(f));
+                            document.getElementById('formFileMultiple').files = dt.files;
+
+                            // C. 移除 DOM 元素
+                            thumbDiv.remove();
+
+                            // D. 更新大圖：如果還有剩餘圖片，顯示第一張
+                            const remainingThumbs = container.querySelectorAll('.thumb-wrapper img');
+                            if (remainingThumbs.length > 0) {
+                                // 抓取剩餘的第一個縮圖路徑
+                                mainImg.src = remainingThumbs[0].src;
+                                container.querySelector('.thumb-wrapper').classList.add('active-thumb');
+                            } else {
+                                mainImg.src = "";                            }
+                        };
+
+                        thumbDiv.appendChild(img);
+                        thumbDiv.appendChild(btn);
+                        container.appendChild(thumbDiv);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        function changeImage(element, newSrc) {
+            document.getElementById('mainImg').src = newSrc;
+            document.querySelectorAll('.thumb-wrapper').forEach(el => {
+                el.classList.remove('active-thumb');
+            });
+            element.classList.add('active-thumb');
+        }
+    </script>
+}
+
+
+
+
+
+
+
+
 
