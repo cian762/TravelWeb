@@ -37,5 +37,8 @@ public partial class Attraction
 
     public DateTime CreatedAt { get; set; }
 
+    // 這行是告訴系統：Attraction 裡面有一個屬性連向 TaqsRegion 表
+    // 這裡的名稱必須叫 Region，這樣你的 .Include(a => a.Region) 才會通
+    public virtual TagsRegion? Region { get; set; }
     public virtual ICollection<AttractionProduct> AttractionProducts { get; set; } = new List<AttractionProduct>();
 }

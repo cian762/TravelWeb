@@ -15,6 +15,7 @@ public partial class AttractionsContext : DbContext
     {
     }
 
+    // 1. 註冊 DbSet (讓 Controller 能抓到這張表)
     public virtual DbSet<Attraction> Attractions { get; set; }
 
     public virtual DbSet<AttractionProduct> AttractionProducts { get; set; }
@@ -37,10 +38,12 @@ public partial class AttractionsContext : DbContext
 
     public virtual DbSet<TicketType> TicketTypes { get; set; }
 
-//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseSqlServer("server=.;database=Travel;Trusted_Connection=True;TrustServerCertificate=True");
+    public virtual DbSet<TagsRegion> TagsRegions { get; set; }
 
+    //-----------------------------------------------------------------------------------
+
+
+    // 2. 在 OnModelCreating 方法裡面補上對應關係
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Attraction>(entity =>
@@ -89,6 +92,12 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.Website)
                 .HasMaxLength(500)
                 .HasColumnName("website");
+
+            // 補上這一塊：建立與 TaqsRegion 的外鍵關聯
+            entity.HasOne(d => d.Region)            // Attraction 有一個 Region
+                .WithMany(p => p.Attractions)        // 一個 Region 有多個 Attractions
+                .HasForeignKey(d => d.RegionId)      // 關聯的 key 是 RegionId
+                .HasConstraintName("FK_Attractions_Tags_Regions"); // 名稱對應 SQL 的 FK
         });
 
         modelBuilder.Entity<AttractionProduct>(entity =>
@@ -329,6 +338,15 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.TicketTypeName)
                 .HasMaxLength(50)
                 .HasColumnName("ticket_type_name");
+        });
+
+        modelBuilder.Entity<TagsRegion>(entity =>
+        {
+            entity.ToTable("Tags_Regions", "Activity"); // 加入 Schema "Activity" 更保險
+            entity.HasKey(e => e.RegionId); // 設定主鍵
+            entity.Property(e => e.RegionId).HasColumnName("RegionID");
+            entity.Property(e => e.Uid).HasColumnName("UID");
+            entity.Property(e => e.RegionName).HasMaxLength(10);
         });
 
         OnModelCreatingPartial(modelBuilder);
