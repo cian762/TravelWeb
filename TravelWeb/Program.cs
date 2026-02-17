@@ -10,8 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 //行程商品連線DI
 builder.Services.AddDbContext<TripDbContext>(O => O.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
-//行程商品主頁viewmodel用DI
+//行程商品主頁用DI
 builder.Services.AddScoped<ITripproducts, Tripproducts>();
+//行程細項連線用DI
+builder.Services.AddScoped<ITripItineraryItem, STripItineraryItem>();
 
 var app = builder.Build();
 

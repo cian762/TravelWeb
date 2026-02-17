@@ -5,98 +5,138 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@* 💡 使用內聯樣式確保優先權最高，不被 Layout 或 Bootstrap 覆蓋 *@
 <style>
-    .btn-xs {
-        padding: 0.25rem 0.4rem;
-        font-size: 0.75rem;
-        line-height: 1;
-        border-radius: 0.2rem;
-    }
-
+    /* 調整表格行高與垂直對齊 */
     .align-middle td {
         vertical-align: middle !important;
+        padding: 15px 8px !important;
     }
-    /* 讓圖片變色有個小動畫，看起來比較高級 */
+
+    /* 自定義大按鈕樣式 */
+    .btn-manage {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
     .grayscale-img {
         transition: 0.3s;
     }
 </style>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4 fw-bold">行程商品管理</h1>
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h1 class="fw-bold m-0">行程商品管理</h1>
+    </div>
+
+    <div class="card mb-3 shadow-sm border-0">
+        <div class="card-body bg-light rounded shadow-sm">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">關鍵字搜尋</label>
+                    <input type="text" name="keyword" class="form-control shadow-sm" placeholder="輸入行程名稱..." value="@ViewData["Keyword"]">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-muted">地區篩選</label>
+                    <select name="regionId" class="form-select shadow-sm" asp-items="ViewBag.Regions">
+                        <option value="">-- 全部地區 --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-muted">狀態</label>
+                    <select name="status" class="form-select shadow-sm">
+                        <option value="">-- 全部 --</option>
+                        <option value="上架">上架中</option>
+                        <option value="下架">已下架</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary shadow-sm flex-grow-1 d-flex align-items-center justify-content-center" style="height: 40px;">
+                            <i class="fas fa-search me-2"></i>搜尋
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 40px;" title="重置">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="card mb-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-middle bg-dark text-white py-3">
-            <div class="fs-5"><i class="fas fa-table me-2"></i>行程商品清單</div>
-            <a asp-area="TripProduct" asp-controller="Trip" asp-action="CreatProduct" class="btn btn-success btn-sm px-3">
-                <i class="fas fa-plus"></i> 新增行程
+        <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white py-3">
+            <div class="fs-5"><i class="fas fa-list me-2"></i>行程清單</div>
+            <a asp-area="TripProduct" asp-controller="Trip" asp-action="CreatProduct" class="btn btn-success px-4 shadow-sm">
+                <i class="fas fa-plus-circle me-1"></i> 新增行程商品
             </a>
         </div>
+
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-3" style="width: 80px;">ID</th>
+                        <th class="ps-3" style="width: 70px;">ID</th>
                         <th style="width: 140px;">預覽圖</th>
                         <th>行程名稱</th>
                         <th>地區</th>
                         <th>價格</th>
                         <th>狀態</th>
-                        <th class="text-center" style="width: 220px;">管理與細項</th>
+                        <th class="text-center" style="width: 320px;">管理與操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        @* 💡 判斷是否為下架狀態 *@
                         bool isInactive = item.Status != "上架";
 
-                        @* 💡 直接在 tr 加上樣式：如果是下架就給灰色背景與灰色文字 *@
-                        <tr style="@(isInactive ? "background-color: #f2f2f2 !important; color: #888888 !important;" : "")">
+                        <tr style="@(isInactive ? "background-color: #f8f9fa !important; color: #adb5bd !important;" : "")">
                             <td class="ps-3 fw-bold">@item.TripProductId</td>
                             <td>
                                 @if (!string.IsNullOrEmpty(item.ImagePath))
                                 {
-                                    @* 💡 下架圖片套用黑白濾鏡 *@
-                                    <img src="@item.ImagePath"
-                                         class="img-thumbnail shadow-sm grayscale-img"
+                                    <img src="@item.ImagePath" class="img-thumbnail shadow-sm grayscale-img"
                                          style="width: 120px; height: 80px; object-fit: cover; @(isInactive ? "filter: grayscale(100%); opacity: 0.5;" : "")" />
                                 }
                                 else
                                 {
-                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center rounded" style="width: 120px; height: 80px; font-size: 0.8rem;">無圖片</div>
+                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center rounded border" style="width: 120px; height: 80px; font-size: 0.8rem;">無圖片</div>
                                 }
                             </td>
                             <td>
-                                @* 💡 下架商品名稱不顯示為藍色 *@
-                                <div class="fw-bold @(isInactive ? "" : "text-primary")">@item.ProductName</div>
+                                <div class="fw-bold fs-6 @(isInactive ? "" : "text-primary")">@item.ProductName</div>
                             </td>
                             <td>
-                                <span class="badge @(isInactive ? "bg-secondary text-white" : "bg-info text-dark")">@item.RegionName</span>
+                                <span class="badge @(isInactive ? "bg-secondary text-white" : "bg-info text-dark") p-2">@item.RegionName</span>
                             </td>
-                            <td class="fw-bold @(isInactive ? "" : "text-danger")">@item.DisplayPrice</td>
+                            <td class="fw-bold fs-6 @(isInactive ? "" : "text-danger")">@item.DisplayPrice</td>
                             <td>
-                                @if (!isInactive)
-                                {
-                                    <span class="badge rounded-pill bg-success px-3 shadow-sm">上架中</span>
-                                }
-                                else
-                                {
-                                    <span class="badge rounded-pill bg-dark px-3 shadow-sm">已下架</span>
-                                }
+                                <span class="badge rounded-pill @(isInactive ? "bg-dark" : "bg-success") px-3 py-2 shadow-sm">
+                                    @(isInactive ? "已下架" : "上架中")
+                                </span>
                             </td>
                             <td class="px-3">
-                                @* 💡 下架時將按鈕區塊整體淡化 *@
-                                <div style="@(isInactive ? "opacity: 0.6;" : "")">
-                                    <div class="d-flex justify-content-center gap-1 mb-2">
-                                        <a asp-action="Edit" asp-route-id="@item.TripProductId" class="btn btn-xs btn-outline-warning">修改</a>
-                                        <a asp-action="Details" asp-route-id="@item.TripProductId" class="btn btn-xs btn-outline-info">詳細</a>
-                                        <a asp-action="Delete" asp-route-id="@item.TripProductId" class="btn btn-xs btn-outline-danger">刪除</a>
-                                    </div>
-                                    <div class="d-grid gap-1">
-                                        <button class="btn btn-xs @(isInactive ? "btn-secondary" : "btn-dark")" onclick="openSchedule(@item.TripProductId)">📅 管理檔期</button>
-                                        <button class="btn btn-xs @(isInactive ? "btn-secondary" : "btn-primary")" onclick="openItinerary(@item.TripProductId)">📍 管理行程</button>
+                                <div class="d-grid px-1 mb-3">
+                                    <button class="btn btn-manage @(isInactive ? "btn-secondary" : "btn-dark") justify-content-center" onclick="openSchedule(@item.TripProductId)">
+                                        <i class="fas fa-clock"></i> 檔期管理
+                                    </button>
+                                </div>
+                                <div style="@(isInactive ? "opacity: 0.7;" : "")">
+                                    <div class="d-flex justify-content-center gap-2 mb-2">
+                                        <a asp-area="TripProduct" asp-controller="Trip" asp-action="ItemIndex" asp-route-id="@item.TripProductId" class="btn btn-info text-white btn-manage shadow-sm me-3">
+                                            <i class="fas fa-calendar-alt"></i> 編排細項
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.TripProductId" class="btn btn-outline-warning btn-manage shadow-sm">
+                                            <i class="fas fa-edit"></i> 修改
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.TripProductId" class="btn btn-outline-danger btn-manage shadow-sm ms-3"
+                                           onclick="return confirm('確定要刪除嗎？')">
+                                            <i class="fas fa-trash-alt"></i> 刪除
+                                        </a>
                                     </div>
                                 </div>
                             </td>
@@ -105,14 +145,54 @@
                 </tbody>
             </table>
         </div>
+
+        @if (ViewBag.TotalPages > 0)
+        {
+            <div class="card-footer bg-white py-4 border-top">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-lg justify-content-center mb-0">
+                        @* 上一頁 *@
+                        <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link shadow-sm px-3" asp-action="Index"
+                               asp-route-page="@(ViewBag.CurrentPage - 1)"
+                               asp-route-keyword="@ViewData["Keyword"]"
+                               asp-route-regionId="@ViewData["RegionId"]"
+                               asp-route-status="@ViewData["Status"]">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        @* 💡 這裡就是你直接按 1, 2, 3 跳轉的地方 *@
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link shadow-sm px-4" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-keyword="@ViewData["Keyword"]"
+                                   asp-route-regionId="@ViewData["RegionId"]"
+                                   asp-route-status="@ViewData["Status"]">@i</a>
+                            </li>
+                        }
+
+                        @* 下一頁 *@
+                        <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                            <a class="page-link shadow-sm px-3" asp-action="Index"
+                               asp-route-page="@(ViewBag.CurrentPage + 1)"
+                               asp-route-keyword="@ViewData["Keyword"]"
+                               asp-route-regionId="@ViewData["RegionId"]"
+                               asp-route-status="@ViewData["Status"]">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
     </div>
 </div>
 
 <script>
     function openSchedule(id) {
         alert('正在開啟商品 ID: ' + id + ' 的檔期管理視窗');
-    }
-    function openItinerary(id) {
-        alert('正在開啟商品 ID: ' + id + ' 的行程管理視窗');
     }
 </script>

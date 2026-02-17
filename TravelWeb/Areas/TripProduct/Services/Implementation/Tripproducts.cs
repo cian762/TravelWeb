@@ -14,7 +14,7 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
         {
            _context = context;
         }
-        
+        //這是行程商品新增的方法
         public async Task<bool> Create(ViewModelProducts vm)
         {
             var trip = new TravelWeb.Areas.TripProduct.Models.TripProduct();
@@ -68,11 +68,13 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
             throw new NotImplementedException();
         }
 
+        //這是抓所有行程商品的方法
         public async Task<IEnumerable<Models.TripProduct>> GetAll()
         {
           return await _context.TripProducts.ToArrayAsync();
         }
 
+        //這是顯示行程主表首頁的方法
         public async Task<IEnumerable<TripIndexViewModel>> GetAllForIndex()
         {
           var q=_context.TripProducts
@@ -116,10 +118,60 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
             return vm;
 
         }
-
-        public Task<bool> Update(ViewModelProducts vm)
+        //這是行程商品修改的方法
+        public async Task<bool> Update(ViewModelProducts vm)
         {
-            throw new NotImplementedException();
+           var q= await _context.TripProducts.Include(p => p.Region)
+                .Include(p=>p.Policy)
+                .Include(p=>p.TravelTags)
+                .FirstOrDefaultAsync(t=>t.TripProductId==vm.TripProductId);
+            if (q == null) return false;
+            int oldDays = q.DurationDays ?? 1;
+            q.ProductName = vm.ProductName;
+            q.DurationDays = vm.DurationDays;
+            q.DisplayPrice = vm.DisplayPrice;
+            q.Description = vm.Description;
+            q.RegionId = vm.RegionId;
+            q.PolicyId = vm.PolicyId;
+            q.Status = vm.Status;
+            if (vm.ImageFile != null)
+            {
+                string folder = Path.Combine("wwwroot", "PImages");
+                string filename = Guid.NewGuid().ToString() + "_" + vm.ImageFile.FileName;
+                string filepath = Path.Combine(folder, filename);
+
+                using (var stream = new FileStream(filepath, FileMode.Create))
+                {
+                    await vm.ImageFile.CopyToAsync(stream);
+                }
+                q.CoverImage = filename;
+            }
+            q.TravelTags.Clear();
+            if (vm.SelectedTags != null && vm.SelectedTags.Any())
+            {
+                foreach (var tagId in vm.SelectedTags)
+                {
+                    if (int.TryParse(tagId, out int id))
+                    {
+                        var tag = await _context.TravelTags.FindAsync(id);
+                        if (tag != null) q.TravelTags.Add(tag);
+                    }
+                    else
+                    {
+                        // 處理使用者手動輸入的新標籤
+                        var newTag = new TravelTag { TravelTagName = tagId };
+                        q.TravelTags.Add(newTag);
+                    }
+                }
+            }
+            if (vm.DurationDays < q.DurationDays)
+            {
+                var Items = _context.TripItineraryItems
+                    .Where(i => i.TripProductId == vm.TripProductId && i.DayNumber > vm.DurationDays);
+
+                _context.TripItineraryItems.RemoveRange(Items);
+            }
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

@@ -7,6 +7,7 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
 {
     public partial class ViewModelProducts
     {
+        public int TripProductId { get; set; }
         [DisplayName("旅遊行程名稱")]
         [Required(ErrorMessage = "請輸入行程名稱")]
         public string? ProductName { get; set; }
@@ -32,6 +33,8 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
         [DisplayName("請選擇退款規定")]
         [Required(ErrorMessage = "請選擇退款規定")]
         public int? PolicyId { get; set; }
+        [DisplayName("商品狀態")]
+        public string? Status { get; set; } = "上架";
         public List<SelectListItem>? RegionOptions { get; set; }
         public List<SelectListItem>? PolicyOptions { get; set; }
         public List<SelectListItem>? TagOptions { get; set; }
