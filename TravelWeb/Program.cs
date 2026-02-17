@@ -1,4 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Activity.Models;
+using TravelWeb.Areas.Activity.Models.EFModel;
+using TravelWeb.Areas.Activity.Service.ActivityServices;
+using TravelWeb.Areas.Activity.Service.IActivityServices;
 using TravelWeb.Areas.Attractions.Models;//景點的
 
 using TravelWeb.Areas.BoardManagement.Models.BoardDB;
@@ -39,6 +43,16 @@ builder.Services.AddDbContext<AttractionsContext>(options =>
 //-----------------------------------------------------------------------------
 
 
+//ActivityDBcontext �A�ȵ��U 260213_���a�j
+builder.Services.AddDbContext<ActivityDbContext>(options => 
+options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
+);
+
+//�[�J Cloudinary ���ݹϧɵ��U 260216_���a�j
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<IPhotoService, PhotoService>();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -56,6 +70,8 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+
+app.MapAreaControllerRoute("app", "Activity", "{controller}/{action}");
 // Area 路由設定 (必須放在預設路由上方)
 app.MapControllerRoute(
     name: "MyAreas",

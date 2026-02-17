@@ -1,0 +1,97 @@
+﻿@model List<TravelWeb.Areas.Activity.Models.ViewModels.ActivityEditViewModel>
+
+@{
+    ViewData["Title"] = "活動 | 活動總覽";
+}
+
+<div class="container-fluid px-5">
+
+    <h1>活動總覽</h1>
+
+    <p>
+        <a asp-action="ActivityCreate" class="btn btn-primary">創建新活動</a>
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].Title)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].RegionName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].TypeName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].StartTime)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].EndTime)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].Address)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].OfficialLink)
+                </th>
+                <th>
+                    上架狀態
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model[0].UpdateAt)
+                </th>
+                    
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityEdit" asp-route-id="@item.ActivityId">@Html.DisplayFor(modelItem => item.Title)</a>
+                       
+                    </td>
+                    <td>
+                        @foreach (var _ in item.RegionName)
+                        {
+                            <p class="badge rounded-pill bg-primary text-light"> @_</p>
+                        }
+
+                    </td>
+                    <td>
+                        @foreach (var _ in item.TypeName)
+                        {
+                            <p class="badge rounded-pill bg-success text-light"> @_</p>
+                        }
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.StartTime)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.EndTime)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Address)
+                    </td>
+                    <td>
+                        <a href="@Html.DisplayFor(modelItem => item.OfficialLink)"  target="_blank">  
+                            前往連結
+                        </a>
+                       
+                    </td>
+                    <td>
+                        <a asp-action="Delete" asp-route-id="@item.ActivityId">Delete</a>
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.UpdateAt)
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+</div>
+
+

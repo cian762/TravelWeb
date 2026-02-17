@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>fff729da-5d88-4c61-bf85-e4b46ee18910</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -820,6 +821,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CloudinaryDotNet" Version="1.28.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -833,10 +835,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Activity\Controllers\" />
     <Folder Include="Areas\Activity\Data\" />
-    <Folder Include="Areas\Activity\Models\" />
-    <Folder Include="Areas\Activity\Views\" />
+    <Folder Include="Areas\Activity\Repository\IActivityRepositories\" />
+    <Folder Include="Areas\Activity\Repository\ActivityRepositories\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Data\" />
     <Folder Include="Areas\BoardManagement\Models\ViewModel\" />

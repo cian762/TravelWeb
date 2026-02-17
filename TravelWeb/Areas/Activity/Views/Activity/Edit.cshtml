@@ -1,0 +1,238 @@
+﻿@model TravelWeb.Areas.Activity.Models.ViewModels.ActivityEditViewModel
+
+@{
+
+    ViewData["Title"] = "活動編輯 | " + Model.Title;
+
+
+}
+
+
+
+<style>
+    .thumb-wrapper {
+        transition: 0.3s;
+        opacity: 0.6;
+        border: 2px solid transparent !important;
+    }
+
+        .thumb-wrapper:hover {
+            opacity: 1;
+            border-color: #0d6efd !important;
+        }
+
+    .active-thumb {
+        opacity: 1;
+        border-color: #0d6efd !important;
+    }
+</style>
+
+@section Scripts
+{
+    <script>
+        document.getElementById('formFileMultiple').addEventListener('change',function(event)
+        {
+            const container = document.getElementById('previewContainer');
+            const mainImg = document.getElementById('mainImg')
+            const files = event.target.files;
+
+            container.innerHTML = "";
+
+            if (files.length > 0) {
+                // 使用 Array.from 是為了相容舊瀏覽器，Razor 有時會卡在 forEach 的語法
+                Array.from(files).forEach((file, index) => {
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        const imgSrc = e.target.result;
+
+                        if (index === 0) {
+                            mainImg.src = imgSrc;
+                        }
+
+                        // 建立縮圖 HTML
+                        const thumbDiv = document.createElement('div');
+                        thumbDiv.className = 'thumb-wrapper border rounded-2 p-1' + (index === 0 ? ' active-thumb' : '');
+
+                        // 注意：這裡直接傳遞 imgSrc
+                        thumbDiv.onclick = function() {
+                            changeImage(this, imgSrc);
+                        };
+
+                        const img = document.createElement('img');
+                        img.src = imgSrc;
+                        img.style.cssText = 'width: 120px; height: 120px; object-fit: contain;';
+
+                        thumbDiv.appendChild(img);
+                        container.appendChild(thumbDiv);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        function changeImage(element, newSrc) {
+            // 1. 更換主圖路徑
+            document.getElementById('mainImg').src = newSrc;
+
+            // 2. 移除所有縮圖的選取狀態
+            document.querySelectorAll('.thumb-wrapper').forEach(el => {
+                el.classList.remove('active-thumb');
+            });
+
+            // 3. 幫點擊的縮圖加上選取狀態
+            element.classList.add('active-thumb');
+        }
+    </script>
+
+}
+
+
+
+
+
+
+
+
+
+
+<section class="container my-2">
+    <h1>活動編輯</h1>
+    <div class="row d-flex align-items-stretch">
+
+        @* 圖片區塊 *@
+        <div class="col-4">
+            <div class="d-flex flex-column h-100">
+                <div class="border rounded-3 shadow-sm bg-white mb-3 overflow-hidden"
+                     style="height: 800px; flex-shrink: 0;">
+                    
+                    @if (Model.ImgUrls != null && Model.ImgUrls.Count > 0)
+                    {
+                        <img id="mainImg" src="@Model.ImgUrls[0]"
+                        class="w-100 h-100"
+                        style="object-fit: contain; background-color: #f8f9fa;">
+                    }
+                    else
+                    {
+                        <img id="mainImg"
+                             class="w-100 h-100"
+                             style="object-fit: contain; background-color: #f8f9fa;">
+                    }
+                </div>
+
+                <div class="d-flex justify-content-start gap-2 overflow-auto  border rounded-3 shadow-sm bg-white" style="height: 150px; flex-shrink: 0;">
+                    @foreach (var img in Model.ImgUrls)
+                    {
+                        <div class="thumb-wrapper border rounded-2 p-1 active-thumb" onclick="changeImage(this, '@img')">
+                            <img src="@img" style="width: 120px; height: 120px; object-fit: contain;">
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+       
+        @* 表單區塊 *@
+        <div class="col-8">
+            <form method="post" class="p-4 border rounded-3 shadow-sm h-100 bg-light d-flex flex-column justify-content-between" enctype="multipart/form-data" asp-action="ActivityEdit" asp-route-id="@Model.ActivityId">
+                <input type="hidden" asp-for="ActivityId">
+
+                <div class="form-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-3" asp-for="Title">活動名稱</label>
+                        <input type="text" class="form-control" asp-for="Title">
+                        <span class="text-danger" asp-validation-for="Title"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold fs-3" asp-for="StartTime">開始時間</label>
+                            <input type="date" class="form-control" asp-for="StartTime">
+                            <span class="text-danger" asp-validation-for="StartTime"></span>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold fs-3" asp-for="EndTime">結束時間</label>
+                            <input type="date" class="form-control" asp-for="EndTime">
+                            <span class="text-danger" asp-validation-for="EndTime"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 ">
+                            <label class="form-label fw-bold fs-3">區域標籤 (多選)</label>
+                            <div class="d-flex flex-wrap">
+                                @foreach (var item in ViewBag.Region)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               name="RegionName"
+                                               value="@item"
+                                               id="reg_@item"
+                                               @(Model.RegionName != null && Model.RegionName.Contains(item) ? "checked" : "")>
+                                        <label class="form-check-label" for="reg_@item">
+                                            @item
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            <span class="text-danger" asp-validation-for="RegionName"></span>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold fs-3">類型標籤 (多選)</label>
+                            <div class="d-flex flex-wrap">
+                                @foreach (var item in ViewBag.Type)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               name="TypeName"
+                                               value="@item"
+                                               id="type_@item"
+                                               @(Model.TypeName != null && Model.TypeName.Contains(item) ? "checked" : "")>
+                                        
+                                        <label class="form-check-label" for="type_@item">
+                                            @item
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            <span class="text-danger" asp-validation-for="TypeName"></span>
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-3" asp-for="Address"></label>
+                        <input type="text" class="form-control" asp-for="Address">
+                        <span class="text-danger" asp-validation-for="Address"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-3" asp-for="OfficialLink"></label>
+                        <input type="text" class="form-control text-primary" asp-for="OfficialLink">
+                        <span class="text-danger" asp-validation-for="OfficialLink"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-3" asp-for="Description"></label>
+                        <textarea class="form-control" asp-for="Description" rows="5"></textarea>
+                        <span class="text-danger" asp-validation-for="Description"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="formFileMultiple" class="form-label fw-bold fs-3" name="images">相關照片</label>
+                        <input class="form-control" type="file" id="formFileMultiple" name="images" accept=".jpg, .jpeg, .png, .webp" multiple>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">儲存變更</button>
+                    </div>
+                    <div class="col-6">
+                        <a asp-area="Activity" asp-controller="Activity" asp-action="Index" class="btn btn-warning btn-lg w-100 text-light fw-bold">取消變更</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+      
+</section>
