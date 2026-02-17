@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Attractions.Models;//æ™¯é»çš„
+
 using TravelWeb.Areas.BoardManagement.Models.BoardDB;
 
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +9,7 @@ using TravelWeb.Areas.Itinerary.Models.Service;
 using TravelWeb.Areas.Itinerary.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -26,9 +29,15 @@ builder.Services.AddScoped<IItineraryCompareService, ItineraryCompareService>();
 
 
 
-// µù¥U BoardDbContext¡A¨Ã«ü©w¨Ï¥Î SQL Server ¥H¤Î³s±µ¦r¦ê
+// è¨»å†Š BoardDbContextï¼Œä¸¦æŒ‡å®šä½¿ç”¨ SQL Server ä»¥åŠé€£æ¥å­—ä¸²
 builder.Services.AddDbContext<BoardDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+
+//æ™¯é»é€£ç·šDI-----------------------------------------------------------------
+builder.Services.AddDbContext<AttractionsContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+//-----------------------------------------------------------------------------
+
 
 var app = builder.Build();
 
@@ -47,12 +56,12 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-// Area ¸ô¥Ñ³]©w (¥²¶·©ñ¦b¹w³]¸ô¥Ñ¤W¤è)
+// Area è·¯ç”±è¨­å®š (å¿…é ˆæ”¾åœ¨é è¨­è·¯ç”±ä¸Šæ–¹)
 app.MapControllerRoute(
     name: "MyAreas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-// ­ì¥»ªº¹w³]¸ô¥Ñ
+// åŸæœ¬çš„é è¨­è·¯ç”±
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
