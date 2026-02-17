@@ -1,0 +1,57 @@
+﻿@{
+    ViewData["Title"] = "會員登入";
+}
+
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow-lg p-4" style="width:400px; border-radius:15px;">
+        <h3 class="text-center mb-4">會員登入</h3>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger text-center">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+
+            <div class="mb-3">
+                <label class="form-label">帳號</label>
+                <input type="text" name="account" class="form-control"
+                       placeholder="請輸入 信箱 或 ID" required />
+            </div>
+
+            <div class="mb-3 position-relative">
+                <label class="form-label">密碼</label>
+                <input type="password" name="password" id="passwordInput"
+                       class="form-control" placeholder="請輸入密碼" required />
+
+                <span onclick="togglePassword()"
+                      style="position:absolute; right:15px; top:38px; cursor:pointer;">
+                    👁️
+                </span>
+            </div>>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    登入
+                </button>
+            </div>
+
+        </form>
+        <script>
+            function togglePassword() {
+                var input = document.getElementById("passwordInput");
+
+                if (input.type === "password") {
+                    input.type = "text";
+                } else {
+                    input.type = "password";
+                }
+            }
+        </script>
+        <div class="text-center mt-3">
+            <a href="/MemberAccount/Create">還沒有帳號？註冊</a>
+        </div>
+    </div>
+</div>

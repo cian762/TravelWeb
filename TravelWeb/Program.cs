@@ -1,22 +1,18 @@
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
-using TravelWeb.Areas.TripProduct.Models;
-using TravelWeb.Areas.TripProduct.Services.Implementation;
-using TravelWeb.Areas.TripProduct.Services.InterSer;
-
-using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
 using TravelWeb.Areas.Activity.Service.ActivityServices;
 using TravelWeb.Areas.Activity.Service.IActivityServices;
 using TravelWeb.Areas.Attractions.Models;//景點的
-
 using TravelWeb.Areas.BoardManagement.Models.BoardDB;
-
-using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 using TravelWeb.Areas.Itinerary.Models.Service;
 using TravelWeb.Areas.Itinerary.Repository;
+using TravelWeb.Areas.TripProduct.Models;
+using TravelWeb.Areas.TripProduct.Services.Implementation;
+using TravelWeb.Areas.TripProduct.Services.InterSer;
+using TravelWeb.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,9 +56,15 @@ builder.Services.AddDbContext<ActivityDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
 );
 
+//Member
+builder.Services.AddDbContext<MemberSystemContext>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+
 //�[�J Cloudinary ���ݹϧɵ��U 260216_���a�j
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<IPhotoService, PhotoService>();
+
+
 
 
 var app = builder.Build();
