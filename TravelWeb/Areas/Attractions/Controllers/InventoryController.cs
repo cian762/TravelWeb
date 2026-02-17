@@ -4,7 +4,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
 {
     public class InventoryController : Controller
     {
-        public IActionResult Index()
+        public IActionResult TripIndex()
         {
             return View();
         }
