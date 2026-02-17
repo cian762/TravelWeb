@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TravelWeb.Models.ItineraryDBContext;
+namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 
 public partial class ItineraryItem
 {

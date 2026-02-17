@@ -4,14 +4,10 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace TravelWeb.Models.ItineraryDBContext;
+namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 
 public partial class TravelContext : DbContext
 {
-    public TravelContext()
-    {
-    }
-
     public TravelContext(DbContextOptions<TravelContext> options)
         : base(options)
     {
@@ -30,8 +26,7 @@ public partial class TravelContext : DbContext
     public virtual DbSet<ItineraryItem> ItineraryItems { get; set; }
 
     public virtual DbSet<ItineraryVersion> ItineraryVersions { get; set; }
-
-   
+    public virtual DbSet<Member_Information> Member_Information { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

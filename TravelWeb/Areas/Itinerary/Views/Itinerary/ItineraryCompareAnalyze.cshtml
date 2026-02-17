@@ -1,0 +1,106 @@
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+@model ComparisonAnalysisViewModel
+@{
+    ViewData["Title"] = "比較功能使用分析";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">📊 比較功能使用分析</h2>
+
+    <!-- 總使用次數 -->
+    <div class="card text-white bg-primary mb-4">
+        <div class="card-body">
+            <h5 class="card-title">總比較次數</h5>
+            <h3>@Model.TotalComparisons</h3>
+        </div>
+    </div>
+
+    <!-- 會員使用統計 -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            會員使用比較功能次數
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>會員ID</th>
+                        <th>會員名稱</th>
+                        <th>比較次數</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.MemberStats)
+                    {
+                        <tr>
+                            <td>@item.MemberID</td>
+                            <td>@item.MemberName</td>
+                            <td>@item.ComparisonCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 行程被比較次數 -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            行程被比較次數
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>行程ID</th>
+                        <th>行程名稱</th>
+                        <th>比較次數</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ItineraryStats)
+                    {
+                        <tr>
+                            <td>@item.ItineraryID</td>
+                            <td>@item.ItineraryName</td>
+                            <td>@item.ComparisonCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 最近比較紀錄 -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            最近比較紀錄
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>比較ID</th>
+                        <th>原版本ID</th>
+                        <th>比較版本ID</th>
+                        <th>比較時間</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.RecentComparisons)
+                    {
+                        <tr>
+                            <td>@item.ComparisonID</td>
+                            <td>@item.OriginalVersionID</td>
+                            <td>@item.ComparedVersionID</td>
+                            <td>@item.ComparedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

@@ -1,7 +1,27 @@
+using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
+using TravelWeb.Areas.Itinerary.Models.Service;
+using TravelWeb.Areas.Itinerary.Repository;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<TravelContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+builder.Services.AddScoped(typeof(IItineraryGenericRepository<>), typeof(ItineraryRepository<>));
+builder.Services.AddScoped<IItineraryGenericRepository<Itinerary>, ItineraryRepository<Itinerary>>();
+builder.Services.AddScoped<IItineraryGenericRepository<ItineraryVersion>, ItineraryRepository<ItineraryVersion>>();
+builder.Services.AddScoped<IItineraryGenericRepository<Aianalysis>, ItineraryRepository<Aianalysis>>();
+builder.Services.AddScoped<IItineraryGenericRepository<AigenerationError>, ItineraryRepository<AigenerationError>>();
+builder.Services.AddScoped<IItineraryGenericRepository<ItineraryComparison>, ItineraryRepository<ItineraryComparison>>();
+builder.Services.AddScoped<IItineraryGenericRepository<TravelWeb.Areas.Itinerary.Models.ItineraryDBModel.Member_Information>, ItineraryRepository<TravelWeb.Areas.Itinerary.Models.ItineraryDBModel.Member_Information>>();
+builder.Services.AddScoped<IDashBoardService, DashBoardService>();
+builder.Services.AddScoped<IItineraryService, ItineraryService>();
+builder.Services.AddScoped<IItineraryErrorSevice, ItineraryErrorService>();
+builder.Services.AddScoped<IItineraryCompareService, ItineraryCompareService>();
+
+
 
 var app = builder.Build();
 

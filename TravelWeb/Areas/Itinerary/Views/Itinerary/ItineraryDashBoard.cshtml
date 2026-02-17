@@ -1,0 +1,147 @@
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+@model DashBoardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="container-fluid mt-4">
+
+    <h2 class="mb-4">系統營運 Dashboard</h2>
+
+    <!-- KPI 卡片區 -->
+    <div class="row g-4">
+
+        <!-- 總行程數 -->
+        <div class="col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body">
+                    <h6>總行程數</h6>
+                    <h3>@Model.TotalItineraries</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 今日新增 -->
+        <div class="col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body">
+                    <h6>今日新增</h6>
+                    <h3>@Model.TodayItineraries</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 總版本數 -->
+        <div class="col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 bg-info text-white">
+                <div class="card-body">
+                    <h6>總版本數</h6>
+                    <h3>@Model.TotalVersions</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 今日AI生成 -->
+        <div class="col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 bg-warning text-dark">
+                <div class="card-body">
+                    <h6>今日 AI 生成</h6>
+                    <h3>@Model.TodayAIGenerations</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 平均可行度 -->
+        <div class="col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 bg-secondary text-white">
+                <div class="card-body">
+                    <h6>平均可行度</h6>
+                    <h3>@Model.AvgFeasibility %</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 未確認錯誤 -->
+        <div class="col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 bg-danger text-white">
+                <div class="card-body">
+                    <h6>未確認錯誤</h6>
+                    <h3>@Model.UnconfirmedErrors</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AI & 錯誤圖表區 -->
+    <div class="row mt-5">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    AI 生成趨勢
+                </div>
+                <div class="card-body">
+                    <canvas id="aiChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    錯誤類型分布
+                </div>
+                <div class="card-body">
+                    <canvas id="errorChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 最近活動 -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    最近活動紀錄
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>時間</th>
+                                <th>類型</th>
+                                <th>內容</th>
+                                <th>使用者</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.RecentActivities)
+                            {
+                                <tr>
+                                    <td>@item.Time.ToString("yyyy/MM/dd HH:mm")</td>
+                                    <td>@item.UserID</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* <script>
+    $(document).ready(function () {
+        console.log("Dashboard Loaded");
+
+        // 之後可以用 AJAX 更新數據
+        // setInterval(loadDashboardData, 30000);
+    });
+</script> *@
