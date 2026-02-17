@@ -2,7 +2,7 @@
 {
     public interface IItineraryGenericRepository<table> where table : class
     {
-        public IEnumerable<table> GetAll();
+        public IQueryable<table> GetAll();
 
 
 

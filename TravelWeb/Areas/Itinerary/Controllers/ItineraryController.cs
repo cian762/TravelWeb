@@ -49,9 +49,9 @@ namespace TravelWeb.Areas.Itinerary
             return View(model);
         }
 
-        public IActionResult ItineraryDashBoard()
+        public async Task<IActionResult> ItineraryDashBoard()
         {
-            var model = _dashboardService.GetDashboardData();
+            var model = await  _dashboardService.GetDashboardData();
             return View(model);
         }
 

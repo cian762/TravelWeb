@@ -13,7 +13,7 @@ namespace TravelWeb.Areas.Itinerary.Repository
             _dbset = _context.Set<table>();
         }
 
-        public IEnumerable<table> GetAll()
+        public IQueryable<table> GetAll()
         {
             return _dbset;
         }

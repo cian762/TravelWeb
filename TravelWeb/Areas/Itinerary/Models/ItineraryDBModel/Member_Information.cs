@@ -10,7 +10,7 @@ namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBModel
         public string MemberId {  get; set; }
         public string MemberCode { get; set; }
         public string? Name { get; set; }
-        public int Gender {  get; set; }
+        public byte Gender {  get; set; }
         public DateTime BirthDate {  get; set; }
         public string AvatarUrl {  get; set; }
         public string Status { get; set; }
