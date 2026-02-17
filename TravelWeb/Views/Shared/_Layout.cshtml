@@ -22,7 +22,7 @@
               "Font Awesome 5 Brands",
               "simple-line-icons",
             ],
-            urls: ["../css/assets/css/fonts.min.css"],
+            urls: ["/css/assets/css/fonts.min.css"],
           },
           active: function () {
             sessionStorage.fonts = true;
@@ -31,12 +31,12 @@
     </script>
 
     <!-- CSS Files -->
-    <link rel="stylesheet" href="~/css/assets/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/assets/css/plugins.min.css" />
-    <link rel="stylesheet" href="~/css/assets/css/kaiadmin.min.css" />
-
+    <link rel="stylesheet" href="/css/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="/css/assets/css/kaiadmin.min.css" />
+    @* 公版修改 *@
     <!-- CSS Just for demo purpose, don't include it in your project -->
-    <link rel="stylesheet" href="~/css/assets/css/demo.css" />
+    <link rel="stylesheet" href="/css/assets/css/demo.css" />
 </head>
 <body>
     <div class="wrapper">
@@ -45,7 +45,8 @@
             <div class="sidebar-logo">
                 <!-- Logo Header -->
                 <div class="logo-header" data-background-color="dark">
-                    <a href="index.html" class="logo">
+                    <a asp-controller="Home" asp-action="Index" class="logo">
+                        @* 暫時修改為連回主頁 *@
                         <img src="assets/img/kaiadmin/logo_light.svg"
                              alt="navbar brand"
                              class="navbar-brand"
@@ -158,12 +159,12 @@
                             <div class="collapse" id="sidebarLayouts">
                                 <ul class="nav nav-collapse">
                                     <li>
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Board" asp-action="ReportManager">
+                                        <a class="nav-link text-dark" asp-area="BoardManagement" asp-controller="Board" asp-action="ReportManager">
                                             <span class="sub-item">貼文檢舉管理中心</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Board" asp-action="ArticleManager">
+                                        <a class="nav-link text-dark" asp-area="BoardManagement" asp-controller="Board" asp-action="ArticleManager">
                                             <span class="sub-item">文章推薦管理</span>
                                         </a>
                                     </li>

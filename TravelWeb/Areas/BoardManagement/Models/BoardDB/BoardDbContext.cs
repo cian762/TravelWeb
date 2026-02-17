@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace TravelWeb.Areas.BoardManagement.Models;
+namespace TravelWeb.Areas.BoardManagement.Models.BoardDB;
 
 public partial class BoardDbContext : DbContext
 {
@@ -49,6 +49,8 @@ public partial class BoardDbContext : DbContext
 
     public virtual DbSet<UserSearchHistory> UserSearchHistories { get; set; }
 
+    public virtual DbSet<ViewArticleHideStatus> ViewArticleHideStatuses { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("server=.;database=Travel;Trusted_Connection=True;TrustServerCertificate=True");
@@ -65,7 +67,9 @@ public partial class BoardDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Title).HasMaxLength(30);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(50)
+                .HasColumnName("UserID");
         });
 
         modelBuilder.Entity<ArticleFolder>(entity =>
@@ -273,18 +277,20 @@ public partial class BoardDbContext : DbContext
 
         modelBuilder.Entity<ReportLog>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("ReportLog", "Board");
+            entity.HasKey(e => e.LogId);
 
+            entity.ToTable("ReportLog", "Board");
+
+            entity.Property(e => e.LogId).HasColumnName("LogID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.LogId).HasColumnName("LogID");
             entity.Property(e => e.Reason).HasMaxLength(100);
             entity.Property(e => e.TargetId).HasColumnName("TargetID");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(50)
+                .HasColumnName("UserID");
         });
 
         modelBuilder.Entity<TagsList>(entity =>
@@ -315,6 +321,16 @@ public partial class BoardDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Keywords).HasMaxLength(50);
             entity.Property(e => e.UserId).HasColumnName("UserID");
+        });
+
+        modelBuilder.Entity<ViewArticleHideStatus>(entity =>
+        {
+            entity
+                
+                .ToView("View_ArticleHideStatus");
+
+            entity.Property(e => e.Note).HasMaxLength(100);
+            entity.Property(e => e.TargetId).HasColumnName("TargetID");
         });
 
         OnModelCreatingPartial(modelBuilder);

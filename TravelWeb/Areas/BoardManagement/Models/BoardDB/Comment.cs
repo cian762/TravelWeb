@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TravelWeb.Areas.BoardManagement.Models;
+namespace TravelWeb.Areas.BoardManagement.Models.BoardDB;
 
 public partial class Comment
 {

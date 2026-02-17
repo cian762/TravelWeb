@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TravelWeb.Areas.BoardManagement.Models;
+namespace TravelWeb.Areas.BoardManagement.Models.BoardDB;
 
-public partial class ArticleFolder
+public partial class ArticleSource
 {
-    public string UserId { get; set; } = null!;
-
     public int ArticleId { get; set; }
+
+    public int Source { get; set; }
 
     public virtual Article Article { get; set; } = null!;
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TravelWeb.Areas.BoardManagement.Models;
+namespace TravelWeb.Areas.BoardManagement.Models.BoardDB;
 
 public partial class ReportLog
 {
@@ -11,7 +11,7 @@ public partial class ReportLog
 
     public byte TargetType { get; set; }
 
-    public int UserId { get; set; }
+    public string UserId { get; set; } = null!;
 
     public byte ViolationType { get; set; }
 
