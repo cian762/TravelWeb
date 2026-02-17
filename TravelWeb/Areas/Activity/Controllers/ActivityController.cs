@@ -204,7 +204,6 @@ namespace TravelWeb.Areas.Activity.Controllers
             if (act == null) return NotFound();
 
             // 2. 更新基本欄位 (解包 ViewModel)
-            //act.ActivityId = vm.ActivityId;
             act.Title = vm.Title;
             act.StartTime = vm.StartTime;
             act.EndTime = vm.EndTime;
