@@ -1,0 +1,60 @@
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+@model EditItineraryErrorViewModel
+@{
+    ViewData["Title"] = "ItineraryErrorEdit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">錯誤處理</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form asp-area="Itinerary" asp-controller="Itinerary" asp-action="Edit" method="post">
+
+                <input type="hidden" asp-for="ErrorId" />
+
+                <div class="mb-3">
+                    <label class="form-label">錯誤類型</label>
+                    <input class="form-control" asp-for="ErrorType" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">錯誤訊息</label>
+                    <textarea class="form-control" asp-for="ErrorMessage" rows="3" readonly></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">錯誤原因說明</label>
+                    <textarea class="form-control" asp-for="ErrorReason" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">給用戶回應</label>
+                    <textarea class="form-control" asp-for="AdminResponse" rows="3"></textarea>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input"
+                           asp-for="IsConfirmed" />
+                    <label class="form-check-label">
+                        標記為已處理
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    儲存
+                </button>
+
+                <a asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryError" class="btn btn-secondary">
+                    返回
+                </a>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+

@@ -414,6 +414,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="efpt.config.json.user" />
     <None Include="wwwroot\css\assets\css\bootstrap.min.css" />
     <None Include="wwwroot\css\assets\css\demo.css" />
     <None Include="wwwroot\css\assets\css\demo.css.map" />
@@ -839,10 +840,11 @@
     <Folder Include="Areas\Activity\Repository\ActivityRepositories\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Data\" />
-    <Folder Include="Areas\BoardManagement\Models\" />
+    <Folder Include="Areas\BoardManagement\Models\ViewModel\" />
     <Folder Include="Areas\Itinerary\Data\" />
     <Folder Include="Areas\Itinerary\Views\" />
     <Folder Include="Areas\Itinerary\Models\ItineraryDBContext\" />
+    <Folder Include="Areas\BoardManagement\Models\" />
     <Folder Include="Areas\Member\Controllers\" />
     <Folder Include="Areas\Member\Data\" />
     <Folder Include="Areas\Member\Models\" />
@@ -851,6 +853,7 @@
     <Folder Include="Areas\TripProduct\Data\" />
     <Folder Include="Areas\TripProduct\Models\" />
     <Folder Include="Areas\TripProduct\Views\" />
+    <Folder Include="wwwroot\uploads\attractions\" />
   </ItemGroup>
 
 </Project>
