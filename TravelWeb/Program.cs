@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.BoardManagement.Models.BoardDB;
+
+using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 using TravelWeb.Areas.Itinerary.Models.Service;
 using TravelWeb.Areas.Itinerary.Repository;
@@ -22,6 +25,10 @@ builder.Services.AddScoped<IItineraryErrorSevice, ItineraryErrorService>();
 builder.Services.AddScoped<IItineraryCompareService, ItineraryCompareService>();
 
 
+
+// 註冊 BoardDbContext，並指定使用 SQL Server 以及連接字串
+builder.Services.AddDbContext<BoardDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 
 var app = builder.Build();
 

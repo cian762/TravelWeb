@@ -839,6 +839,10 @@
     <Folder Include="Areas\Activity\Views\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Data\" />
+    <Folder Include="Areas\BoardManagement\Models\ViewModel\" />
+    <Folder Include="Areas\Itinerary\Data\" />
+    <Folder Include="Areas\Itinerary\Views\" />
+    <Folder Include="Areas\Itinerary\Models\ItineraryDBContext\" />
     <Folder Include="Areas\BoardManagement\Models\" />
     <Folder Include="Areas\Member\Controllers\" />
     <Folder Include="Areas\Member\Data\" />
