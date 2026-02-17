@@ -1,0 +1,39 @@
+﻿@model TravelWeb.Models.MemberInformation
+
+@{
+    ViewData["Title"] = "編輯個人資料";
+}
+
+<h2 class="mb-4">新增個人資料</h2>
+
+<form asp-action="Edit" enctype="multipart/form-data">
+
+    <input type="hidden" asp-for="MemberId" />
+
+    <div>
+        <label>會員ID</label>
+        <input class="form-control" value="@Model.MemberId" readonly />
+    </div>
+
+    <div class="form-group">
+        <label>姓名</label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>目前頭像</label><br />
+        @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+        {
+            <img src="@Model.AvatarUrl" width="150" />
+        }
+    </div>
+
+    <div class="form-group">
+        <label>更換頭像</label>
+        <input type="file" name="avatarFile" class="form-control" />
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-primary">更新</button>
+    <a asp-action="Index" class="btn btn-secondary">取消</a>
+</form>
