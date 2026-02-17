@@ -1,0 +1,59 @@
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+@model VersionViewModel
+@{
+    ViewData["Title"] = "ItineraryVersionManage";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-3">版本管理 - @Model.ItineraryTitle</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <table class="table table-bordered">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>版本號</th>
+                        <th>建立來源</th>
+                        <th>狀態</th>
+                        <th>建立時間</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in Model.Versions)
+                    {
+                        <tr>
+                            <td>V @v.VersionNumber</td>
+                            <td>@v.Creator</td>
+                            <td>
+                                @if (v.CurrentUsageStatus == "Active")
+                                {
+                                    <span class="badge bg-success">使用中</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@v.CurrentUsageStatus</span>
+                                }
+                            </td>
+                            <td>@v.CreatedTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning">
+                                    切換為目前版本
+                                </button>
+                                <button class="btn btn-sm btn-info">
+                                    Diff 比較
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+

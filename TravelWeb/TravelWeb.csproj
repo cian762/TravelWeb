@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -413,6 +413,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="efpt.config.json.user" />
     <None Include="wwwroot\css\assets\css\bootstrap.min.css" />
     <None Include="wwwroot\css\assets\css\demo.css" />
     <None Include="wwwroot\css\assets\css\demo.css.map" />
@@ -838,10 +839,11 @@
     <Folder Include="Areas\Activity\Views\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Data\" />
-    <Folder Include="Areas\BoardManagement\Models\" />
+    <Folder Include="Areas\BoardManagement\Models\ViewModel\" />
     <Folder Include="Areas\Itinerary\Data\" />
     <Folder Include="Areas\Itinerary\Views\" />
     <Folder Include="Areas\Itinerary\Models\ItineraryDBContext\" />
+    <Folder Include="Areas\BoardManagement\Models\" />
     <Folder Include="Areas\Member\Controllers\" />
     <Folder Include="Areas\Member\Data\" />
     <Folder Include="Areas\Member\Models\" />

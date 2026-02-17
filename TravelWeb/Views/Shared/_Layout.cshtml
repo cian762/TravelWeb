@@ -10,6 +10,9 @@
     <link rel="icon"
           href="~/css/assets/img/kaiadmin/favicon.ico"
           type="image/x-icon" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
     <!-- Fonts and icons -->
     <script src="~/css/assets/js/plugin/webfont/webfont.min.js"></script>
     <script>
@@ -22,7 +25,7 @@
               "Font Awesome 5 Brands",
               "simple-line-icons",
             ],
-            urls: ["../css/assets/css/fonts.min.css"],
+            urls: ["/css/assets/css/fonts.min.css"],
           },
           active: function () {
             sessionStorage.fonts = true;
@@ -31,12 +34,12 @@
     </script>
 
     <!-- CSS Files -->
-    <link rel="stylesheet" href="~/css/assets/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/assets/css/plugins.min.css" />
-    <link rel="stylesheet" href="~/css/assets/css/kaiadmin.min.css" />
-
+    <link rel="stylesheet" href="/css/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="/css/assets/css/kaiadmin.min.css" />
+    @* 公版修改 *@
     <!-- CSS Just for demo purpose, don't include it in your project -->
-    <link rel="stylesheet" href="~/css/assets/css/demo.css" />
+    <link rel="stylesheet" href="/css/assets/css/demo.css" />
 </head>
 <body>
     <div class="wrapper">
@@ -45,7 +48,8 @@
             <div class="sidebar-logo">
                 <!-- Logo Header -->
                 <div class="logo-header" data-background-color="dark">
-                    <a href="index.html" class="logo">
+                    <a asp-controller="Home" asp-action="Index" class="logo">
+                        @* 暫時修改為連回主頁 *@
                         <img src="assets/img/kaiadmin/logo_light.svg"
                              alt="navbar brand"
                              class="navbar-brand"
@@ -158,12 +162,12 @@
                             <div class="collapse" id="sidebarLayouts">
                                 <ul class="nav nav-collapse">
                                     <li>
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Board" asp-action="ReportManager">
+                                        <a class="nav-link text-dark" asp-area="BoardManagement" asp-controller="Board" asp-action="ReportManager">
                                             <span class="sub-item">貼文檢舉管理中心</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Board" asp-action="ArticleManager">
+                                        <a class="nav-link text-dark" asp-area="BoardManagement" asp-controller="Board" asp-action="ArticleManager">
                                             <span class="sub-item">文章推薦管理</span>
                                         </a>
                                     </li>
@@ -179,10 +183,26 @@
                             <div class="collapse" id="forms">
                                 <ul class="nav nav-collapse">
                                     <li>
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Itinerary" asp-action="">
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryDashBoard">
+                                            <span class="sub-item">行程總覽 Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryManage">
                                             <span class="sub-item">行程管理</span>
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryError">
+                                            <span class="sub-item">行程錯誤管理</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Itinerary" asp-controller="Itinerary" asp-action="ItineraryCompareAnalyze">
+                                            <span class="sub-item">行程比較分析</span>
+                                        </a>
+                                    </li>
+                                   
                                 </ul>
                             </div>
                         </li>
@@ -806,7 +826,7 @@
 
         </div>
 
-        <footer class="footer">
+        @* <footer class="footer">
             <div class="container-fluid d-flex justify-content-between">
                 <nav class="pull-left">
                     <ul class="nav">
@@ -832,7 +852,7 @@
                     <a target="_blank" href="https://themewagon.com/">ThemeWagon</a>.
                 </div>
             </div>
-        </footer>
+        </footer> *@
     </div>
 
     <!-- Custom template | don't include it in your project! -->

@@ -1,14 +1,39 @@
 using Microsoft.EntityFrameworkCore;
-using TravelWeb.Areas.Attractions.Models;//´ºÂIªº
+using TravelWeb.Areas.Attractions.Models;//æ™¯é»çš„
 
+using TravelWeb.Areas.BoardManagement.Models.BoardDB;
+
+using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
+using TravelWeb.Areas.Itinerary.Models.Service;
+using TravelWeb.Areas.Itinerary.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<TravelContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+builder.Services.AddScoped(typeof(IItineraryGenericRepository<>), typeof(ItineraryRepository<>));
+builder.Services.AddScoped<IItineraryGenericRepository<Itinerary>, ItineraryRepository<Itinerary>>();
+builder.Services.AddScoped<IItineraryGenericRepository<ItineraryVersion>, ItineraryRepository<ItineraryVersion>>();
+builder.Services.AddScoped<IItineraryGenericRepository<Aianalysis>, ItineraryRepository<Aianalysis>>();
+builder.Services.AddScoped<IItineraryGenericRepository<AigenerationError>, ItineraryRepository<AigenerationError>>();
+builder.Services.AddScoped<IItineraryGenericRepository<ItineraryComparison>, ItineraryRepository<ItineraryComparison>>();
+builder.Services.AddScoped<IItineraryGenericRepository<TravelWeb.Areas.Itinerary.Models.ItineraryDBModel.Member_Information>, ItineraryRepository<TravelWeb.Areas.Itinerary.Models.ItineraryDBModel.Member_Information>>();
+builder.Services.AddScoped<IDashBoardService, DashBoardService>();
+builder.Services.AddScoped<IItineraryService, ItineraryService>();
+builder.Services.AddScoped<IItineraryErrorSevice, ItineraryErrorService>();
+builder.Services.AddScoped<IItineraryCompareService, ItineraryCompareService>();
 
-//´ºÂI³s½uDI-----------------------------------------------------------------
+
+
+// è¨»å†Š BoardDbContextï¼Œä¸¦æŒ‡å®šä½¿ç”¨ SQL Server ä»¥åŠé€£æ¥å­—ä¸²
+builder.Services.AddDbContext<BoardDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+
+//æ™¯é»é€£ç·šDI-----------------------------------------------------------------
 builder.Services.AddDbContext<AttractionsContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 //-----------------------------------------------------------------------------
@@ -31,12 +56,12 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-// Area ¸ô¥Ñ³]©w (¥²¶·©ñ¦b¹w³]¸ô¥Ñ¤W¤è)
+// Area è·¯ç”±è¨­å®š (å¿…é ˆæ”¾åœ¨é è¨­è·¯ç”±ä¸Šæ–¹)
 app.MapControllerRoute(
     name: "MyAreas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-// ­ì¥»ªº¹w³]¸ô¥Ñ
+// åŸæœ¬çš„é è¨­è·¯ç”±
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

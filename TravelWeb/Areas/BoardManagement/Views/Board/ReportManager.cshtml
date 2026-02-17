@@ -1,0 +1,79 @@
+﻿@model IEnumerable<TravelWeb.Areas.BoardManagement.Models.BoardDB.ViewArticleHideStatus>
+
+@{
+    ViewData["Title"] = "貼文檢舉管理中心";
+    Layout = "_Layout";
+}
+
+<h1>貼文檢舉管理中心</h1>
+
+@* <p>
+    <a asp-action="Create">Create New</a>
+</p> *@
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                文章編號
+            </th>
+            <th>
+                文章標題 
+            </th>
+            <th>
+                文章檢舉次數
+            </th>
+            <th>
+                已解決
+            </th>
+            <th>
+               未解決
+            </th>
+            <th>
+               備註
+            </th>
+            @* <th>
+                文章權限 @Html.DisplayNameFor(model => model.Status)
+            </th> *@
+            <th>
+                文章狀態                 
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TargetId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TargetId)
+                </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ReportCount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SolvedCount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UnauditedCount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Note)
+            </td>
+            @* <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td> *@
+            <td>
+                    @(item.IsViolation == true ? "違規已隱藏" : "無違規正常")
+                @* @Html.DisplayFor(modelItem => item.IsViolation) *@
+            </td>
+            <td>                  
+                <a asp-action="Edit" asp-route-id="@item.TargetId">Edit</a> |
+                <a asp-area="BoardManagement" asp-controller="Board" asp-action="ReportDetails" asp-route-id="@item.TargetId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.TargetId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
