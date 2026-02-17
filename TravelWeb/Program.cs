@@ -1,3 +1,9 @@
+using Microsoft.CodeAnalysis.Options;
+using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.TripProduct.Models;
+using TravelWeb.Areas.TripProduct.Services.Implementation;
+using TravelWeb.Areas.TripProduct.Services.InterSer;
+
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
@@ -17,6 +23,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+//行程商品連線DI
+builder.Services.AddDbContext<TripDbContext>(O => O.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+//行程商品主頁用DI
+builder.Services.AddScoped<ITripproducts, Tripproducts>();
+//行程細項連線用DI
+builder.Services.AddScoped<ITripItineraryItem, STripItineraryItem>();
 builder.Services.AddDbContext<TravelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 builder.Services.AddScoped(typeof(IItineraryGenericRepository<>), typeof(ItineraryRepository<>));
@@ -72,12 +84,17 @@ app.UseAuthorization();
 
 
 app.MapAreaControllerRoute("app", "Activity", "{controller}/{action}");
-// Area 路由設定 (必須放在預設路由上方)
+// Area ��ѳ]�w (������b�w�]��ѤW��)
 app.MapControllerRoute(
     name: "MyAreas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+// Area ��ѳ]�w (��{�ӫ~)
+app.MapControllerRoute(
+     name: "Trip",
+     pattern: "{area:exists}/{controler=Trip}/{action=index}/{id?}"
+    );
 
-// 原本的預設路由
+// �쥻���w�]���
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

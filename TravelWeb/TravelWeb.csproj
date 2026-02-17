@@ -849,8 +849,8 @@
     <Folder Include="Areas\Member\Data\" />
     <Folder Include="Areas\Member\Models\" />
     <Folder Include="Areas\Member\Views\" />
-    <Folder Include="Areas\TripProduct\Controllers\" />
     <Folder Include="Areas\TripProduct\Data\" />
+    <Folder Include="wwwroot\PImages\" />
     <Folder Include="Areas\TripProduct\Models\" />
     <Folder Include="Areas\TripProduct\Views\" />
     <Folder Include="wwwroot\uploads\attractions\" />

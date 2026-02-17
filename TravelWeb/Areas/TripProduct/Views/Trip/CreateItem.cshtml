@@ -1,0 +1,115 @@
+﻿@model TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelTripItineraryItems
+
+@{
+    ViewData["Title"] = "新增行程細項";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>新增行程細項</h2>
+        <a asp-action="ItemIndex" asp-route-id="@Model.TripProductId" class="btn btn-outline-secondary">返回列表</a>
+    </div>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="ItemCreate" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <input type="hidden" asp-for="TripProductId" />
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label asp-for="DayNumber" class="form-label"></label>
+                                <input asp-for="DayNumber" class="form-control" type="number" min="1" />
+                                <span asp-validation-for="DayNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label asp-for="SortOrder" class="form-label"></label>
+                                <input asp-for="SortOrder" class="form-control" type="number" min="1" />
+                                <span asp-validation-for="SortOrder" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label d-block">行程類型</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="typeGroup" id="btnAttraction" checked onclick="toggleType('attraction')">
+                                <label class="btn btn-outline-primary" for="btnAttraction">選擇景點</label>
+
+                                <input type="radio" class="btn-check" name="typeGroup" id="btnActivity" onclick="toggleType('activity')">
+                                <label class="btn btn-outline-primary" for="btnActivity">選擇活動</label>
+
+                                <input type="radio" class="btn-check" name="typeGroup" id="btnCustom" onclick="toggleType('custom')">
+                                <label class="btn btn-outline-primary" for="btnCustom">自定義資源</label>
+                            </div>
+                        </div>
+
+                        <div id="section-attraction" class="type-section mb-3">
+                            <label class="form-label">現有景點清單</label>
+                            <select asp-for="AttractionId" asp-items="Model.AttractionList" class="form-select">
+                                <option value="">-- 請選擇景點 --</option>
+                            </select>
+                        </div>
+
+                        <div id="section-activity" class="type-section mb-3" style="display:none;">
+                            <label class="form-label">現有活動清單</label>
+                            <select asp-for="ActivityId" asp-items="Model.ActivityList" class="form-select">
+                                <option value="">-- 請選擇活動 --</option>
+                            </select>
+                        </div>
+
+                        <div id="section-custom" class="type-section mb-3" style="display:none;">
+                            <div class="p-3 border rounded bg-light">
+                                <div class="mb-3">
+                                    <label asp-for="ResourceName" class="form-label"></label>
+                                    <input asp-for="ResourceName" class="form-control" />
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="FileImage" class="form-label"></label>
+                                    <input asp-for="FileImage" type="file" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CustomText" class="form-label"></label>
+                            <textarea asp-for="CustomText" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="CustomText" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">儲存行程細項</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function toggleType(type) {
+            // 隱藏所有
+            document.querySelectorAll('.type-section').forEach(el => el.style.display = 'none');
+            // 顯示目標
+            document.getElementById('section-' + type).style.display = 'block';
+
+            // 清空非當前選擇的欄位值，避免後端接收到衝突的 ID
+            if (type !== 'attraction') document.getElementById('AttractionId').value = '';
+            if (type !== 'activity') document.getElementById('ActivityId').value = '';
+            if (type !== 'custom') {
+                document.getElementById('ResourceName').value = '';
+                document.getElementById('FileImage').value = '';
+            }
+        }
+    </script>
+}
