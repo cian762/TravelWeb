@@ -190,6 +190,23 @@
             $('#detailsContent').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>');
 
             $.get('@Url.Action("GetDetails")/' + id, function (data) {
+                // 處理圖片區塊
+                let imgHtml = '';
+                if (data.images && data.images.length > 0) {
+                    imgHtml = '<div class="row mt-3">';
+                    data.images.forEach(path => {
+                        imgHtml += `
+                            <div class="col-md-4 mb-3">
+                                <a href="${path}" target="_blank">
+                                    <img src="${path}" class="img-thumbnail w-100" style="height:150px; object-fit:cover;" title="點擊放大">
+                                </a>
+                            </div>`;
+                    });
+                    imgHtml += '</div>';
+                } else {
+                    imgHtml = '<p class="text-muted">暫無照片</p>';
+                }
+
                 let html = `
                     <div class="row">
                         <div class="col-md-6">
@@ -210,6 +227,11 @@
                             <p><strong>公休說明：</strong> ${data.closedDays || '無'}</p>
                             <p><strong>交通資訊：</strong><br>${data.transport || '無'}</p>
                         </div>
+                        <div class="col-12"><hr></div>
+                        <div class="col-12">
+                            <strong>景點照片：</strong>
+                            ${imgHtml}
+                        </div>
                     </div>
                 `;
                 $('#detailsContent').html(html);
@@ -221,15 +243,15 @@
         // --- 成功提示 ---
         @if (TempData["SuccessMessage"] != null)
         {
-                <text>
-                Swal.fire({
-                    icon: 'success',
-                    title: '完成！',
-                    text: '@Html.Raw(TempData["SuccessMessage"])',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                </text>
+                    <text>
+                    Swal.fire({
+                        icon: 'success',
+                        title: '完成！',
+                        text: '@Html.Raw(TempData["SuccessMessage"])',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    </text>
         }
     </script>
 }

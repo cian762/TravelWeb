@@ -40,7 +40,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <form asp-action="Create" method="post">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     <div class="card-body">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -105,7 +105,7 @@
                                     <label asp-for="Latitude">緯度 (Latitude)</label>
                                     <input asp-for="Latitude"
                                            type="number"
-                                           step="0.000001"
+                                           step="any"
                                            class="form-control"
                                            placeholder="例如：25.033976" />
                                     <span asp-validation-for="Latitude" class="text-danger"></span>
@@ -114,7 +114,7 @@
                                     <label asp-for="Longitude">經度 (Longitude)</label>
                                     <input asp-for="Longitude"
                                            type="number"
-                                           step="0.000001"
+                                           step="any"
                                            class="form-control"
                                            placeholder="例如：121.564660" />
                                     <span asp-validation-for="Longitude" class="text-danger"></span>
@@ -138,7 +138,17 @@
                             </div>
                         </div>
                     </div>
-
+                        <div class="card-body">
+                            <div class="section-box">
+                                <span class="section-title">圖片管理</span>
+                                <div class="form-group">
+                                    <label>上傳景點照片 (可多選)</label>
+                                    <input type="file" name="imageFiles" class="form-control" multiple accept="image/*" />
+                                    <small class="form-text text-muted">支援 jpg, png, webp 格式</small>
+                                </div>
+                                <div id="imagePreview" class="mt-3 d-flex flex-wrap" style="gap: 10px;"></div>
+                            </div>
+                        </div>
                     <div class="card-action text-right">
                         <button type="submit" class="btn btn-success">確認儲存景點</button>
                         <a asp-action="Index" class="btn btn-danger">取消</a>
@@ -184,6 +194,20 @@
 
             function resetSelect(selector, defaultText) {
                 $(selector).empty().append($('<option>', { value: '', text: defaultText })).prop('disabled', true);
+            }
+        });
+
+                $('#imgInput').change(function() {
+            var preview = $('#imagePreview');
+            preview.empty();
+            if (this.files) {
+                $.each(this.files, function(i, file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.append('<img src="' + e.target.result + '" style="width:100px; height:100px; object-fit:cover; border-radius:5px; border:1px solid #ddd;">');
+                    }
+                    reader.readAsDataURL(file);
+                });
             }
         });
     </script>

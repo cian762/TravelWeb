@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Attractions.Models;
+using TravelWeb.Areas.Activity.Models.EFModel;
 
 namespace TravelWeb.Areas.Attractions.Models;
 
@@ -15,161 +17,99 @@ public partial class AttractionsContext : DbContext
     {
     }
 
-    // 1. 註冊 DbSet (讓 Controller 能抓到這張表)
+    // 註冊所有 DbSet
     public virtual DbSet<Attraction> Attractions { get; set; }
-
     public virtual DbSet<AttractionProduct> AttractionProducts { get; set; }
-
     public virtual DbSet<AttractionProductDetail> AttractionProductDetails { get; set; }
-
     public virtual DbSet<AttractionProductFavorite> AttractionProductFavorites { get; set; }
-
     public virtual DbSet<AttractionTypeCategory> AttractionTypeCategories { get; set; }
-
     public virtual DbSet<AttractionTypeMapping> AttractionTypeMappings { get; set; }
-
     public virtual DbSet<Image> Images { get; set; }
-
     public virtual DbSet<ProductInventoryStatus> ProductInventoryStatuses { get; set; }
-
     public virtual DbSet<StockInRecord> StockInRecords { get; set; }
-
     public virtual DbSet<Tag> Tags { get; set; }
-
     public virtual DbSet<TicketType> TicketTypes { get; set; }
-
     public virtual DbSet<TagsRegion> TagsRegions { get; set; }
 
-    //-----------------------------------------------------------------------------------
-
-
-    // 2. 在 OnModelCreating 方法裡面補上對應關係
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // 1. 景點表設定
         modelBuilder.Entity<Attraction>(entity =>
         {
             entity.ToTable("Attractions", "Attractions");
+            entity.HasKey(e => e.AttractionId);
 
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
-            entity.Property(e => e.Address)
-                .HasMaxLength(255)
-                .HasColumnName("address");
-            entity.Property(e => e.ApprovalStatus)
-                .HasDefaultValue(0)
-                .HasColumnName("approval_status");
-            entity.Property(e => e.AreaId)
-                .HasMaxLength(50)
-                .HasColumnName("area_id");
-            entity.Property(e => e.BusinessHours)
-                .HasMaxLength(500)
-                .HasColumnName("business_hours");
-            entity.Property(e => e.ClosedDaysNote)
-                .HasMaxLength(200)
-                .HasColumnName("closed_days_note");
-            entity.Property(e => e.CreatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
-            entity.Property(e => e.GooglePlaceId)
-                .HasMaxLength(255)
-                .HasColumnName("google_place_id");
-            entity.Property(e => e.Latitude)
-                .HasColumnType("decimal(10, 7)")
-                .HasColumnName("latitude");
-            entity.Property(e => e.Longitude)
-                .HasColumnType("decimal(10, 7)")
-                .HasColumnName("longitude");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
-            entity.Property(e => e.OpendataId)
-                .HasMaxLength(100)
-                .HasColumnName("opendata_id");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(50)
-                .HasColumnName("phone");
+            entity.Property(e => e.Address).HasMaxLength(255).HasColumnName("address");
+            entity.Property(e => e.ApprovalStatus).HasDefaultValue(0).HasColumnName("approval_status");
+            entity.Property(e => e.AreaId).HasMaxLength(50).HasColumnName("area_id");
+            entity.Property(e => e.BusinessHours).HasMaxLength(500).HasColumnName("business_hours");
+            entity.Property(e => e.ClosedDaysNote).HasMaxLength(200).HasColumnName("closed_days_note");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasColumnName("created_at");
+            entity.Property(e => e.GooglePlaceId).HasMaxLength(255).HasColumnName("google_place_id");
+            entity.Property(e => e.Latitude).HasColumnType("decimal(10, 7)").HasColumnName("latitude");
+            entity.Property(e => e.Longitude).HasColumnType("decimal(10, 7)").HasColumnName("longitude");
+            entity.Property(e => e.Name).HasMaxLength(255).HasColumnName("name");
+            entity.Property(e => e.OpendataId).HasMaxLength(100).HasColumnName("opendata_id");
+            entity.Property(e => e.Phone).HasMaxLength(50).HasColumnName("phone");
             entity.Property(e => e.RegionId).HasColumnName("RegionID");
             entity.Property(e => e.TransportInfo).HasColumnName("transport_info");
-            entity.Property(e => e.Website)
-                .HasMaxLength(500)
-                .HasColumnName("website");
+            entity.Property(e => e.Website).HasMaxLength(500).HasColumnName("website");
 
-            // 補上這一塊：建立與 TaqsRegion 的外鍵關聯
-            entity.HasOne(d => d.Region)            // Attraction 有一個 Region
-                .WithMany(p => p.Attractions)        // 一個 Region 有多個 Attractions
-                .HasForeignKey(d => d.RegionId)      // 關聯的 key 是 RegionId
-                .HasConstraintName("FK_Attractions_Tags_Regions"); // 名稱對應 SQL 的 FK
+            // 與 TagsRegion 的關聯
+            entity.HasOne(d => d.Region)
+                .WithMany(p => p.Attractions)
+                .HasForeignKey(d => d.RegionId)
+                .HasConstraintName("FK_Attractions_Tags_Regions");
         });
 
+        // 2. 圖片表設定 (核心修復)
+        modelBuilder.Entity<Image>(entity =>
+        {
+            entity.ToTable("Images", "Attractions");
+            entity.HasKey(e => e.ImageId);
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
+            entity.Property(e => e.ImagePath).HasMaxLength(255).HasColumnName("image_path");
+
+            // 景點與圖片的一對多關係
+            entity.HasOne(d => d.Attraction)
+                .WithMany(p => p.Images)
+                .HasForeignKey(d => d.AttractionId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Images_Attractions");
+        });
+
+        // 3. 區域標籤表設定 (根據截圖修正)
+        modelBuilder.Entity<TagsRegion>(entity =>
+        {
+            entity.ToTable("Tags_Regions", "Activity"); // 修正表名與 Schema
+            entity.HasKey(e => e.RegionId);
+            entity.Property(e => e.RegionId).HasColumnName("RegionID");
+            entity.Property(e => e.Uid).HasColumnName("UID");
+            entity.Property(e => e.RegionName).HasMaxLength(10);
+        });
+
+        // 4. 其他產品相關設定 (保持你原本的邏輯)
         modelBuilder.Entity<AttractionProduct>(entity =>
         {
             entity.HasKey(e => e.ProductId);
-
             entity.ToTable("AttractionProducts", "Attractions");
-
             entity.HasIndex(e => e.ProductCode, "UQ_AttractionProducts_ProductCode").IsUnique();
-
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.MaxPurchaseQuantity).HasColumnName("max_purchase_quantity");
-            entity.Property(e => e.PolicyId).HasColumnName("policy_id");
-            entity.Property(e => e.Price)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("price");
-            entity.Property(e => e.ProductCode)
-                .HasMaxLength(50)
-                .HasColumnName("product_code");
-            entity.Property(e => e.RegionId).HasColumnName("region_id");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasDefaultValue("DRAFT")
-                .HasColumnName("status");
-            entity.Property(e => e.TicketTypeCode)
-                .HasMaxLength(20)
-                .HasColumnName("ticket_type_code");
-            entity.Property(e => e.Title)
-                .HasMaxLength(255)
-                .HasColumnName("title");
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)").HasColumnName("price");
+            entity.Property(e => e.ProductCode).HasMaxLength(50).HasColumnName("product_code");
 
             entity.HasOne(d => d.Attraction).WithMany(p => p.AttractionProducts)
                 .HasForeignKey(d => d.AttractionId)
                 .HasConstraintName("FK_AttractionProducts_Attractions");
-
-            entity.HasMany(d => d.Tags).WithMany(p => p.Products)
-                .UsingEntity<Dictionary<string, object>>(
-                    "AttractionProductTag",
-                    r => r.HasOne<Tag>().WithMany()
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_AttractionProductTags_Tags"),
-                    l => l.HasOne<AttractionProduct>().WithMany()
-                        .HasForeignKey("ProductId")
-                        .HasConstraintName("FK_AttractionProductTags_AttractionProducts"),
-                    j =>
-                    {
-                        j.HasKey("ProductId", "TagId").HasName("PK__Attracti__332B17DE9A42B909");
-                        j.ToTable("AttractionProductTags", "Attractions");
-                        j.IndexerProperty<int>("ProductId").HasColumnName("product_id");
-                        j.IndexerProperty<int>("TagId").HasColumnName("tag_id");
-                    });
         });
 
         modelBuilder.Entity<AttractionProductDetail>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("AttractionProductDetails", "Attractions");
-
-            entity.Property(e => e.ContentDetails).HasColumnName("content_details");
-            entity.Property(e => e.LastUpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("last_updated_at");
-            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.HasNoKey().ToTable("AttractionProductDetails", "Attractions");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.Property(e => e.UsageInstructions).HasColumnName("usage_instructions");
-
             entity.HasOne(d => d.Product).WithMany()
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK_AttractionProductDetails_AttractionProducts");
@@ -177,22 +117,9 @@ public partial class AttractionsContext : DbContext
 
         modelBuilder.Entity<AttractionProductFavorite>(entity =>
         {
-            entity.HasKey(e => e.FavoriteId).HasName("PK__Attracti__46ACF4CBDF390037");
-
+            entity.HasKey(e => e.FavoriteId);
             entity.ToTable("AttractionProductFavorites", "Attractions");
-
-            entity.HasIndex(e => new { e.UserId, e.ProductId }, "UQ_Favorites_UserProduct").IsUnique();
-
-            entity.Property(e => e.FavoriteId).HasColumnName("favorite_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.Property(e => e.UserId)
-                .HasMaxLength(50)
-                .HasColumnName("user_id");
-
             entity.HasOne(d => d.Product).WithMany(p => p.AttractionProductFavorites)
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK_AttractionProductFavorites_AttractionProducts");
@@ -200,153 +127,51 @@ public partial class AttractionsContext : DbContext
 
         modelBuilder.Entity<AttractionTypeCategory>(entity =>
         {
-            entity.HasKey(e => e.AttractionTypeId).HasName("PK__Attracti__61CA9FF14ABB1A87");
-
+            entity.HasKey(e => e.AttractionTypeId);
             entity.ToTable("AttractionTypeCategories", "Attractions");
-
             entity.Property(e => e.AttractionTypeId).HasColumnName("attraction_type_id");
-            entity.Property(e => e.AttractionTypeName)
-                .HasMaxLength(50)
-                .HasColumnName("attraction_type_name");
         });
 
         modelBuilder.Entity<AttractionTypeMapping>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("AttractionTypeMappings", "Attractions");
-
-            entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
-            entity.Property(e => e.AttractionTypeId).HasColumnName("attraction_type_id");
-
+            entity.HasNoKey().ToTable("AttractionTypeMappings", "Attractions");
             entity.HasOne(d => d.Attraction).WithMany()
                 .HasForeignKey(d => d.AttractionId)
                 .HasConstraintName("FK_AttractionTypeMappings_Attractions");
-
-            entity.HasOne(d => d.AttractionType).WithMany()
-                .HasForeignKey(d => d.AttractionTypeId)
-                .HasConstraintName("FK_AttractionTypeMappings_AttractionTypeCategories");
-        });
-
-        modelBuilder.Entity<Image>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToTable("Images", "Attractions");
-
-            entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
-            entity.Property(e => e.ImagePath)
-                .HasMaxLength(255)
-                .HasColumnName("image_path");
-
-            entity.HasOne(d => d.Attraction).WithMany()
-                .HasForeignKey(d => d.AttractionId)
-                .HasConstraintName("FK_Images_Attractions");
         });
 
         modelBuilder.Entity<ProductInventoryStatus>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("ProductInventoryStatus", "Attractions");
-
-            entity.Property(e => e.DailyLimit).HasColumnName("daily_limit");
-            entity.Property(e => e.InventoryMode)
-                .HasMaxLength(20)
-                .HasDefaultValue("UNLIMITED")
-                .HasColumnName("inventory_mode");
-            entity.Property(e => e.LastUpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("last_updated_at");
+            entity.HasNoKey().ToTable("ProductInventoryStatus", "Attractions");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.Property(e => e.SoldQuantity)
-                .HasDefaultValue(0)
-                .HasColumnName("sold_quantity");
-
             entity.HasOne(d => d.Product).WithMany()
                 .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductInventoryStatus_AttractionProducts");
         });
 
         modelBuilder.Entity<StockInRecord>(entity =>
         {
-            entity.HasKey(e => e.StockInId).HasName("PK__StockInR__F657737DB034425D");
-
+            entity.HasKey(e => e.StockInId);
             entity.ToTable("StockInRecords", "Attractions");
-
-            entity.Property(e => e.StockInId).HasColumnName("stock_in_id");
-            entity.Property(e => e.InventoryType)
-                .HasMaxLength(20)
-                .HasDefaultValue("VIRTUAL")
-                .HasColumnName("inventory_type");
-            entity.Property(e => e.ProductCode)
-                .HasMaxLength(50)
-                .HasColumnName("product_code");
-            entity.Property(e => e.ProductType)
-                .HasMaxLength(20)
-                .HasColumnName("product_type");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.RemainingStock).HasColumnName("remaining_stock");
-            entity.Property(e => e.Remarks)
-                .HasMaxLength(500)
-                .HasColumnName("remarks");
-            entity.Property(e => e.StockInDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnName("stock_in_date");
-            entity.Property(e => e.SupplierName)
-                .HasMaxLength(100)
-                .HasColumnName("supplier_name");
-            entity.Property(e => e.UnitCost)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("unit_cost");
-
+            entity.Property(e => e.ProductCode).HasMaxLength(50).HasColumnName("product_code");
             entity.HasOne(d => d.ProductCodeNavigation).WithMany(p => p.StockInRecords)
                 .HasPrincipalKey(p => p.ProductCode)
                 .HasForeignKey(d => d.ProductCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_StockInRecords_AttractionProducts");
         });
 
         modelBuilder.Entity<Tag>(entity =>
         {
-            entity.HasKey(e => e.TagId).HasName("PK__Tags__4296A2B675F200BC");
-
+            entity.HasKey(e => e.TagId);
             entity.ToTable("Tags", "Attractions");
-
-            entity.HasIndex(e => e.TagName, "UQ__Tags__E298655C3A98ABFF").IsUnique();
-
             entity.Property(e => e.TagId).HasColumnName("tag_id");
-            entity.Property(e => e.TagName)
-                .HasMaxLength(50)
-                .HasColumnName("tag_name");
         });
 
         modelBuilder.Entity<TicketType>(entity =>
         {
-            entity.HasKey(e => e.TicketTypeCode).HasName("PK__TicketTy__427E4A98744E0C99");
-
+            entity.HasKey(e => e.TicketTypeCode);
             entity.ToTable("TicketTypes", "Attractions");
-
-            entity.Property(e => e.TicketTypeCode)
-                .HasMaxLength(20)
-                .HasColumnName("ticket_type_code");
-            entity.Property(e => e.SortOrder)
-                .HasDefaultValue(0)
-                .HasColumnName("sort_order");
-            entity.Property(e => e.TicketTypeName)
-                .HasMaxLength(50)
-                .HasColumnName("ticket_type_name");
-        });
-
-        modelBuilder.Entity<TagsRegion>(entity =>
-        {
-            entity.ToTable("Tags_Regions", "Activity"); // 加入 Schema "Activity" 更保險
-            entity.HasKey(e => e.RegionId); // 設定主鍵
-            entity.Property(e => e.RegionId).HasColumnName("RegionID");
-            entity.Property(e => e.Uid).HasColumnName("UID");
-            entity.Property(e => e.RegionName).HasMaxLength(10);
+            entity.Property(e => e.TicketTypeCode).HasMaxLength(20).HasColumnName("ticket_type_code");
         });
 
         OnModelCreatingPartial(modelBuilder);

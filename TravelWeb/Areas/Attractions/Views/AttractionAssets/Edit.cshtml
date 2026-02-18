@@ -5,7 +5,6 @@
 }
 
 <style>
-    /* 隱藏 Footer 邏輯 */
     footer, .footer, .main-footer, [class*="footer"] {
         display: none !important;
     }
@@ -32,10 +31,39 @@
         padding-left: 10px;
     }
 
-    /* 確保選單可以點選的視覺提示 */
     select.form-control:not(:disabled) {
         background-color: #ffffff !important;
         cursor: pointer;
+    }
+    /* 圖片預覽樣式 */
+    .img-manage-wrapper {
+        position: relative;
+        display: inline-block;
+        margin: 10px;
+    }
+
+        .img-manage-wrapper img {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+    .img-remove-btn {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #f25961;
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        line-height: 20px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 12px;
+        border: none;
     }
 </style>
 
@@ -46,7 +74,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <form asp-action="Edit" method="post">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
                     <div class="card-body">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -144,6 +172,37 @@
                         </div>
                     </div>
 
+                    <div class="section-box">
+                        <span class="section-title">圖片管理</span>
+                        <div class="form-group">
+                            <label>上傳新照片 (可多選)</label>
+                            <input type="file" name="imageFiles" class="form-control" multiple accept="image/*" />
+                            <small class="form-text text-muted">支援 jpg, png, webp 等格式。</small>
+                        </div>
+
+                        <div id="existing-images" class="mt-3">
+                            <label>現有圖片：</label>
+                            <div class="d-flex flex-wrap">
+                                @if (Model.Images != null && Model.Images.Any())
+                                {
+                                    foreach (var img in Model.Images)
+                                    {
+                                        <div class="img-manage-wrapper" id="img-container-@img.ImageId">
+                                            <img src="@img.ImagePath" />
+                                            <button type="button" class="img-remove-btn" onclick="deleteImage(@img.ImageId)">&times;</button>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted p-2">目前尚無圖片</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+
+
                     <div class="card-action text-right">
                         <button type="submit" class="btn btn-primary">儲存修改</button>
                         <a asp-action="Index" class="btn btn-black">取消返回</a>
@@ -159,6 +218,30 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
+        // 刪除圖片的 Ajax
+        function deleteImage(imageId) {
+            if (confirm('確定要刪除這張圖片嗎？檔案將會從伺服器移除。')) {
+                $.ajax({
+                    url: '@Url.Action("DeleteImage")',
+                    type: 'POST',
+                    data: {
+                        id: imageId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            $(`#img-container-${imageId}`).fadeOut(300, function() { $(this).remove(); });
+                        } else {
+                            alert('刪除失敗：' + result.message);
+                        }
+                    }
+                });
+            }
+        }
+
+
+
+
         $(document).ready(function () {
             // 區域連動
             $('#ddlArea').on('change', function () {
