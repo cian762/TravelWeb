@@ -130,14 +130,21 @@ public partial class AttractionsContext : DbContext
             entity.HasKey(e => e.AttractionTypeId);
             entity.ToTable("AttractionTypeCategories", "Attractions");
             entity.Property(e => e.AttractionTypeId).HasColumnName("attraction_type_id");
+            entity.Property(e => e.AttractionTypeName).HasMaxLength(100).HasColumnName("attraction_type_name");
         });
 
         modelBuilder.Entity<AttractionTypeMapping>(entity =>
         {
-            entity.HasNoKey().ToTable("AttractionTypeMappings", "Attractions");
-            entity.HasOne(d => d.Attraction).WithMany()
-                .HasForeignKey(d => d.AttractionId)
-                .HasConstraintName("FK_AttractionTypeMappings_Attractions");
+            // 移除 HasNoKey()，改用 HasKey 複合鍵
+            entity.ToTable("AttractionTypeMappings", "Attractions");
+            entity.HasKey(e => new { e.AttractionId, e.AttractionTypeId });
+
+            entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
+            entity.Property(e => e.AttractionTypeId).HasColumnName("attraction_type_id");
+
+            entity.HasOne(d => d.Attraction)
+                .WithMany(p => p.AttractionTypeMappings)
+                .HasForeignKey(d => d.AttractionId);
         });
 
         modelBuilder.Entity<ProductInventoryStatus>(entity =>

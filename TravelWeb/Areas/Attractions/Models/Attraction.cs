@@ -42,4 +42,6 @@ public partial class Attraction
     public virtual TagsRegion? Region { get; set; }
     public virtual ICollection<AttractionProduct> AttractionProducts { get; set; } = new List<AttractionProduct>();
     public virtual ICollection<Image> Images { get; set; } = new List<Image>();
+    // 讓景點知道它擁有很多個類別關聯
+    public virtual ICollection<AttractionTypeMapping> AttractionTypeMappings { get; set; } = new List<AttractionTypeMapping>();
 }
