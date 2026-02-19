@@ -79,16 +79,62 @@ namespace TravelWeb.Areas.Attractions.Controllers
         }
 
 
+        // --- 狀態切換功能 (IsActive) ---
         [HttpPost]
-        public IActionResult ToggleActive(int id, int isActive)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleActive(int id, int isActive)
         {
-            var product = _context.AttractionProducts.Find(id);
-            if (product != null)
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null)
             {
-                product.IsActive = isActive;
-                _context.SaveChanges();
-                TempData["SuccessMessage"] = $"票券狀態已成功更新！";
+                return NotFound();
             }
+
+            product.IsActive = isActive;
+            _context.Update(product);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = isActive == 1 ? "票券已成功上架！" : "票券已下架。";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // --- 系統狀態變更 (Status) ---
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, string status)
+        {
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null) return NotFound();
+
+            string cleanStatus = status.ToUpper().Trim();
+            product.Status = cleanStatus;
+
+            // --- 嚴謹連動邏輯開始 ---
+            if (cleanStatus == "ACTIVE")
+            {
+                // 只有狀態為 ACTIVE 時，銷售狀態才設為 1 (銷售中)
+                product.IsActive = 1;
+            }
+            else
+            {
+                // 只要不是 ACTIVE (包含 DRAFT, INACTIVE, ARCHIVED)，一律設為 0 (已下架)
+                product.IsActive = 0;
+            }
+            // --- 嚴謹連動邏輯結束 ---
+
+            try
+            {
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+
+                string msg = cleanStatus == "ACTIVE" ? "票券已正式發佈並開始銷售！" : "狀態已更新，銷售已停止。";
+                TempData["SuccessMessage"] = msg;
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "同步失敗：" + ex.Message;
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }
