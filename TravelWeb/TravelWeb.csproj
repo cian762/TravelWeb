@@ -852,7 +852,6 @@
     <Folder Include="Areas\TripProduct\Data\" />
     <Folder Include="wwwroot\PImages\" />
     <Folder Include="Areas\TripProduct\Models\" />
-    <Folder Include="Areas\TripProduct\Views\" />
     <Folder Include="wwwroot\uploads\attractions\" />
   </ItemGroup>
 
