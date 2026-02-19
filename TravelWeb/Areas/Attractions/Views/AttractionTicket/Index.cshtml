@@ -45,7 +45,12 @@
                                 {
                                     <tr>
                                         <td><code class="text-primary">@item.ProductCode</code></td>
-                                        <td><strong>@item.Title</strong></td>
+                                        <td>
+                                            <div class="fw-bold">@item.Title</div>
+                                            <small class="text-muted">
+                                                <i class="bi bi-tag"></i> @(item.TicketType?.TicketTypeName ?? "未分類")
+                                            </small>
+                                        </td>
                                         <td>@(item.Attraction?.Name ?? "未指定")</td>
                                         <td class="text-danger fw-bold">@item.Price?.ToString("C0")</td>
                                         <td>

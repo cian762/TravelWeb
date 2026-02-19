@@ -20,6 +20,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         {
             var tickets = await _context.AttractionProducts
                 .Include(p => p.Attraction)
+                .Include(p => p.TicketType)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -39,19 +40,20 @@ namespace TravelWeb.Areas.Attractions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AttractionProduct product)
         {
-            // 移除不必要的模型驗證，避免因為導覽屬性為空而導致驗證失敗
+            // 1. 移除不必要的模型驗證，避免導覽屬性（Navigation Property）為空導致驗證失敗
             ModelState.Remove("Attraction");
+            ModelState.Remove("TicketType");
 
             if (ModelState.IsValid)
             {
-                // 1. 自動補上建立時間
+                // 2. 自動補上建立時間
                 product.CreatedAt = DateTime.Now;
 
-                // 2. 處理 Status 字串與 IsActive 的連動邏輯
+                // 3. 處理 Status 字串標準化與 IsActive 的連動邏輯
                 // 確保 Status 有值且為大寫，若沒填則給予預設值 "DRAFT"
                 product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
 
-                // --- 自動連動邏輯：只有 ACTIVE 才上架 ---
+                // --- 自動連動邏輯：只有 ACTIVE 才上架，其餘狀態一律下架 ---
                 if (product.Status == "ACTIVE")
                 {
                     product.IsActive = 1; // 銷售中
@@ -61,32 +63,38 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     product.IsActive = 0; // 已下架 (適用於 DRAFT, INACTIVE, ARCHIVED)
                 }
 
-              
                 try
                 {
                     _context.Add(product);
                     await _context.SaveChangesAsync();
 
-                    // 加上操作成功的提示訊息
+                    // 加上操作成功的提示訊息（使用 TempData 搭配 SweetAlert 或 Toast）
                     TempData["SuccessMessage"] = $"票券「{product.Title}」已成功新增，狀態為 {product.Status}！";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
-                    // 處理資料庫存檔時的例外（例如違反唯一性約束等）
+                    // 處理資料庫存檔時的例外
                     ModelState.AddModelError("", "存檔至資料庫時發生錯誤：" + ex.Message);
                 }
             }
 
-            // --- 驗證失敗時的除錯與回傳 ---
+            // --- 若驗證失敗 (ModelState.IsValid == false) 或發生 Catch 異常 ---
+
+            // 1. 輸出偵錯訊息
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             foreach (var error in errors)
             {
                 System.Diagnostics.Debug.WriteLine("驗證錯誤: " + error);
             }
 
-            // 重新準備下拉選單資料並回傳 View
-            ViewBag.AttractionList = new SelectList(_context.Attractions, "AttractionId", "Name", product.AttractionId);
+            // 2. 重要！重新準備所有下拉選單資料，否則 View 重新渲染時會噴 NULL 錯誤
+            // 景點清單 (過濾已軟刪除的景點)
+            ViewBag.AttractionList = new SelectList(_context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
+
+            // 票種清單 (對應你的 TicketTypes 表)
+            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+
             return View(product);
         }
 

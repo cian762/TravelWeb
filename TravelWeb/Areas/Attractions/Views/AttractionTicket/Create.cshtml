@@ -37,6 +37,14 @@
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
 
+            <div class="form-group mb-3">
+                <label asp-for="TicketTypeCode" class="control-label">票種</label>
+                <select asp-for="TicketTypeCode" class="form-control" asp-items="ViewBag.TicketTypeList">
+                    <option value="">-- 請選擇票種 --</option>
+                </select>
+                <span asp-validation-for="TicketTypeCode" class="text-danger"></span>
+            </div>
+
             @* 4. 價格 *@
             <div class="form-group mb-3">
                 <label asp-for="Price" class="control-label">售價</label>

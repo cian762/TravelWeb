@@ -230,6 +230,9 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.TicketTypeName)
                   .HasMaxLength(50) // 對應你的 nvarchar(50)
                   .HasColumnName("ticket_type_name");
+
+            // 關鍵！加上這行來對應資料庫欄位
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
         });
 
 
