@@ -31,11 +31,17 @@ namespace TravelWeb.Areas.Attractions.Controllers
         // 1. 顯示新增頁面 (Get)
         public IActionResult Create()
         {
+            // 1. 原有的區域下拉選單
             var regions = _context.TagsRegions
                                     .Where(r => r.Uid == null)
                                     .OrderBy(r => r.RegionId)
                                     .ToList();
             ViewBag.RegionList = new SelectList(regions, "RegionId", "RegionName");
+
+            // 2. 新增：抓取所有標籤類別 (對應 AttractionTypeCategories 表)
+            // 這樣 View 才能用 foreach 把標籤排出來
+            ViewBag.Categories = _context.AttractionTypeCategories.ToList();
+
             return View();
         }
 
@@ -43,7 +49,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         // 參數加上 List<IFormFile> imageFiles 以接收多圖上傳
-        public async Task<IActionResult> Create(Attraction attraction, List<IFormFile> imageFiles)
+        public async Task<IActionResult> Create(Attraction attraction, List<IFormFile> imageFiles, int[] selectedCategoryIds)
         {
             if (ModelState.IsValid)
             {
@@ -55,7 +61,22 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 _context.Attractions.Add(attraction);
                 await _context.SaveChangesAsync();
 
-                // C. 處理圖片上傳
+                // 2. 儲存標籤關聯 (Mapping)
+                if (selectedCategoryIds != null && selectedCategoryIds.Length > 0)
+                {
+                    foreach (var typeId in selectedCategoryIds)
+                    {
+                        var mapping = new AttractionTypeMapping
+                        {
+                            AttractionId = attraction.AttractionId, // 連結剛產生的景點 ID
+                            AttractionTypeId = typeId
+                        };
+                        _context.AttractionTypeMappings.Add(mapping);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
+                 // 3. 處理圖片上傳
                 if (imageFiles != null && imageFiles.Count > 0)
                 {
                     // 設定儲存路徑：wwwroot/uploads/attractions
@@ -149,7 +170,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
         {
             var attraction = await _context.Attractions
                 .Include(a => a.Region)
-                .Include(a => a.Images) // 👈 關鍵：必須包含圖片
+                .Include(a => a.Images)
+                .Include(a => a.AttractionTypeMappings) // 👈 1. 載入中間表
+                    .ThenInclude(m => m.AttractionType) // 👈 2. 載入真正的標籤分類名稱
                 .FirstOrDefaultAsync(m => m.AttractionId == id);
 
             if (attraction == null) return NotFound();
@@ -167,8 +190,12 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 lng = attraction.Longitude,
                 createdAt = attraction.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 region = attraction.Region?.RegionName ?? "未知",
-                // 👈 把所有圖片路徑轉成字串陣列傳給前端
-                images = attraction.Images.Select(img => img.ImagePath).ToList()
+                images = attraction.Images.Select(img => img.ImagePath).ToList(),
+
+                // 👈 3. 把標籤名稱轉成字串陣ate陣列傳給前端
+                tags = attraction.AttractionTypeMappings
+                                 .Select(m => m.AttractionType.AttractionTypeName)
+                                 .ToList()
             });
         }
 
@@ -194,6 +221,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
             if (attraction == null) return NotFound();
 
+            // 💡 重點：編輯頁面也需要抓取所有標籤類別，View 才能跑 foreach
+            ViewBag.Categories = _context.AttractionTypeCategories.ToList();
+
             var regions = _context.TagsRegions.Where(r => r.Uid == null).OrderBy(r => r.RegionId).ToList();
             ViewBag.RegionList = new SelectList(regions, "RegionId", "RegionName");
 
@@ -202,7 +232,8 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Attraction attraction, List<IFormFile> imageFiles)
+        // 💡 補上 selectedCategoryIds 參數
+        public async Task<IActionResult> Edit(int id, Attraction attraction, List<IFormFile> imageFiles, int[] selectedCategoryIds)
         {
             if (id != attraction.AttractionId) return NotFound();
 
@@ -210,19 +241,43 @@ namespace TravelWeb.Areas.Attractions.Controllers
             {
                 try
                 {
+                    // A. 更新景點主體資料
                     _context.Update(attraction);
                     await _context.SaveChangesAsync();
 
+                    // B. 處理標籤同步 (先清空該景點的所有舊標籤，再新增目前的勾選)
+                    // 1. 找出資料庫裡這筆景點現有的所有 Mapping
+                    var oldMappings = _context.AttractionTypeMappings
+                                             .Where(m => m.AttractionId == id);
+
+                    // 2. 移除它們
+                    _context.AttractionTypeMappings.RemoveRange(oldMappings);
+                    await _context.SaveChangesAsync();
+
+                    // 3. 重新插入勾選的標籤
+                    if (selectedCategoryIds != null && selectedCategoryIds.Length > 0)
+                    {
+                        foreach (var typeId in selectedCategoryIds)
+                        {
+                            _context.AttractionTypeMappings.Add(new AttractionTypeMapping
+                            {
+                                AttractionId = id,
+                                AttractionTypeId = typeId
+                            });
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // C. 處理圖片上傳 (維持你原本的邏輯)
                     if (imageFiles != null && imageFiles.Count > 0)
                     {
-                        // 👈 關鍵修正：使用 WebRootPath 確保定位到 wwwroot
                         string uploadDir = Path.Combine(_hostEnvironment.WebRootPath, "uploads", "attractions");
                         if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
 
                         foreach (var file in imageFiles)
                         {
                             if (file.Length > 0)
-                            { 
+                            {
                                 string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
                                 string filePath = Path.Combine(uploadDir, fileName);
 
@@ -250,8 +305,12 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 }
             }
 
+            // --- 若驗證失敗，重新準備下拉選單與標籤資料 ---
             var regions = _context.TagsRegions.Where(r => r.Uid == null).OrderBy(r => r.RegionId).ToList();
             ViewBag.RegionList = new SelectList(regions, "RegionId", "RegionName");
+            // 💡 別忘了補上標籤清單，不然頁面跳回來標籤會不見
+            ViewBag.Categories = _context.AttractionTypeCategories.ToList();
+
             return View(attraction);
         }
 

@@ -65,6 +65,19 @@
         font-size: 12px;
         border: none;
     }
+
+  
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+
+
 </style>
 
 <div class="page-inner">
@@ -139,6 +152,48 @@
                                     <span asp-validation-for="RegionId" class="text-danger"></span>
                                 </div>
                             </div>
+
+                            <div class="form-group mb-4">
+                                <label class="control-label fw-bold mb-2">景點標籤類別</label>
+                                <div class="alert alert-warning py-2 small">
+                                    <i class="fas fa-info-circle me-1"></i> 編輯模式下，請重新勾選此景點需要的標籤。
+                                </div>
+                                <div class="card shadow-sm border-0 bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @{
+                                                // 1. 安全地從 ViewBag 取出資料並轉型
+                                                var categoryList = ViewBag.Categories as IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionTypeCategory>;
+                                            }
+
+                                            @if (categoryList != null && categoryList.Any())
+                                            {
+                                                foreach (var cat in categoryList)
+                                                {
+                                                    // 2. 這裡使用 label 搭配 hidden checkbox 做出按鈕感
+                                                    <div class="tag-item">
+                                                        <input type="checkbox" class="btn-check" name="selectedCategoryIds"
+                                                               value="@cat.AttractionTypeId" id="cat_@cat.AttractionTypeId" autocomplete="off">
+                                                        <label class="btn btn-outline-primary rounded-pill px-3 shadow-sm bg-white cursor-pointer" for="cat_@cat.AttractionTypeId">
+                                                            #@cat.AttractionTypeName
+                                                        </label>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="text-muted p-2">
+                                                    <i class="fas fa-exclamation-circle me-1"></i> 資料庫中尚未建立任何標籤類別。
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+
 
                             <div class="form-row">
                                 <div class="form-group col-md-6">
