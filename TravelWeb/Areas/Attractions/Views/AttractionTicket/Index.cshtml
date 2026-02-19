@@ -1,33 +1,31 @@
-﻿@* Product *@
-@model IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionProduct>
+﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionProduct>
 
 @{
-    ViewData["Title"] = "景點列表";
+    ViewData["Title"] = "票券管理列表";
 }
 
 <div class="page-inner">
+    @* --- 1. 頁面標題區 --- *@
     <div class="page-header">
-        <h4 class="page-title">景點管理</h4>
+        <h4 class="page-title">票券產品管理</h4>
         <ul class="breadcrumbs">
-            <li class="nav-home">
-                <a href="#"><i class="flaticon-home"></i></a>
-            </li>
+            <li class="nav-home"><a href="#"><i class="flaticon-home"></i></a></li>
             <li class="separator"><i class="flaticon-right-arrow"></i></li>
             <li class="nav-item"><a href="#">景點區</a></li>
+            <li class="separator"><i class="flaticon-right-arrow"></i></li>
+            <li class="nav-item"><a href="#">票券管理</a></li>
         </ul>
     </div>
 
+    @* --- 2. 主要列表卡片 --- *@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <div class="d-flex align-items-center">
-                        <h4 class="card-title">景點列表</h4>
-                        @* 找到這一行並修改 *@
-                        <a asp-area="Attractions" asp-controller="AttractionTicket" asp-action="Create" class="btn btn-primary btn-round ms-auto">
-                            <i class="fa fa-plus"></i> 新增票券
-                        </a>
-                    </div>
+                <div class="card-header d-flex align-items-center">
+                    <h4 class="card-title">票券列表</h4>
+                    <a asp-area="Attractions" asp-controller="AttractionTicket" asp-action="Create" class="btn btn-primary btn-round ms-auto">
+                        <i class="fa fa-plus"></i> 新增票券
+                    </a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -38,8 +36,9 @@
                                     <th>票券名稱</th>
                                     <th>所屬景點</th>
                                     <th>售價</th>
-                                    <th>狀態</th>
-                                    <th>操作</th>
+                                    <th>系統狀態</th>
+                                    <th>銷售狀態 (點擊切換)</th>
+                                    <th style="width: 15%">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -48,27 +47,42 @@
                                     <tr>
                                         <td><code class="text-primary">@item.ProductCode</code></td>
                                         <td><strong>@item.Title</strong></td>
-                                        <td>@item.Attraction?.Name</td>
+                                        <td>@(item.Attraction?.Name ?? "未指定")</td>
                                         <td class="text-danger fw-bold">@item.Price?.ToString("C0")</td>
+                                        <td><span class="badge badge-info">@(item.Status ?? "DRAFT")</span></td>
                                         <td>
+                                            @* 修改點：改為按鈕觸發 toggleStatus *@
                                             @if (item.IsActive == 1)
                                             {
-                                                <span class="badge bg-success">銷售中</span>
+                                                <button type="button" class="btn btn-xs btn-success btn-round"
+                                                        onclick="toggleStatus(@item.ProductId, 0, '@item.Title')">
+                                                    銷售中
+                                                </button>
                                             }
                                             else
                                             {
-                                                <span class="badge bg-secondary">已下架</span>
+                                                <button type="button" class="btn btn-xs btn-secondary btn-round"
+                                                        onclick="toggleStatus(@item.ProductId, 1, '@item.Title')">
+                                                    已下架
+                                                </button>
                                             }
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-edit"></i> 編輯
+                                                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary" title="編輯">
+                                                    <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a asp-controller="Inventory" asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-info">
-                                                    <i class="fas fa-boxes"></i> 庫存
+                                                <a asp-controller="Inventory" asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-info" title="庫存">
+                                                    <i class="fas fa-boxes"></i>
                                                 </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@item.ProductId, '@item.Title')" title="刪除">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
+                                            @* 隱藏的刪除表單 *@
+                                            <form id="delete-form-@item.ProductId" asp-action="Delete" asp-route-id="@item.ProductId" method="post" style="display:none;">
+                                                @Html.AntiForgeryToken()
+                                            </form>
                                         </td>
                                     </tr>
                                 }
@@ -81,29 +95,15 @@
     </div>
 </div>
 
-@* 查看詳情 Modal *@
-<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+@* --- 3. 詳情 Modal --- *@
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="detailsModalLabel">景點詳細資訊</h5>
+                <h5 class="modal-title fw-bold">票券詳細資訊</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                @* 1. 這裡放原本的詳細文字內容 *@
-                <div id="detailsContent"></div>
-
-                <hr />
-                @* 2. 這裡專門放標籤 *@
-                <div class="mb-3">
-                    <h6 class="fw-bold"><i class="fas fa-tags me-2"></i>景點標籤：</h6>
-                    <div id="attractionTags" class="d-flex flex-wrap gap-2 mt-2">
-                        @* 標籤會由 JS 動態產生成 span *@
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            <div class="modal-body" id="detailsContent">
             </div>
         </div>
     </div>
@@ -111,49 +111,12 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // --- 審核功能 (核准) ---
-        function confirmApprove(id, name) {
-            Swal.fire({
-                title: '確認核准',
-                text: '您確定要通過景點「' + name + '」的審核嗎？',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#31ce36',
-                cancelButtonColor: '#d33',
-                confirmButtonText: '是的，准許通過！',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('approve-form-' + id).submit();
-                }
-            })
-        }
-
-        // --- 審核功能 (重設/撤回) ---
-        function confirmReset(id, name) {
-            Swal.fire({
-                title: '重設狀態？',
-                text: '您確定要把景點「' + name + '」改回審核中嗎？',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#f39c12',
-                cancelButtonColor: '#d33',
-                confirmButtonText: '是的，重設它',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('approve-form-' + id).submit();
-                }
-            })
-        }
-
-        // --- 刪除功能 ---
+        // --- 1. 刪除確認功能 ---
         function confirmDelete(id, name) {
             Swal.fire({
                 title: '確定要刪除嗎？',
-                text: '景點「' + name + '」刪除後將無法還原！',
+                text: '票券「' + name + '」刪除後將無法還原！',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -162,97 +125,62 @@
                 cancelButtonText: '取消'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.getElementById('delete-form-' + id).submit();
+                    const form = document.getElementById('delete-form-' + id);
+                    if (form) form.submit();
                 }
             })
         }
 
-               // --- 查看詳情功能 ---
-        function showDetails(id) {
-            $('#detailsModal').modal('show');
-            // 清空舊標籤並顯示載入中
-            $('#attractionTags').empty();
-            $('#detailsContent').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>');
+        // --- 2. 狀態切換功能 (AJAX 提交或模擬表單) ---
+        function toggleStatus(id, newStatus, title) {
+            const actionText = newStatus === 1 ? '上架' : '下架';
+            const color = newStatus === 1 ? '#28a745' : '#6c757d';
 
-            $.get('@Url.Action("GetDetails")/' + id, function (data) {
-                // 1. 處理標籤區塊 (渲染到你 Modal 預留的 #attractionTags)
-                let tagHtml = '';
-                   if (data.tags && data.tags.length > 0) {
-        // 這裡加上 d-flex (彈性佈局) 和 justify-content-start (靠左對齊)
-        // gap-2 會讓標籤之間保持固定的小距離，而不會亂跳
-        tagHtml = `<div class="d-flex flex-wrap justify-content-start gap-2">`;
-        tagHtml += data.tags.map(t =>
-            `<span class="badge rounded-pill bg-primary px-3 py-2 shadow-sm" style="font-size:0.85rem; white-space:nowrap;">#${t}</span>`
-        ).join('');
-        tagHtml += `</div>`;
-                } else {
-                    tagHtml = '<span class="text-muted small">尚未設定標籤</span>';
+            Swal.fire({
+                title: `確定要${actionText}嗎？`,
+                text: `票券「${title}」將變更為${actionText}狀態。`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: color,
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: `是的，${actionText}！`,
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 建立動態表單提交，這樣不用改太多後端 API
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    // 請確保後端 Controller 有對應的 ToggleActive Action
+                    form.action = '@Url.Action("ToggleActive", "AttractionTicket")';
+
+                    const idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'id';
+                    idInput.value = id;
+
+                    const statusInput = document.createElement('input');
+                    statusInput.type = 'hidden';
+                    statusInput.name = 'isActive';
+                    statusInput.value = newStatus;
+
+                    form.appendChild(idInput);
+                    form.appendChild(statusInput);
+                    document.body.appendChild(form);
+                    form.submit();
                 }
-                $('#attractionTags').html(tagHtml);
-
-                // 2. 處理圖片區塊 (維持你原本的邏輯)
-                let imgHtml = '';
-                if (data.images && data.images.length > 0) {
-                    imgHtml = '<div class="row mt-3">';
-                    data.images.forEach(path => {
-                        imgHtml += `
-                            <div class="col-md-4 mb-3">
-                                <a href="${path}" target="_blank">
-                                    <img src="${path}" class="img-thumbnail w-100" style="height:150px; object-fit:cover;" title="點擊放大">
-                                </a>
-                            </div>`;
-                    });
-                    imgHtml += '</div>';
-                } else {
-                    imgHtml = '<p class="text-muted">暫無照片</p>';
-                }
-
-                // 3. 組合主體內容
-                let html = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>景點名稱：</strong> ${data.name}</p>
-                            <p><strong>所屬區域：</strong> ${data.region}</p>
-                            <p><strong>地址：</strong> ${data.address}</p>
-                            <p><strong>電話：</strong> ${data.phone}</p>
-                            <p><strong>新增時間：</strong> ${data.createdAt}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>經度：</strong> ${data.lng}</p>
-                            <p><strong>緯度：</strong> ${data.lat}</p>
-                            <p><strong>官方網站：</strong> ${data.website !== '無' ? `<a href="${data.website}" target="_blank">點我前往</a>` : '無'}</p>
-                        </div>
-                        <div class="col-12"><hr></div>
-                        <div class="col-12">
-                            <p><strong>營業時間：</strong><br>${data.businessHours ? data.businessHours.replace(/\n/g, '<br>') : '無'}</p>
-                            <p><strong>公休說明：</strong> ${data.closedDays || '無'}</p>
-                            <p><strong>交通資訊：</strong><br>${data.transport || '無'}</p>
-                        </div>
-                        <div class="col-12"><hr></div>
-                        <div class="col-12">
-                            <strong>景點照片：</strong>
-                            ${imgHtml}
-                        </div>
-                    </div>
-                `;
-                $('#detailsContent').html(html);
-            }).fail(function() {
-                $('#detailsContent').html('<div class="alert alert-danger">讀取資料失敗。</div>');
             });
         }
 
-        // --- 成功提示 ---
-        @if (TempData["SuccessMessage"] != null)
-        {
-                        <text>
-                        Swal.fire({
-                            icon: 'success',
-                            title: '完成！',
-                            text: '@Html.Raw(TempData["SuccessMessage"])',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                        </text>
+        // --- 3. 成功訊息顯示 ---
+        const successMsg = '@Html.Raw(TempData["SuccessMessage"])';
+        if (successMsg && successMsg !== '') {
+            Swal.fire({
+                icon: 'success',
+                title: '完成！',
+                text: successMsg,
+                timer: 2000,
+                showConfirmButton: false
+            });
         }
     </script>
 }

@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using TravelWeb.Areas.Attractions.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
+using TravelWeb.Areas.Attractions.Models;
 
 namespace TravelWeb.Areas.Attractions.Models;
 
@@ -37,9 +38,13 @@ public partial class AttractionsContext : DbContext
         {
             foreach (var property in entity.GetProperties())
             {
-                // 自動轉換：CreatedAt -> created_at
-                var columnName = string.Concat(property.Name.Select((x, i) => i > 0 && char.IsUpper(x) ? "_" + x.ToString() : x.ToString())).ToLower();
-                property.SetColumnName(columnName);
+                // 關鍵判斷：只有當「還沒有手動設定過欄位名稱」時，才進行自動轉換
+                if (string.IsNullOrEmpty(property.GetColumnName(StoreObjectIdentifier.Table(entity.GetTableName(), entity.GetSchema()))))
+                {
+                    var columnName = string.Concat(property.Name.Select((x, i) =>
+                        i > 0 && char.IsUpper(x) ? "_" + x.ToString() : x.ToString())).ToLower();
+                    property.SetColumnName(columnName);
+                }
             }
         }
         // 1. 景點表設定

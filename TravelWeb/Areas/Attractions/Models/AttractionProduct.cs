@@ -29,7 +29,7 @@ public partial class AttractionProduct
 
     public string? TicketTypeCode { get; set; }
 
-    public virtual Attraction Attraction { get; set; } = null!;
+    public virtual Attraction? Attraction { get; set; } = null!;
 
     public virtual ICollection<AttractionProductFavorite> AttractionProductFavorites { get; set; } = new List<AttractionProductFavorite>();
 

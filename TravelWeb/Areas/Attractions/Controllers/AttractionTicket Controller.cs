@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Attractions.Models;
 
@@ -27,14 +28,8 @@ namespace TravelWeb.Areas.Attractions.Controllers
         // GET: Attractions/AttractionTicket/Create
         public IActionResult Create()
         {
-            // 抓取所有景點，準備給下拉選單使用
-            // 注意：這裡的 Select 欄位名稱要對應你的 Attraction Model
-            var attractions = _context.Attractions
-                .Select(a => new { a.AttractionId, a.Name })
-                .ToList();
-
-            ViewBag.AttractionList = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(attractions, "AttractionId", "Name");
-
+            var attractions = _context.Attractions.ToList();
+            ViewBag.AttractionList = new SelectList(attractions, "AttractionId", "Name");
             return View();
         }
 
@@ -43,18 +38,58 @@ namespace TravelWeb.Areas.Attractions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AttractionProduct product)
         {
+            // 移除不必要的驗證項（如果導覽屬性沒改 nullable，這行可以手動移除該項目的驗證）
+            ModelState.Remove("Attraction");
+
             if (ModelState.IsValid)
             {
-                product.CreatedAt = DateTime.Now; // 自動填入建立時間
+                // 1. 自動補上建立時間
+                product.CreatedAt = DateTime.Now;
+
+                // 2. 處理 Status：如果畫面上沒填，就補上資料庫的預設值 'DRAFT'
+                if (string.IsNullOrEmpty(product.Status))
+                {
+                    product.Status = "DRAFT";
+                }
+
+                // 3. 處理 RegionId：如果你的系統一定要有區域 ID
+                if (product.RegionId == null || product.RegionId == 0)
+                {
+                    product.RegionId = 1; // 根據你的資料庫情況給予一個預設值
+                }
+
                 _context.Add(product);
                 await _context.SaveChangesAsync();
+
+                // 加上操作成功的提示訊息
+                TempData["SuccessMessage"] = $"票券「{product.Title}」已成功新增！";
+
                 return RedirectToAction(nameof(Index));
             }
 
-            // 如果失敗，重新準備下拉選單資料
-            var attractions = _context.Attractions.Select(a => new { a.AttractionId, a.Name }).ToList();
-            ViewBag.AttractionList = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(attractions, "AttractionId", "Name");
+            // --- 驗證失敗時的除錯與回傳 ---
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            foreach (var error in errors)
+            {
+                System.Diagnostics.Debug.WriteLine("驗證錯誤: " + error);
+            }
+
+            ViewBag.AttractionList = new SelectList(_context.Attractions, "AttractionId", "Name", product.AttractionId);
             return View(product);
+        }
+
+
+        [HttpPost]
+        public IActionResult ToggleActive(int id, int isActive)
+        {
+            var product = _context.AttractionProducts.Find(id);
+            if (product != null)
+            {
+                product.IsActive = isActive;
+                _context.SaveChanges();
+                TempData["SuccessMessage"] = $"票券狀態已成功更新！";
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }
