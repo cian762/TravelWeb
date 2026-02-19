@@ -35,6 +35,8 @@ public partial class Attraction
 
     public string? TransportInfo { get; set; }
 
+    // 增加軟刪除標記
+    public bool IsDeleted { get; set; } = false;
     public DateTime CreatedAt { get; set; }
 
     // 這行是告訴系統：Attraction 裡面有一個屬性連向 TaqsRegion 表

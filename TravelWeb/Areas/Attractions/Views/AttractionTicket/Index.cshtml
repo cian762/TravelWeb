@@ -34,6 +34,7 @@
                                     <th>票券名稱</th>
                                     <th>所屬景點</th>
                                     <th>售價</th>
+                                    <th>每人限購</th>
                                     <th>系統狀態 (點擊切換)</th>
                                     <th>銷售狀態 (點擊切換)</th>
                                     <th style="width: 15%">操作</th>
@@ -47,6 +48,17 @@
                                         <td><strong>@item.Title</strong></td>
                                         <td>@(item.Attraction?.Name ?? "未指定")</td>
                                         <td class="text-danger fw-bold">@item.Price?.ToString("C0")</td>
+                                        <td>
+                                            @if (item.MaxPurchaseQuantity > 0)
+                                            {
+                                                <span>@item.MaxPurchaseQuantity 張</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">無限制</span>
+                                            }
+                                        </td>
+
                                         <td>
                                             @* 點擊變更 DRAFT/PUBLISHED/ARCHIVED *@
                                             <button type="button" class="btn btn-xs btn-outline-info btn-round"

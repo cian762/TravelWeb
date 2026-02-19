@@ -10,8 +10,7 @@ public partial class AttractionProduct
     public string ProductCode { get; set; } = null!;
 
     public int AttractionId { get; set; }
-
-    public int? RegionId { get; set; }
+ 
 
     public string Title { get; set; } = null!;
 
@@ -27,8 +26,9 @@ public partial class AttractionProduct
 
     public int? IsActive { get; set; }
 
-    public string? TicketTypeCode { get; set; }
+    public int? TicketTypeCode { get; set; } // 必須與 TicketType 表的型別一致
 
+    public virtual TicketType? TicketType { get; set; }
     public virtual Attraction? Attraction { get; set; } = null!;
 
     public virtual ICollection<AttractionProductFavorite> AttractionProductFavorites { get; set; } = new List<AttractionProductFavorite>();

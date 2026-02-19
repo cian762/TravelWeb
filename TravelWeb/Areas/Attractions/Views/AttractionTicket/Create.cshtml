@@ -44,14 +44,21 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
-            @* 5. 是否啟用 (改用選單) *@
             <div class="form-group mb-3">
-                <label asp-for="IsActive" class="control-label">狀態</label>
-                <select asp-for="IsActive" class="form-control">
-                    <option value="1">銷售中</option>
-                    <option value="0">下架</option>
+                <label asp-for="MaxPurchaseQuantity" class="control-label">單筆最大購買數量</label>
+                <input asp-for="MaxPurchaseQuantity" type="number" class="form-control" min="1" placeholder="例如：10 (留空代表不限制)" />
+                <span class="text-muted small">※ 限制會員單筆訂單最多可購買的張數。</span>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">票券狀態</label>
+                <select name="Status" class="form-control">
+                    <option value="DRAFT" selected>草稿 (DRAFT)</option>
+                    <option value="ACTIVE">已發佈 (ACTIVE)</option>
+                    <option value="INACTIVE">暫時下架 (INACTIVE)</option>
+                    <option value="ARCHIVED">封存 (ARCHIVED)</option>
                 </select>
-                <span asp-validation-for="IsActive" class="text-danger"></span>
+                <span class="text-muted small">※ 只有設定為「已發佈」時，系統才會自動同步為銷售中。</span>
             </div>
 
           

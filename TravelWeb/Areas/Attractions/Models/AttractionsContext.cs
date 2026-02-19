@@ -69,7 +69,7 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.RegionId).HasColumnName("RegionID");
             entity.Property(e => e.TransportInfo).HasColumnName("transport_info");
             entity.Property(e => e.Website).HasMaxLength(500).HasColumnName("website");
-
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             // 與 TagsRegion 的關聯
             entity.HasOne(d => d.Region)
                 .WithMany(p => p.Attractions)
@@ -85,7 +85,7 @@ public partial class AttractionsContext : DbContext
                 entity.Property(e => e.ProductId).HasColumnName("product_id");
                 entity.Property(e => e.ProductCode).HasColumnName("product_code").HasMaxLength(50);
                 entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
-                entity.Property(e => e.RegionId).HasColumnName("region_id"); // 注意這裡要跟 DB 一致
+               
                 entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(255);
                 entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(50);
                 entity.Property(e => e.PolicyId).HasColumnName("policy_id");
@@ -143,9 +143,11 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)").HasColumnName("price");
             entity.Property(e => e.ProductCode).HasMaxLength(50).HasColumnName("product_code");
 
-            entity.HasOne(d => d.Attraction).WithMany(p => p.AttractionProducts)
-                .HasForeignKey(d => d.AttractionId)
-                .HasConstraintName("FK_AttractionProducts_Attractions");
+            // 關鍵修正：明確指定外鍵對應
+            entity.HasOne(d => d.TicketType)
+                  .WithMany(p => p.AttractionProducts)
+                  .HasForeignKey(d => d.TicketTypeCode) // 告訴 EF 你的外鍵是這一欄
+                  .HasConstraintName("FK_AttractionProducts_TicketTypes");
         });
 
         modelBuilder.Entity<AttractionProductDetail>(entity =>
@@ -220,8 +222,17 @@ public partial class AttractionsContext : DbContext
         {
             entity.HasKey(e => e.TicketTypeCode);
             entity.ToTable("TicketTypes", "Attractions");
-            entity.Property(e => e.TicketTypeCode).HasMaxLength(20).HasColumnName("ticket_type_code");
+
+            // 移除 HasMaxLength，因為 int 不支援長度設定
+            entity.Property(e => e.TicketTypeCode)
+                  .HasColumnName("ticket_type_code");
+
+            entity.Property(e => e.TicketTypeName)
+                  .HasMaxLength(50) // 對應你的 nvarchar(50)
+                  .HasColumnName("ticket_type_name");
         });
+
+
 
         OnModelCreatingPartial(modelBuilder);
     }

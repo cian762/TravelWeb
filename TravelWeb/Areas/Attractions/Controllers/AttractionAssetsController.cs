@@ -20,12 +20,13 @@ namespace TravelWeb.Areas.Attractions.Controllers
             _hostEnvironment = hostEnvironment; // 👈 這裡對應賦值
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var data = _context.Attractions
-                               .Include(a => a.Region)
-                               .ToList();
-            return View(data);
+            // 只抓取 IsDeleted 為 false 的景點
+            var list = await _context.Attractions
+                                     .Where(a => !a.IsDeleted)
+                                     .ToListAsync();
+            return View(list);
         }
 
         // 1. 顯示新增頁面 (Get)
@@ -199,20 +200,30 @@ namespace TravelWeb.Areas.Attractions.Controllers
             });
         }
 
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var attraction = await _context.Attractions.FindAsync(id);
-            if (attraction != null)
+            if (attraction == null) return NotFound();
+
+            // 改為軟刪除：不移除資料，只改狀態
+            attraction.IsDeleted = true;
+
+            // 如果希望連動，也可以把該景點下的所有票券也設為下架 (IsActive = 0)
+            var relatedProducts = _context.AttractionProducts.Where(p => p.AttractionId == id);
+            foreach (var product in relatedProducts)
             {
-                _context.Attractions.Remove(attraction);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "景點已成功刪除！";
+                product.IsActive = 0;
+                product.Status = "INACTIVE";
             }
+
+            _context.Update(attraction);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "景點已下架（軟刪除成功）";
             return RedirectToAction(nameof(Index));
         }
-
         public async Task<IActionResult> Edit(int id)
         {
             var attraction = await _context.Attractions

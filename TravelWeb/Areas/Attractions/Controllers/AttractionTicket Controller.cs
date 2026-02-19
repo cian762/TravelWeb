@@ -30,6 +30,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         {
             var attractions = _context.Attractions.ToList();
             ViewBag.AttractionList = new SelectList(attractions, "AttractionId", "Name");
+            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName");
             return View();
         }
 
@@ -38,7 +39,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AttractionProduct product)
         {
-            // 移除不必要的驗證項（如果導覽屬性沒改 nullable，這行可以手動移除該項目的驗證）
+            // 移除不必要的模型驗證，避免因為導覽屬性為空而導致驗證失敗
             ModelState.Remove("Attraction");
 
             if (ModelState.IsValid)
@@ -46,25 +47,35 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 // 1. 自動補上建立時間
                 product.CreatedAt = DateTime.Now;
 
-                // 2. 處理 Status：如果畫面上沒填，就補上資料庫的預設值 'DRAFT'
-                if (string.IsNullOrEmpty(product.Status))
+                // 2. 處理 Status 字串與 IsActive 的連動邏輯
+                // 確保 Status 有值且為大寫，若沒填則給予預設值 "DRAFT"
+                product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
+
+                // --- 自動連動邏輯：只有 ACTIVE 才上架 ---
+                if (product.Status == "ACTIVE")
                 {
-                    product.Status = "DRAFT";
+                    product.IsActive = 1; // 銷售中
+                }
+                else
+                {
+                    product.IsActive = 0; // 已下架 (適用於 DRAFT, INACTIVE, ARCHIVED)
                 }
 
-                // 3. 處理 RegionId：如果你的系統一定要有區域 ID
-                if (product.RegionId == null || product.RegionId == 0)
+              
+                try
                 {
-                    product.RegionId = 1; // 根據你的資料庫情況給予一個預設值
+                    _context.Add(product);
+                    await _context.SaveChangesAsync();
+
+                    // 加上操作成功的提示訊息
+                    TempData["SuccessMessage"] = $"票券「{product.Title}」已成功新增，狀態為 {product.Status}！";
+                    return RedirectToAction(nameof(Index));
                 }
-
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-
-                // 加上操作成功的提示訊息
-                TempData["SuccessMessage"] = $"票券「{product.Title}」已成功新增！";
-
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    // 處理資料庫存檔時的例外（例如違反唯一性約束等）
+                    ModelState.AddModelError("", "存檔至資料庫時發生錯誤：" + ex.Message);
+                }
             }
 
             // --- 驗證失敗時的除錯與回傳 ---
@@ -74,10 +85,10 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 System.Diagnostics.Debug.WriteLine("驗證錯誤: " + error);
             }
 
+            // 重新準備下拉選單資料並回傳 View
             ViewBag.AttractionList = new SelectList(_context.Attractions, "AttractionId", "Name", product.AttractionId);
             return View(product);
         }
-
 
         // --- 狀態切換功能 (IsActive) ---
         [HttpPost]
