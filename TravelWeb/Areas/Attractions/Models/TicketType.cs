@@ -5,7 +5,7 @@ namespace TravelWeb.Areas.Attractions.Models;
 
 public partial class TicketType
 {
-    public string TicketTypeCode { get; set; } = null!;
+    public int? TicketTypeCode { get; set; } = null!;
 
     public string TicketTypeName { get; set; } = null!;
 

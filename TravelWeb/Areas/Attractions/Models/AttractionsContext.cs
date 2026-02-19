@@ -33,6 +33,15 @@ public partial class AttractionsContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entity.GetProperties())
+            {
+                // 自動轉換：CreatedAt -> created_at
+                var columnName = string.Concat(property.Name.Select((x, i) => i > 0 && char.IsUpper(x) ? "_" + x.ToString() : x.ToString())).ToLower();
+                property.SetColumnName(columnName);
+            }
+        }
         // 1. 景點表設定
         modelBuilder.Entity<Attraction>(entity =>
         {
@@ -61,6 +70,34 @@ public partial class AttractionsContext : DbContext
                 .WithMany(p => p.Attractions)
                 .HasForeignKey(d => d.RegionId)
                 .HasConstraintName("FK_Attractions_Tags_Regions");
+
+            // 2. 景點票券產品表設定
+            modelBuilder.Entity<AttractionProduct>(entity =>
+            {
+                entity.ToTable("AttractionProducts", "Attractions"); // 指定 Schema 為 Attractions
+                entity.HasKey(e => e.ProductId);
+
+                entity.Property(e => e.ProductId).HasColumnName("product_id");
+                entity.Property(e => e.ProductCode).HasColumnName("product_code").HasMaxLength(50);
+                entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
+                entity.Property(e => e.RegionId).HasColumnName("region_id"); // 注意這裡要跟 DB 一致
+                entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(255);
+                entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(50);
+                entity.Property(e => e.PolicyId).HasColumnName("policy_id");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasColumnType("datetime2(7)");
+                entity.Property(e => e.Price).HasColumnName("price").HasColumnType("decimal(10, 2)");
+                entity.Property(e => e.MaxPurchaseQuantity).HasColumnName("max_purchase_quantity");
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+                entity.Property(e => e.TicketTypeCode).HasColumnName("ticket_type_code");
+
+                // 設定與 Attraction 的關聯
+                entity.HasOne(d => d.Attraction)
+                    .WithMany(p => p.AttractionProducts) // 確保 Attraction Model 裡有這個 ICollection
+                    .HasForeignKey(d => d.AttractionId)
+                    .HasConstraintName("FK_AttractionProducts_Attractions");
+            });
+
+
         });
 
         // 2. 圖片表設定 (核心修復)
