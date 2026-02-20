@@ -9,32 +9,50 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
     {
 
         public int TripProductId { get; set; }
+
         [DisplayName("第幾天")]
-        [Required(ErrorMessage ="請輸入天數")]
+        [Required(ErrorMessage = "請輸入天數")]
         public int? DayNumber { get; set; }
+
         [DisplayName("行程排序號碼")]
         [Required(ErrorMessage = "請輸入排序數字")]
         public int? SortOrder { get; set; }
-        [DisplayName("景點名稱")]
 
+        // --- 名稱相關 ---
+        [DisplayName("景點名稱")]
         public string? AttractionName { get; set; }
+
         [DisplayName("活動名稱")]
         public string? ActivityName { get; set; }
-       
-        [DisplayName("自訂景點或活動")]
+
+        [DisplayName("自訂資源名稱")]
         public string? ResourceName { get; set; }
-        [DisplayName("內容描述")]
+
+        // --- 內容描述 (這是要存進 Resources 表的 DefaultDescription) ---
+        [DisplayName("內容描述 (快照)")]
         public string? CustomText { get; set; }
-        [DisplayName("圖片預覽")]
-        public string ?ImagePath { get; set; }
-        [DisplayName("資源圖片上傳")]
-        public IFormFile ?FileImage { get; set; }
-        public int ?ResourceId { get; set; }
-        public int ?AttractionId { get; set; }
-        public int ?ActivityId { get; set; }
+
+        // --- 圖片處理關鍵欄位 ---
+
+        [DisplayName("圖片快照路徑")]
+        public string? ImagePath { get; set; } // 💡 用來接收前端選中的那張「快照圖」路徑
+
+        [DisplayName("上傳多張資源圖片")]
+        public List<IFormFile>? FileImages { get; set; } // 💡 修改：從 IFormFile 改成 List，支援多圖上傳
+
+        // --- 關聯 ID ---
+        public int? ResourceId { get; set; }
+        public int? AttractionId { get; set; }
+        public int? ActivityId { get; set; }
+
+        // --- 選單與設定 ---
         public IEnumerable<SelectListItem>? AttractionList { get; set; }
         public IEnumerable<SelectListItem>? ActivityList { get; set; }
         public int MaxDays { get; set; }
+
+        // --- 預覽用 (Ajax 回傳) ---
+        public List<string>? ResourceImages { get; set; }
+
 
 
 

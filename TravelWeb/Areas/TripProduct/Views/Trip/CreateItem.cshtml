@@ -16,10 +16,12 @@
         <div class="col-md-8 mx-auto">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <form asp-action="ItemCreate" method="post" enctype="multipart/form-data">
+                    <form asp-action="ItemCreate" method="post" enctype="multipart/form-data" id="itineraryForm">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <input type="hidden" asp-for="TripProductId" />
+                        @* 💡 用來存最後選中的快照路徑 *@
+                        <input type="hidden" asp-for="ImagePath" id="FinalImagePath" />
 
                         <div class="row mb-3">
                             <div class="col">
@@ -48,36 +50,41 @@
                             </div>
                         </div>
 
+                        @* 💡 原始欄位保留，增加 onchange 事件 *@
                         <div id="section-attraction" class="type-section mb-3">
                             <label class="form-label">現有景點清單</label>
-                            <select asp-for="AttractionId" asp-items="Model.AttractionList" class="form-select">
+                            <select asp-for="AttractionId" asp-items="Model.AttractionList" class="form-select" onchange="fetchResourceDetail('attraction', this.value)">
                                 <option value="">-- 請選擇景點 --</option>
                             </select>
                         </div>
 
                         <div id="section-activity" class="type-section mb-3" style="display:none;">
                             <label class="form-label">現有活動清單</label>
-                            <select asp-for="ActivityId" asp-items="Model.ActivityList" class="form-select">
+                            <select asp-for="ActivityId" asp-items="Model.ActivityList" class="form-select" onchange="fetchResourceDetail('activity', this.value)">
                                 <option value="">-- 請選擇活動 --</option>
                             </select>
+                        </div>
+
+                        @* 💡 圖片選取預覽區 (動態出現) *@
+                        <div id="imagePreviewArea" class="mb-3 d-none">
+                            <label class="form-label text-primary fw-bold">資源圖片預覽</label>
+                            <div id="imageContainer" class="d-flex flex-wrap gap-2 p-2 border rounded bg-light">
+                                </div>
                         </div>
 
                         <div id="section-custom" class="type-section mb-3" style="display:none;">
                             <div class="p-3 border rounded bg-light">
                                 <div class="mb-3">
-                                    <label asp-for="ResourceName" class="form-label"></label>
-                                    <input asp-for="ResourceName" class="form-control" />
+                                    <label class="form-label">上傳多張資源圖片</label>
+                                    <input name="FileImages" id="FileImages" type="file" class="form-control" multiple accept="image/*" onchange="previewFiles(this)" />
                                 </div>
-                                <div class="mb-3">
-                                    <label asp-for="FileImage" class="form-label"></label>
-                                    <input asp-for="FileImage" type="file" class="form-control" />
-                                </div>
+                                <div id="customImagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="CustomText" class="form-label"></label>
-                            <textarea asp-for="CustomText" class="form-control" rows="3"></textarea>
+                            <label asp-for="CustomText" class="form-label">內容描述 (快照)</label>
+                            <textarea asp-for="CustomText" class="form-control" rows="5"></textarea>
                             <span asp-validation-for="CustomText" class="text-danger"></span>
                         </div>
 
@@ -98,12 +105,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function toggleType(type) {
-            // 隱藏所有
             document.querySelectorAll('.type-section').forEach(el => el.style.display = 'none');
-            // 顯示目標
             document.getElementById('section-' + type).style.display = 'block';
 
-            // 清空非當前選擇的欄位值，避免後端接收到衝突的 ID
+            // 切換時隱藏圖片預覽
+            $('#imagePreviewArea').addClass('d-none');
+            $('#imageContainer').empty();
+
             if (type !== 'attraction') document.getElementById('AttractionId').value = '';
             if (type !== 'activity') document.getElementById('ActivityId').value = '';
             if (type !== 'custom') {
@@ -111,5 +119,55 @@
                 document.getElementById('FileImage').value = '';
             }
         }
+
+        // 💡 關鍵：當下拉選單改變時，抓取資料
+        function fetchResourceDetail(type, id) {
+            if (!id) {
+                $('#imagePreviewArea').addClass('d-none');
+                return;
+            }
+
+            // 呼叫後端 API (這部分需要你在 Controller 準備好 Action)
+            $.get('/TripProduct/GetResourceDetail', { type: type, id: id }, function (data) {
+                if (data) {
+                    // 1. 自動填入描述
+                    $('#CustomText').val(data.description);
+
+                    // 2. 處理多圖預覽
+                    let imgHtml = '';
+                    if (data.images && data.images.length > 0) {
+                        data.images.forEach((path, index) => {
+                            imgHtml += `
+                                <img src="${path}" class="img-thumbnail selectable-img"
+                                     style="width: 100px; height: 100px; cursor: pointer; object-fit: cover;"
+                                     onclick="selectSnapshot(this, '${path}')" />`;
+                        });
+                        $('#imageContainer').html(imgHtml);
+                        $('#imagePreviewArea').removeClass('d-none');
+
+                        // 預設選取第一張
+                        selectSnapshot($('#imageContainer img:first'), data.images[0]);
+                    } else {
+                        $('#imagePreviewArea').addClass('d-none');
+                    }
+                }
+            });
+        }
+
+        function selectSnapshot(el, path) {
+            // 視覺高亮
+            $('.selectable-img').removeClass('border-primary border-4');
+            $(el).addClass('border-primary border-4');
+            // 填入隱藏欄位供存檔
+            $('#FinalImagePath').val(path);
+        }
     </script>
+
+    <style>
+        .selectable-img:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+            transition: 0.2s;
+        }
+    </style>
 }

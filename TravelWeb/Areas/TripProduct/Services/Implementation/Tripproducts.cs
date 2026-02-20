@@ -90,7 +90,7 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
         //這是顯示行程主表首頁的方法
         public async Task<(IEnumerable<TripIndexViewModel> List, int TotalCount)> GetAllForIndex(string? keyword = null, int? regionId = null,string ?status = null,  int page = 1)
         {
-            int pageSize = 2;
+            int pageSize = 10;
 
             // 1. 永遠先過濾掉「軟刪除」的資料
             var query = _context.TripProducts

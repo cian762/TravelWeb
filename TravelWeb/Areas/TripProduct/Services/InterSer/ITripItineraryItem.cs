@@ -1,4 +1,5 @@
 ﻿using TravelWeb.Areas.TripProduct.Models.ViewModels;
+using TravelWeb.Areas.TripProduct.Services.Implementation;
 
 namespace TravelWeb.Areas.TripProduct.Services.InterSer
 {
@@ -9,5 +10,6 @@ namespace TravelWeb.Areas.TripProduct.Services.InterSer
         Task<bool> IUpdate(TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelTripItineraryItems items);
         Task<bool> IDelete(int id);
         Task<ViewModelTripItineraryItems> PrepareViewModel(int tripProductId);
+        Task<ResourceDetailDto> GetResourceDetailAsync(string type, int id);
     }
 }

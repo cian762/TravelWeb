@@ -35,7 +35,7 @@ namespace TravelWeb.Areas.TripProduct.Controllers
             // 4. 分頁計算
             ViewBag.TotalCount = totalCount;
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / 2);
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount /10);
 
             return View(list);
         }
@@ -131,11 +131,43 @@ namespace TravelWeb.Areas.TripProduct.Controllers
             return View(q);
         }
         [HttpGet]
+        public async Task<IActionResult> GetResourceDetail(string type, int id)
+        {
+            // 💡 呼叫 Service 裡的邏輯
+            var detail = await _item.GetResourceDetailAsync(type, id);
+
+            // 如果沒抓到資料，回傳空物件避免前端噴錯
+            if (detail == null) return Json(new { description = "", images = new List<string>() });
+
+            return Json(detail);
+        }
+        [HttpGet]
         public async Task<IActionResult> CreateItem(int id)
         { 
          var vm=await _item.PrepareViewModel(id);
             return View(vm);
         }
-       
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ItemCreate(ViewModelTripItineraryItems vm)
+        {
+            if (ModelState.IsValid)
+            {
+                // 💡 呼叫 Service 的 ICreate 方法進行複雜的存檔邏輯
+                // 這包含：存圖片檔案、寫入 Resources 表、寫入 TripItineraryItems 表
+                bool isSuccess = await _item.ICreate(vm);
+
+                if (isSuccess)
+                {
+                    return RedirectToAction(nameof(ItemIndex), new { id = vm.TripProductId });
+                }
+                ModelState.AddModelError("", "儲存失敗，請檢查資料。");
+            }
+
+            // 如果失敗，重新準備下拉選單資料再回傳 View
+            var reloadVm = await _item.PrepareViewModel(vm.TripProductId);
+            return View(reloadVm);
+        }
+
     }
 }
