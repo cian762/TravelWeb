@@ -1,8 +1,40 @@
 ﻿@model TravelWeb.Areas.Attractions.Models.AttractionProduct
 
 @{
-    ViewData["Title"] = "編輯景點票券"; // 修正標題
+    ViewData["Title"] = "編輯景點票券"; 
 }
+
+<style>
+    /* 讓詳細內容區塊的邊框變淡，並增加圓角 */
+    .custom-detail-area {
+        border: 1px solid #dee2e6 !important; /* 降低對比度 */
+        background-color: #fdfdfd; /* 極淡的灰色背景，增加層次感 */
+        border-radius: 6px;
+        padding: 15px;
+    }
+
+    /* 調整 textarea 樣式，移除過重的陰影 */
+    .form-control.custom-textarea {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+
+        /* 當滑鼠點擊進去時的柔和效果 */
+        .form-control.custom-textarea:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .1);
+            outline: 0;
+        }
+
+    /* 弱化標題邊界感 */
+    .detail-label {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
 
 <h1>編輯景點票券</h1>
 
@@ -75,6 +107,30 @@
                 </select>
                 <span class="text-muted small">※ 設定為「已發佈 (ACTIVE)」時，前台才會顯示為銷售中。</span>
                 <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>票券詳細內容</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label class="control-label fw-bold">內容介紹</label>
+                        @* 注意這裡的 name 屬性必須對應到 Model 的導覽屬性 *@
+                        <textarea name="AttractionProductDetail.ContentDetails" class="form-control" rows="5" placeholder="請輸入產品的詳細特色介紹...">@Model.AttractionProductDetail?.ContentDetails</textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label fw-bold">使用說明</label>
+                        <textarea name="AttractionProductDetail.UsageInstructions" class="form-control" rows="5" placeholder="請輸入兌換流程或使用限制...">@Model.AttractionProductDetail?.UsageInstructions</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="fw-bold text-muted">內部備註 (僅管理員可見)</label>
+                <input name="AttractionProductDetail.Notes" class="form-control form-control-sm"
+                       value="@Model.AttractionProductDetail?.Notes" placeholder="例如：2026活動用資料..." />
             </div>
 
             <div class="form-group">

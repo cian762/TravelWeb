@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TravelWeb.Models;
 
 namespace TravelWeb.Areas.Attractions.Models;
 
@@ -35,5 +36,8 @@ public partial class AttractionProduct
 
     public virtual ICollection<StockInRecord> StockInRecords { get; set; } = new List<StockInRecord>();
 
+    public virtual ICollection<AttractionProductTag> AttractionProductTags { get; set; } = new HashSet<AttractionProductTag>();
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
+    // 手動補上這一行，讓 Controller 能夠識別
+    public virtual AttractionProductDetail? AttractionProductDetail { get; set; }
 }

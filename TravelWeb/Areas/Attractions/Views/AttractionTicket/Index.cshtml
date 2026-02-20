@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionProduct>
 
 @{
-    ViewData["Title"] = "景點票券管理 - 終極整合版";
+    ViewData["Title"] = "景點票券管理 - 詳情整合版";
 }
 
 <div class="page-inner">
@@ -10,9 +10,7 @@
         <ul class="breadcrumbs">
             <li class="nav-home"><a href="#"><i class="flaticon-home"></i></a></li>
             <li class="separator"><i class="flaticon-right-arrow"></i></li>
-         @*    <li class="nav-item"><a href="#">景點區</a></li> *@
-            <li class="separator"><i class="flaticon-right-arrow"></i></li>
-        @*     <li class="nav-item"><a href="#">票券管理</a></li> *@
+            <li class="nav-item">票券管理</li>
         </ul>
     </div>
 
@@ -65,14 +63,12 @@
                                         </td>
 
                                         <td>
-                                            @* 點擊變更 DRAFT/PUBLISHED/ARCHIVED *@
                                             <button type="button" class="btn btn-xs btn-outline-info btn-round"
                                                     onclick="changeStatus(@item.ProductId, '@(item.Status?.ToUpper() ?? "DRAFT")', '@item.Title')">
                                                 <i class="fas fa-sync-alt"></i> @(item.Status ?? "DRAFT")
                                             </button>
                                         </td>
                                         <td>
-                                            @* 點擊變更 0/1 *@
                                             @if (item.IsActive == 1)
                                             {
                                                 <button type="button" class="btn btn-xs btn-success btn-round"
@@ -86,13 +82,27 @@
                                                         onclick="toggleActive(@item.ProductId, 1, '@item.Title')">
                                                     已下架
                                                 </button>
+
                                             }
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                                                <a asp-controller="Inventory" asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-info"><i class="fas fa-boxes"></i></a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@item.ProductId, '@item.Title')"><i class="fas fa-trash"></i></button>
+                                                @* 1. 編輯按鈕 *@
+                                                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary" title="編輯基本資料">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+
+                                                @* 2. 檢視詳情按鈕 (原本的庫存按鈕改為眼睛圖示) *@
+                                                <button type="button" class="btn btn-sm btn-outline-info"
+                                                        onclick="showProductDetails(@item.ProductId)" title="查看內容詳情">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+
+                                                @* 3. 刪除按鈕 *@
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        onclick="confirmDelete(@item.ProductId, '@item.Title')" title="刪除票券">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
                                             <form id="delete-form-@item.ProductId" asp-action="Delete" asp-route-id="@item.ProductId" method="post" style="display:none;">
                                                 @Html.AntiForgeryToken()
@@ -109,19 +119,48 @@
     </div>
 </div>
 
+@* --- 內容詳情 Modal (彈窗) --- *@
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="detailsModalLabel"><i class="fas fa-info-circle me-2"></i>票券詳細內容</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <h6 class="fw-bold text-info"><i class="fas fa-align-left me-2"></i>內容介紹</h6>
+                    <div id="modalContentDetails" class="p-3 bg-light rounded border" style="min-height: 100px; white-space: pre-line;">
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="fw-bold text-info"><i class="fas fa-clipboard-list me-2"></i>使用說明</h6>
+                    <div id="modalUsageInstructions" class="p-3 bg-light rounded border" style="min-height: 100px; white-space: pre-line;">
+                    </div>
+                </div>
+                <div class="mt-3 p-2 bg-light border-start border-4 border-info">
+                    <h6 class="fw-bold text-info"><i class="fas fa-sticky-note me-2"></i>內部備註</h6>
+                    <div id="modalNotes" class="text-muted small"></div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // 封裝表單提交，減少重複代碼
+        // 封裝表單提交
         function quickPost(action, data) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = action;
-
-            // 加入 CSRF Token 防止 400 錯誤
             const token = document.querySelector('input[name="__RequestVerificationToken"]');
             if (token) form.appendChild(token.cloneNode());
-
             for (const key in data) {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -133,42 +172,74 @@
             form.submit();
         }
 
-        // 1. 銷售狀態切換
+         // --- 銷售狀態切換 (連動系統狀態) ---
         function toggleActive(id, newStatus, title) {
-            const text = newStatus === 1 ? '上架' : '下架';
+            // 根據傳入的 newStatus (0 或 1) 決定顯示文字
+            const actionText = newStatus === 1 ? '上架' : '下架';
+            const statusText = newStatus === 1 ? '銷售中' : '已下架';
+            const iconType = newStatus === 1 ? 'success' : 'warning';
+
             Swal.fire({
-                title: `確定要${text}嗎？`,
-                text: `票券「${title}」狀態將變更。`,
-                icon: 'question',
+                title: `確定要將「${title}」${actionText}嗎？`,
+                text: `這將會同步將系統狀態更新為 ${newStatus === 1 ? 'ACTIVE' : 'DRAFT'}。`,
+                icon: iconType,
                 showCancelButton: true,
-                confirmButtonText: `是的，${text}！`
+                confirmButtonColor: newStatus === 1 ? '#28a745' : '#6c757d',
+                cancelButtonColor: '#d33',
+                confirmButtonText: `是的，我要${actionText}！`,
+                cancelButtonText: '取消'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    quickPost('@Url.Action("ToggleActive")', { id: id, isActive: newStatus });
+                    // 使用你的 quickPost 函數發送資料
+                    // 注意：這裡必須傳送 __RequestVerificationToken，因為後端有 [ValidateAntiForgeryToken]
+                    const token = $('input[name="__RequestVerificationToken"]').val();
+
+                    $.ajax({
+                        url: '@Url.Action("ToggleActive", "AttractionTicket")',
+                        type: 'POST',
+                        data: {
+                            id: id,
+                            isActive: newStatus,
+                            __RequestVerificationToken: token
+                        },
+                        success: function (response) {
+                            // 因為你的 Controller 最後是 return RedirectToAction
+                            // 這裡通常會接收到整個 Index 頁面的 HTML，或者你可以根據需求重新整理頁面
+                            Swal.fire({
+                                title: '更新成功！',
+                                text: `票券已連動變更為${statusText}狀態。`,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload(); // 重新整理頁面，看到最新的連動狀態
+                            });
+                        },
+                        error: function (xhr) {
+                            Swal.fire('錯誤', '狀態更新失敗，請稍後再試。', 'error');
+                        }
+                    });
                 }
             });
         }
 
-               // 2. 系統狀態切換
+        // 2. 系統狀態切換
         function changeStatus(id, current, title) {
             Swal.fire({
                 title: '變更系統狀態',
                 text: `票券「${title}」目前狀態為：${current}`,
                 input: 'select',
                 inputOptions: {
-                    // 左邊的 Key 必須嚴格對應資料庫：ARCHIVED, INACTIVE, ACTIVE, DRAFT
                     'DRAFT': '草稿 (DRAFT)',
-                    'ACTIVE': '已發佈 (ACTIVE)',   // 之前你傳 PUBLISHED，現在改傳 ACTIVE
-                    'INACTIVE': '已下架 (INACTIVE)', // 之前你傳其他值，現在改傳 INACTIVE
+                    'ACTIVE': '已發佈 (ACTIVE)',
+                    'INACTIVE': '已下架 (INACTIVE)',
                     'ARCHIVED': '封存 (ARCHIVED)'
                 },
-                inputValue: current.toUpperCase().trim(), // 確保預設選中項正確
+                inputValue: current.toUpperCase().trim(),
                 showCancelButton: true,
-                confirmButtonText: '確定更新',
-                cancelButtonText: '取消'
+                confirmButtonText: '確定更新'
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
-                    // 這裡傳送出去的 result.value 就會是 'ACTIVE' 或 'INACTIVE' 等
                     quickPost('@Url.Action("UpdateStatus")', { id: id, status: result.value });
                 }
             });
@@ -189,7 +260,26 @@
             });
         }
 
-        // 4. 成功訊息
+        // 4. 取得詳情並顯示 Modal
+        function showProductDetails(id) {
+            // 使用 AJAX 向後端請求 API (等一下要在 Controller 寫這段)
+            $.ajax({
+                url: '@Url.Action("GetDetails")/' + id,
+                type: 'GET',
+                success: function (data) {
+                    $('#modalContentDetails').text(data.contentDetails || '暫無詳細內容介紹');
+                    $('#modalUsageInstructions').text(data.usageInstructions || '暫無相關使用說明');
+                    // --- 補上這行 ---
+                    $('#modalNotes').text(data.notes || "無內部備註");
+                    $('#detailsModal').modal('show');
+                },
+                error: function () {
+                    Swal.fire('錯誤', '無法載入詳情資訊', 'error');
+                }
+            });
+        }
+
+        // 5. 成功訊息
         const successMsg = '@Html.Raw(TempData["SuccessMessage"])';
         if (successMsg) {
             Swal.fire({ icon: 'success', title: '完成', text: successMsg, timer: 2000, showConfirmButton: false });

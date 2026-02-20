@@ -24,6 +24,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         {
             // 只抓取 IsDeleted 為 false 的景點
             var list = await _context.Attractions
+                                      .Include(a => a.Region) // 假設你的導覽屬性叫 Region
                                      .Where(a => !a.IsDeleted)
                                      .ToListAsync();
             return View(list);

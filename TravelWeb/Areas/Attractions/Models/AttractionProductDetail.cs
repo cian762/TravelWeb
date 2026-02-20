@@ -15,5 +15,6 @@ public partial class AttractionProductDetail
 
     public DateTime? LastUpdatedAt { get; set; }
 
-    public virtual AttractionProduct Product { get; set; } = null!;
+    // 只留這一個，? 代表允許 null
+    public virtual AttractionProduct? Product { get; set; }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TravelWeb.Areas.Activity.Models.EFModel;
 using TravelWeb.Areas.Attractions.Models;
+using TravelWeb.Models;
 
 namespace TravelWeb.Areas.Attractions.Models;
 
@@ -31,6 +32,7 @@ public partial class AttractionsContext : DbContext
     public virtual DbSet<Tag> Tags { get; set; }
     public virtual DbSet<TicketType> TicketTypes { get; set; }
     public virtual DbSet<TagsRegion> TagsRegions { get; set; }
+    public virtual DbSet<AttractionProductTag> AttractionProductTags { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -152,11 +154,21 @@ public partial class AttractionsContext : DbContext
 
         modelBuilder.Entity<AttractionProductDetail>(entity =>
         {
-            entity.HasNoKey().ToTable("AttractionProductDetails", "Attractions");
+            // 1. 設定 product_id 為主鍵 (雖然 DB 沒設，但 EF 需要它來追蹤)
+            entity.HasKey(e => e.ProductId);
+
+            entity.ToTable("AttractionProductDetails", "Attractions");
+
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.HasOne(d => d.Product).WithMany()
-                .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_AttractionProductDetails_AttractionProducts");
+            entity.Property(e => e.ContentDetails).HasColumnName("content_details");
+            entity.Property(e => e.UsageInstructions).HasColumnName("usage_instructions");
+            entity.Property(e => e.LastUpdatedAt).HasColumnName("last_updated_at");
+
+            // 2. 正確設定 1 對 1 關係
+            entity.HasOne(d => d.Product)
+                  .WithOne(p => p.AttractionProductDetail) // 指向剛才在 Product 補上的屬性
+                  .HasForeignKey<AttractionProductDetail>(d => d.ProductId)
+                  .HasConstraintName("FK_AttractionProductDetails_AttractionProducts");
         });
 
         modelBuilder.Entity<AttractionProductFavorite>(entity =>
@@ -214,8 +226,16 @@ public partial class AttractionsContext : DbContext
         modelBuilder.Entity<Tag>(entity =>
         {
             entity.HasKey(e => e.TagId);
+
+            // 根據你的圖表，如果是在 Attractions 結構圖中，請確認 Schema 名稱
             entity.ToTable("Tags", "Attractions");
+
             entity.Property(e => e.TagId).HasColumnName("tag_id");
+
+            // 補上標籤名稱的對應
+            entity.Property(e => e.TagName)
+                  .HasMaxLength(50) // 假設長度為 50
+                  .HasColumnName("tag_name");
         });
 
         modelBuilder.Entity<TicketType>(entity =>
@@ -235,7 +255,27 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.SortOrder).HasColumnName("sort_order");
         });
 
+        modelBuilder.Entity<AttractionProductTag>(entity =>
+        {
+            // 設定複合主鍵 (PK)
+            entity.HasKey(e => new { e.ProductId, e.TagId });
 
+            entity.ToTable("AttractionProductTags");
+
+            // 設定與 Product 的關係
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.AttractionProductTags) // 等下要在 Product 補上這一行
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AttractionProductTags_AttractionProducts");
+
+            // 設定與 Tag 的關係
+            entity.HasOne(d => d.Tag)
+                .WithMany(p => p.AttractionProductTags) // 等下要在 Tag 補上這一行
+                .HasForeignKey(d => d.TagId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AttractionProductTags_Tags");
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }

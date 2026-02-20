@@ -4,6 +4,37 @@
     ViewData["Title"] = "新增景點票券";
 }
 
+<style>
+    /* 讓詳細內容區塊的邊框變淡，並增加圓角 */
+    .custom-detail-area {
+        border: 1px solid #dee2e6 !important; /* 降低對比度 */
+        background-color: #fdfdfd; /* 極淡的灰色背景，增加層次感 */
+        border-radius: 6px;
+        padding: 15px;
+    }
+
+    /* 調整 textarea 樣式，移除過重的陰影 */
+    .form-control.custom-textarea {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+
+        /* 當滑鼠點擊進去時的柔和效果 */
+        .form-control.custom-textarea:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .1);
+            outline: 0;
+        }
+
+    /* 弱化標題邊界感 */
+    .detail-label {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
 <h1>新增景點票券</h1>
 
 <hr />
@@ -69,7 +100,27 @@
                 <span class="text-muted small">※ 只有設定為「已發佈」時，系統才會自動同步為銷售中。</span>
             </div>
 
-          
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>票券詳細內容</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">內容介紹</label>
+                        <textarea name="AttractionProductDetail.ContentDetails" class="form-control custom-textarea" rows="4" placeholder="請輸入產品詳細介紹..."></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">使用說明</label>
+                        <textarea name="AttractionProductDetail.UsageInstructions" class="form-control custom-textarea" rows="4" placeholder="請輸入票券使用方式、兌換限制等..."></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold text-muted">內部備註 (僅管理員可見)</label>
+                        <input name="AttractionProductDetail.Notes" class="form-control form-control-sm" placeholder="例如：2026年夏季促銷用..." />
+                    </div>
+                </div>
+            </div>
 
             <div class="form-group mt-4">
                 <input type="submit" value="確認儲存" class="btn btn-primary" />
