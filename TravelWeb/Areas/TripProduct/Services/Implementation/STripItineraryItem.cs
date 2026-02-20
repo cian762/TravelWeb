@@ -23,7 +23,7 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
         public async Task<IEnumerable<ViewModelTripItineraryItems>> IGetAny(int tripProductId)
         {
             var dataList = await _context.TripItineraryItems
-           .Include(t => t.Attraction)
+           .Include(t => t.Attraction).ThenInclude(t=>t)
            .Include(t => t.Activity)
            .Include(t => t.Resource)
            .Where(t => t.TripProductId == tripProductId)

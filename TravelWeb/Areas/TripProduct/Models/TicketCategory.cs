@@ -9,6 +9,8 @@ public partial class TicketCategory
 
     public string? CategoryName { get; set; }
 
+    public virtual ICollection<AcitivityTicket> AcitivityTickets { get; set; } = new List<AcitivityTicket>();
+
     public virtual ICollection<OrderItemTicket> OrderItemTickets { get; set; } = new List<OrderItemTicket>();
 
     public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
