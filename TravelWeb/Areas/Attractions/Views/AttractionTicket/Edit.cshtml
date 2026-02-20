@@ -1,0 +1,93 @@
+﻿@model TravelWeb.Areas.Attractions.Models.AttractionProduct
+
+@{
+    ViewData["Title"] = "編輯景點票券"; // 修正標題
+}
+
+<h1>編輯景點票券</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        @* 重要：asp-action 必須改為 Edit *@
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @* 隱藏欄位：傳遞 ID 與 建立時間給後端，確保更新正確且時間不被覆蓋 *@
+            <input type="hidden" asp-for="ProductId" />
+            <input type="hidden" asp-for="CreatedAt" />
+
+            @* 1. 選擇景點 *@
+            <div class="form-group mb-3">
+                <label asp-for="AttractionId" class="control-label">所屬景點</label>
+                <select asp-for="AttractionId" class="form-control" asp-items="ViewBag.AttractionList">
+                    <option value="">-- 請選擇景點 --</option>
+                </select>
+                <span asp-validation-for="AttractionId" class="text-danger"></span>
+            </div>
+
+            @* 2. 產品代碼 *@
+            <div class="form-group mb-3">
+                <label asp-for="ProductCode" class="control-label">產品代碼</label>
+                <input asp-for="ProductCode" class="form-control" placeholder="例如: TKT-101-001" />
+                <span asp-validation-for="ProductCode" class="text-danger"></span>
+            </div>
+
+            @* 3. 票券名稱 *@
+            <div class="form-group mb-3">
+                <label asp-for="Title" class="control-label">票券名稱</label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            @* 4. 票種 *@
+            <div class="form-group mb-3">
+                <label asp-for="TicketTypeCode" class="control-label">票種</label>
+                <select asp-for="TicketTypeCode" class="form-control" asp-items="ViewBag.TicketTypeList">
+                    <option value="">-- 請選擇票種 --</option>
+                </select>
+                <span asp-validation-for="TicketTypeCode" class="text-danger"></span>
+            </div>
+
+            @* 5. 價格 *@
+            <div class="form-group mb-3">
+                <label asp-for="Price" class="control-label">售價</label>
+                <input asp-for="Price" class="form-control" type="number" step="0.01" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+
+            @* 6. 最大購買數 *@
+            <div class="form-group mb-3">
+                <label asp-for="MaxPurchaseQuantity" class="control-label">單筆最大購買數量</label>
+                <input asp-for="MaxPurchaseQuantity" type="number" class="form-control" min="1" placeholder="例如：10 (留空代表不限制)" />
+                <span class="text-muted small">※ 限制會員單筆訂單最多可購買的張數。</span>
+                <span asp-validation-for="MaxPurchaseQuantity" class="text-danger"></span>
+            </div>
+
+            @* 7. 票券狀態 - 使用 asp-for 讓它自動對應資料庫的值 *@
+            <div class="form-group mb-4">
+                <label asp-for="Status" class="control-label">系統狀態</label>
+                <select asp-for="Status" class="form-control">
+                    <option value="DRAFT">草稿 (DRAFT)</option>
+                    <option value="ACTIVE">已發佈 (ACTIVE)</option>
+                    <option value="INACTIVE">暫時下架 (INACTIVE)</option>
+                    <option value="ARCHIVED">封存 (ARCHIVED)</option>
+                </select>
+                <span class="text-muted small">※ 設定為「已發佈 (ACTIVE)」時，前台才會顯示為銷售中。</span>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary shadow-sm">儲存變更</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">返回列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+

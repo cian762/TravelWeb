@@ -156,5 +156,68 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+
+        // GET: AttractionTicket/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            // 抓取產品資料
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null) return NotFound();
+
+            // 準備景點下拉選單 (過濾掉被軟刪除的)
+            ViewBag.AttractionList = new SelectList(_context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
+
+            // 準備票種下拉選單
+            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+
+            return View(product);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, AttractionProduct product)
+        {
+            if (id != product.ProductId) return NotFound();
+
+            ModelState.Remove("Attraction");
+            ModelState.Remove("TicketType");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // 1. 標準化狀態字串
+                    product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
+
+                    // 2. 自動連動 IsActive (銷售中/已下架)
+                    product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
+
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "更新成功！";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(product.ProductId)) return NotFound();
+                    else throw;
+                }
+            }
+
+            // 失敗時重新準備選單
+            ViewBag.AttractionList = new SelectList(_context.Attractions, "AttractionId", "Name", product.AttractionId);
+            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes, "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            return View(product);
+        }
+        private bool ProductExists(int id)
+        {
+            return _context.AttractionProducts.Any(e => e.ProductId == id);
+        }
     }
-}
+   
+    }
