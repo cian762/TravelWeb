@@ -1,0 +1,19 @@
+CorrelationId: 8f42c09c-df3e-4a41-9e69-c0c2e31e269d
+UTC DateTime: 02/14/2026 01:19:40
+
+The following files/folders have not been downloaded
+0. TravelWeb/obj/Debug/net8.0/staticwebassets.references.upToDateCheck.txt
+1. TravelWeb/obj/Debug/net8.0/staticwebassets.removed.txt
+2. TravelWeb/obj/Debug/net8.0/TravelWeb.csproj.Up2Date
+3. TravelWeb/obj/Debug/net8.0/TravelWeb.MvcApplicationPartsAssemblyInfo.cache
+4. TravelWeb/wwwroot/css/assets/js/plugin/jsvectormap
+5. TravelWeb/wwwroot/css/assets/js/plugin/list.js
+6. TravelWeb/wwwroot/css/assets/js/plugin/owl-carousel
+7. TravelWeb/wwwroot/css/assets/js/plugin/select2
+8. TravelWeb/wwwroot/css/assets/js/plugin/sortable
+9. TravelWeb/wwwroot/css/assets/js/plugin/sticky-sidebar
+10. TravelWeb/wwwroot/css/assets/js/plugin/summernote
+11. TravelWeb/wwwroot/css/assets/js/plugin/sweetalert
+12. TravelWeb/wwwroot/css/assets/js/plugin/webfont
+13. TravelWeb/wwwroot/css/assets/js/kaiadmin.js
+14. TravelWeb/wwwroot/js/site.js

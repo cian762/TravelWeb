@@ -41,12 +41,17 @@
                             </td>
                             <td>@v.CreatedTime.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
-                                <button class="btn btn-sm btn-warning">
-                                    切換為目前版本
-                                </button>
-                                <button class="btn btn-sm btn-info">
-                                    Diff 比較
-                                </button>
+                                <form asp-action="SetCurrentVersion" method="post">
+                                    <input type="hidden" name="versionId" value="@v.VersionId" />
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        切換為目前版本
+                                    </button>
+                                    <a asp-action="Diff"
+                                       asp-route-versionId="@v.VersionId"
+                                       class="btn btn-sm btn-info">
+                                        Diff 比較
+                                    </a>
+                                </form>
                             </td>
                         </tr>
                     }

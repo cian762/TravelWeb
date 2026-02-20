@@ -31,16 +31,16 @@ namespace TravelWeb.Areas.Itinerary
             return View(model);
         }
         [HttpPost]
-        public async Task<IActionResult>Edit(EditItineraryErrorViewModel model)
+        public async Task<IActionResult>ItineraryErrorEdit(EditItineraryErrorViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
-
+          
             await _errorSevice.UpdateErrorAsync(model);
 
-            return RedirectToAction("Index");
+            return RedirectToAction("ItineraryError");
         }
 
         public IActionResult ItineraryCompareAnalyze()
@@ -60,13 +60,23 @@ namespace TravelWeb.Areas.Itinerary
             var model = await  _itineraryService.GetItineraryManagementAsync();
             return View(model);
         }
-
+        
         public async Task< IActionResult> ItineraryVersionManage(int id)
         {
             var model = await _itineraryService.GetVersionManagementAsync(id);
-            return View();
+            return View(model);
         }
-       
+        [HttpPost]
+        public IActionResult SetCurrentVersion(int versionId)
+        {
+            _itineraryService.SetCurrentVersion(versionId);
+            return RedirectToAction("ItineraryManage");
+        }
+        public IActionResult Diff(int versionId)
+        {
+            var model = _itineraryService.GetDiff(versionId);
+            return View(model);
+        }
 
 
     }

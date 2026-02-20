@@ -63,6 +63,7 @@ namespace TravelWeb.Areas.Itinerary.Models.Service
             entity.AdminResponse = model.AdminResponse;
 
             _errorRepo.Update(entity);
+            _errorRepo.SaveChanges();
         }
     }
 }

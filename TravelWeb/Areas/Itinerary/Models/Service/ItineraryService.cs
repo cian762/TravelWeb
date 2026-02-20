@@ -17,6 +17,34 @@ namespace TravelWeb.Areas.Itinerary.Models.Service
             _versionRepo = versionRepo;
         }
 
+        public DiffViewModel GetDiff(int versionId)
+        {
+            var selectedVersion = _versionRepo.GetById(versionId);
+
+            if (selectedVersion == null)
+                throw new Exception("找不到版本");
+
+            var currentVersion = _versionRepo.GetAll()
+                .FirstOrDefault(v =>
+                    v.ItineraryId == selectedVersion.ItineraryId
+                    && v.CurrentUsageStatus == "啟用");
+
+            if (currentVersion == null)
+                throw new Exception("找不到目前版本");
+
+            var model = new DiffViewModel
+            {
+                OldVersionId = selectedVersion.VersionId,
+                NewVersionId = currentVersion.VersionId,
+                OldContent = selectedVersion.Source,
+                NewContent = currentVersion.Source,
+                IsDifferent = selectedVersion.Source != currentVersion.Source
+            };
+
+            return model;
+        }
+        
+
         public async Task<ItineraryDetailViewModel> GetItineraryManagementAsync()
         {
             var itineraries = _itineraryRepo.GetAll();
@@ -67,6 +95,34 @@ namespace TravelWeb.Areas.Itinerary.Models.Service
             };
 
             return model;
+        }
+
+        public void SetCurrentVersion(int versionId)
+        {
+            var targetVersion = _versionRepo.GetById(versionId);
+
+            if (targetVersion == null)
+                throw new Exception("找不到版本");
+
+            var itineraryId = targetVersion.ItineraryId;
+
+            // 取得同一行程的所有版本
+            var allVersions = _versionRepo.GetAll()
+                .Where(v => v.ItineraryId == itineraryId)
+                .ToList();
+
+            // 先全部取消
+            foreach (var version in allVersions)
+            {
+                version.CurrentUsageStatus = "非啟用"; // 或 false
+                _versionRepo.Update(version);
+            }
+
+            // 設定指定版本
+            targetVersion.CurrentUsageStatus = "啟用"; // 或 true
+            _versionRepo.Update(targetVersion);
+
+            _versionRepo.SaveChanges();
         }
     }
 }

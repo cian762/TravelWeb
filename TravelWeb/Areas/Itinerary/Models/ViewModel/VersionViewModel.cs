@@ -15,4 +15,14 @@
         public string CurrentUsageStatus { get; set; }
         public DateTime CreatedTime { get; set; }
     }
+    public class DiffViewModel
+    {
+        public int OldVersionId { get; set; }
+        public int NewVersionId { get; set; }
+
+        public string OldContent { get; set; }
+        public string NewContent { get; set; }
+
+        public bool IsDifferent { get; set; }
+    }
 }
