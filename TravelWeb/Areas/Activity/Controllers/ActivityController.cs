@@ -22,7 +22,7 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
         //活動總覽 GET
-        [HttpGet("Overview")]
+        [HttpGet("Activities")]
         public async Task<IActionResult> Index()
         {
             var acts = await _dbContext.Activities.Select(m => new ActivityEditViewModel
@@ -44,7 +44,7 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
         //新增活動 GET
-        [HttpGet("Create")]
+        [HttpGet("Activity")]
         public IActionResult ActivityCreate() 
         {
             //Checkbox 填入資料用
@@ -57,7 +57,7 @@ namespace TravelWeb.Areas.Activity.Controllers
         }
 
         //新增活動 POST
-        [HttpPost("Create")]
+        [HttpPost("Activity")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActivityCreate(ActivityEditViewModel vm, List<IFormFile> images)
         {
@@ -142,7 +142,7 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
         //活動內容修改 GET
-        [HttpGet("Edit/{id}")]
+        [HttpGet("Activity/{id}")]
         public IActionResult ActivityEdit(int id) 
         {
             //Checkbox 填入資料用
@@ -179,7 +179,7 @@ namespace TravelWeb.Areas.Activity.Controllers
         }
 
         //活動內容修改 POST
-        [HttpPost("Edit/{id}")]
+        [HttpPost("Activity/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm)
         {
@@ -259,7 +259,7 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
         //活動票卷總覽 GET
-        [HttpGet("Ticket")]
+        [HttpGet("Tickets")]
         public async Task<IActionResult> TicketManage() 
         {
             var vm = await _dbContext.AcitivityTickets
@@ -281,7 +281,7 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
         //活動票劵新增 GET
-        [HttpGet("TicketCreate")]
+        [HttpGet("Ticket")]
         public async Task<IActionResult> TicketCreate() 
         {
             var ActivityInfo = await _dbContext.Activities.Select(a => new 
@@ -297,7 +297,7 @@ namespace TravelWeb.Areas.Activity.Controllers
             return View();
         }
 
-
+        //AJAX 拉商品資料用 Action
         [HttpGet("GetProductInfo")]
         public async Task<IActionResult> GetProductsByActivity(int activityId) 
         {
@@ -315,13 +315,24 @@ namespace TravelWeb.Areas.Activity.Controllers
         }
 
 
+        // AJAX 拉活動起始/終止用 Action
+        [HttpGet("GetActivityInfo")]
+        public async Task<IActionResult> GetTimeByActivity(int activityId)
+        {
+            var result = await _dbContext.Activities
+                .Where(a => a.ActivityId == activityId)
+                .Select(a => new
+                {
+                    startTime = a.StartTime,
+                    endTime = a.EndTime
+                }).FirstOrDefaultAsync();
 
-
-
+            return Json(result);
+        }
 
 
         //活動票劵新增 POST
-        [HttpPost("TicketCreate")]
+        [HttpPost("Ticket")]
         public async Task<IActionResult> TicketCreate(ActivityTicketViewModel ticket)
         {
             if (!ModelState.IsValid)
@@ -405,22 +416,108 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
 
-
         //活動票券修改 GET
-        [HttpGet("TicketEdit/{productCode}")]
-        public async Task<IActionResult> TicketEdit(int productCode) 
+        [HttpGet("Ticket/{ProductCode}")]
+        public async Task<IActionResult> TicketEdit(string ProductCode) 
         {
-            return View("TicketEdit");
+            var ActivityInfo = await _dbContext.Activities.Select(a => new
+            {
+                ActivityId = a.ActivityId,
+                ActivityName = a.Title
+            }).ToListAsync();
+
+            ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
+            ViewData["ActivityInfo"] = ActivityInfo;
+
+
+
+            var product = await _dbContext.AcitivityTickets
+                .Where(p => p.ProductCode == ProductCode)
+                .Select(p => new ActivityTicketViewModel
+                {
+                    ProductCode = p.ProductCode,
+                    ProductName = p.ProductName,
+                    TicketCategoryName = p.TicketCategory.CategoryName,
+                    CurrentPrice = p.CurrentPrice,
+                    Status = p.Status,
+                    StartDate = p.StartDate,
+                    ExpiryDate = p.ExpiryDate,
+                    ProdcutDescription = p.ActivityTicketDetail.ProdcutDescription,
+                    TermsOfService = p.ActivityTicketDetail.TermsOfService,
+                    AcivityId = p.ActivityTicketDetail.ActivityId,
+                   
+                })
+                .FirstOrDefaultAsync();
+
+            return View("TicketEdit",product);
         }
 
 
         //活動票券修改 POST
-        [HttpPost("TicketEdit/{productCode}")]
+        [HttpPost("Ticket/{ProductCode}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TicketManage(int productCode) 
+        public async Task<IActionResult> TicketEdit(string ProductCode, ActivityTicketViewModel ticket) 
         {
+            if (ProductCode != ticket.ProductCode) 
+            {
+                return BadRequest();
+            }
 
 
+            if (!ModelState.IsValid) 
+            {
+                var ActivityInfo = await _dbContext.Activities.Select(a => new
+                {
+                    ActivityId = a.ActivityId,
+                    ActivityName = a.Title
+                }).ToListAsync();
+
+                ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
+                ViewData["ActivityInfo"] = ActivityInfo;
+
+                return View("TicketEdit", ticket);
+            }
+
+
+
+            var OriginTicket = await _dbContext.AcitivityTickets
+                .FirstOrDefaultAsync(t => t.ProductCode == ticket.ProductCode);
+
+            
+            OriginTicket!.CurrentPrice = ticket.CurrentPrice;
+            OriginTicket!.Status = ticket.Status;
+            OriginTicket!.StartDate = ticket.StartDate;
+            OriginTicket!.ExpiryDate = ticket.ExpiryDate;
+
+
+
+            var OriginTicketDetail = await _dbContext.ActivityTicketDetails
+                .FirstOrDefaultAsync(d => d.ProductCode == ticket.ProductCode);
+
+            OriginTicketDetail!.ProdcutDescription = ticket.ProdcutDescription;
+            OriginTicketDetail!.TermsOfService = ticket.TermsOfService;
+
+
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "更新失敗: " + ex.Message);
+
+                var ActivityInfo = await _dbContext.Activities.Select(a => new
+                {
+                    ActivityId = a.ActivityId,
+                    ActivityName = a.Title
+                }).ToListAsync();
+
+                ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
+                ViewData["ActivityInfo"] = ActivityInfo;
+
+                return View("TicketEdit", ticket);
+
+            }
             return RedirectToAction(nameof(TicketManage));
         }
 

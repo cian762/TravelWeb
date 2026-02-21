@@ -1,8 +1,194 @@
-﻿
+﻿@model TravelWeb.Areas.Activity.Models.ViewModels.ActivityTicketViewModel
 
 @{
     ViewData["Title"] = "活動 | 商品編輯";
 }
 
 
-<h1>商品編輯</h1>
+@section Scripts {
+    <script>
+        $(document).ready(function()
+        {
+            function loadProducts(activityId) {
+                var tableBody = $('#ProductTableBody');
+                tableBody.empty();
+
+                $.getJSON('/Act/GetProductInfo', { activityId: activityId }, function (data) {
+                    if (data && data.length > 0) {
+                        $.each(data, function(i, item) {
+                            var row = `<tr>
+                                        <td>${item.name}</td>
+                                        <td>${item.category}</td>
+                                        <td>NT$${item.price}</td>
+                                        <td>${item.status}</td>
+                                       </tr>`;
+                            tableBody.append(row);
+                        });
+                    } else {
+                        tableBody.append('<tr><td colspan="4" class="text-center">本活動尚無商品</td></tr>');
+                    }
+                })
+
+
+                var TimeRanges = $('#TimeInfo');
+
+                $.getJSON('/Act/GetActivityInfo',{activityId: activityId},function (data)
+                {
+                    TimeRanges.empty();
+                    var StartTime = `<label class="me-3 text-danger fs-4">起始時間: ${data.startTime}</label>`;
+                    var EndTime = `<label class="text-danger fs-4">結束時間: ${data.endTime}</label>`;
+                    TimeRanges.append(StartTime);
+                    TimeRanges.append(EndTime);
+                })
+
+            }
+
+            var initialId = $('#ActivitySelect').val();
+            loadProducts(initialId);
+        })
+
+
+
+
+    </script>
+}
+
+
+
+<div class="container">
+    <h1>商品編輯</h1>
+
+    <form method="post" class="p-4 border rounded-3 shadow-sm h-100 bg-light d-flex flex-column justify-content-between" enctype="application/x-www-form-urlencoded" asp-action="TicketEdit">
+        <div class="row">
+            <div class="col-6">
+                
+                <div class="border-bottom border-dark d-flex">
+                    <input type="hidden" class="form-control" asp-for="AcivityId">
+                    <label class="fw-bold fs-3 mb-3">活動標題</label>
+                    
+                    <select id="ActivitySelect" class="form-select w-50 mb-3 ms-3" asp-for="AcivityId" disabled>
+                        @foreach (var item in ViewBag.ActivityInfo)
+                        {
+                            <option value="@(item.ActivityId)">@(item.ActivityName)</option>
+                        }
+                    </select>
+                </div>
+                <span class="text-danger" asp-validation-for="AcivityId"></span>
+
+
+                <div>
+                    <div id="TimeInfo"></div>
+                    <label class="mt-3 fw-bold fs-3">本活動當前商品資訊</label>
+                    <table class="table table-hover mt-3">
+                        <caption>本活動已勘列商品</caption>
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>商品名稱</th>
+                                <th>票種分類</th>
+                                <th>門票現價</th>
+                                <th>販售狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ProductTableBody">
+                        </tbody>
+                    </table>
+
+
+                </div>
+                
+            </div>
+
+            <div class="col-6">
+
+                <input type="hidden" asp-for="ProductCode">
+
+                <div class="form-body">
+                    <div id="Prodcut">
+                        <div class="row">
+                            <div class="mb-3 col-4">
+                                <label class="form-label fw-bold fs-3" asp-for="ProductCode"></label>
+                                <input type="text" class="form-control" asp-for="ProductCode" readonly>
+                                <span class="text-danger" asp-validation-for="ProductCode"></span>
+                            </div>
+                            <div class="mb-3 col-8">
+                                <label class="form-label fw-bold fs-3" asp-for="ProductName"></label>
+                                <input type="text" class="form-control" asp-for="ProductName" readonly>
+                                <span class="text-danger" asp-validation-for="ProductName"></span>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+
+                            <div class="mb-3 col-4">
+                                <label class="form-label fw-bold fs-3" asp-for="TicketCategoryName"></label>
+                                <input type="text" class="form-control" asp-for="TicketCategoryName" readonly>
+                                <span class="text-danger" asp-validation-for="TicketCategoryName"></span>
+                            </div>
+                            <div class="mb-3 col-4">
+                                <label class="form-label fw-bold fs-3" asp-for="CurrentPrice"></label>
+                                <input type="text" class="form-control" asp-for="CurrentPrice">
+                                <span class="text-danger" asp-validation-for="CurrentPrice"></span>
+                            </div>
+                            <div class="mb-3 col-4">
+                                <label class="form-label fw-bold fs-3" asp-for="Status"></label>
+                                <select class="form-select" style="height:42px;" asp-for="Status">
+                                    <option disabled selected>--選擇狀態--</option>
+                                    @foreach (var item in ViewBag.Status)
+                                    {
+                                        <option value="@item">@item</option>
+                                    }
+                                </select>
+                                <span class="text-danger" asp-validation-for="Status"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold fs-3" asp-for="StartDate"></label>
+                                <input type="date" class="form-control" asp-for="StartDate">
+                                <span class="text-danger" asp-validation-for="StartDate"></span>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold fs-3" asp-for="ExpiryDate"></label>
+                                <input type="date" class="form-control" asp-for="ExpiryDate">
+                                <span class="text-danger" asp-validation-for="ExpiryDate"></span>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="mb-3 col-6">
+                                <label class="form-label fw-bold fs-3" asp-for="ProdcutDescription"></label>
+                                <textarea type="text" class="form-control" asp-for="ProdcutDescription" rows="5"></textarea>
+                                <span class="text-danger" asp-validation-for="ProdcutDescription"></span>
+                            </div>
+                            <div class="mb-3 col-6">
+                                <label class="form-label fw-bold fs-3" asp-for="TermsOfService"></label>
+                                <textarea type="text" class="form-control" asp-for="TermsOfService" rows="5"></textarea>
+                                <span class="text-danger" asp-validation-for="TermsOfService"></span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">修改商品</button>
+                    </div>
+                    <div class="col-6">
+                        <a asp-area="Activity" asp-controller="Activity" asp-action="TicketManage" class="btn btn-warning btn-lg w-100 text-light fw-bold">取消修改</a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+
+
+</div>
+
+
+
