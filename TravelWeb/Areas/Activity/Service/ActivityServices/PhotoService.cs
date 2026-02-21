@@ -30,5 +30,16 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
             }
             return uploadResult;
         }
+
+        public async Task<DeletionResult> DeletePhotoAsync(string publicId)
+        {
+            // 建立刪除參數
+            var deleteParams = new DeletionParams(publicId);
+
+            // 呼叫 Cloudinary API 執行刪除
+            var result = await _cloudinary.DestroyAsync(deleteParams);
+
+            return result;
+        }
     }
 }

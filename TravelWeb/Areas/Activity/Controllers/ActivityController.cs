@@ -181,7 +181,7 @@ namespace TravelWeb.Areas.Activity.Controllers
         //活動內容修改 POST
         [HttpPost("Activity/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm)
+        public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm, List<IFormFile> images, List<string> DeletedUrls)
         {
             // 1. 安全檢查：確保網址 ID 與表單內容一致
             if (id != vm.ActivityId)
@@ -201,6 +201,7 @@ namespace TravelWeb.Areas.Activity.Controllers
             var act = await _dbContext.Activities
                     .Include(a => a.Types)
                     .Include(a => a.Regions)
+                    .Include(a => a.ActivityImages)
                     .FirstOrDefaultAsync(a => a.ActivityId == vm.ActivityId);
 
             if (act == null) return NotFound();
@@ -247,10 +248,56 @@ namespace TravelWeb.Areas.Activity.Controllers
                 }
             }
 
+
+            //以下開始為照片處理
+            
+            //新增照片
+            if (images != null && images.Count > 0)
+            {
+                if (act.ActivityImages == null) 
+                {
+                    act.ActivityImages = new List<ActivityImage>();
+                }
+
+                foreach (var image in images)
+                {
+                    var result = await _photoService.AddPhotoAsync(image);
+                    if (result.Error == null) // 確保上傳成功
+                    {
+                        act.ActivityImages.Add(new ActivityImage
+                        {
+                            ImageUrl = result.SecureUrl.AbsoluteUri,
+                            PublicId = result.PublicId,
+                        });
+                    }
+                }
+            }
+
+            //移除現有照片
+            if (DeletedUrls != null && DeletedUrls.Any())
+            {
+                foreach (var url in DeletedUrls)
+                {
+                    // 從已經 Include 的集合中找，減少資料庫查詢次數
+                    var photoToRemove = act.ActivityImages.FirstOrDefault(u => u.ImageUrl == url);
+
+                    if (photoToRemove != null)
+                    {
+                        //呼叫 Service 刪除圖床中實體檔案
+                        if (!string.IsNullOrEmpty(photoToRemove.PublicId))
+                        {
+                            await _photoService.DeletePhotoAsync(photoToRemove.PublicId);
+                        }
+                        _dbContext.ActivityImages.Remove(photoToRemove);
+                    }
+                }
+            }
+
             // 4. 儲存
             act.UpdateAt = DateTime.Now;
             await _dbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+                
         }
 
 
@@ -302,11 +349,11 @@ namespace TravelWeb.Areas.Activity.Controllers
         public async Task<IActionResult> GetProductsByActivity(int activityId) 
         {
             var products = await _dbContext.AcitivityTickets
-                .Where(a => a.ActivityTicketDetail.ActivityId == activityId)
+                .Where(a => a.ActivityTicketDetail!.ActivityId == activityId)
                 .Select(p => new
                 {
                     name = p.ProductName,
-                    category = p.TicketCategory.CategoryName,
+                    category = p.TicketCategory!.CategoryName,
                     price = p.CurrentPrice,
                     status = p.Status
                 }).ToListAsync();
@@ -437,12 +484,12 @@ namespace TravelWeb.Areas.Activity.Controllers
                 {
                     ProductCode = p.ProductCode,
                     ProductName = p.ProductName,
-                    TicketCategoryName = p.TicketCategory.CategoryName,
+                    TicketCategoryName = p.TicketCategory!.CategoryName,
                     CurrentPrice = p.CurrentPrice,
                     Status = p.Status,
                     StartDate = p.StartDate,
                     ExpiryDate = p.ExpiryDate,
-                    ProdcutDescription = p.ActivityTicketDetail.ProdcutDescription,
+                    ProdcutDescription = p.ActivityTicketDetail!.ProdcutDescription,
                     TermsOfService = p.ActivityTicketDetail.TermsOfService,
                     AcivityId = p.ActivityTicketDetail.ActivityId,
                    

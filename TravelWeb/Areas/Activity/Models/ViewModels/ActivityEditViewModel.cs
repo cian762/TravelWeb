@@ -47,6 +47,8 @@ namespace TravelWeb.Areas.Activity.Models.ViewModels
         public List<string>? TypeName { get; set; }
 
         public List<string>? ImgUrls { get; set; }
-
+        
+        //用來收集已建立但需要刪除的圖片路徑
+        public List<string>? DeletedUrls { get; set; }
     }
 }
