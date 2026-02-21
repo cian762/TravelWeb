@@ -134,6 +134,14 @@
                     </div>
                 </div>
 
+                <div class="tag-section mb-4 p-2" style="background-color: #f8f9fa; border-radius: 8px;">
+                    <h6 class="text-secondary small font-weight-bold mb-2">
+                        <i class="fas fa-hashtag mr-1"></i> 相關標籤
+                    </h6>
+                    <div id="modalTagsContainer" class="d-flex flex-wrap justify-content-start">
+                    </div>
+                </div>
+           
                 <div>
                     <h6 class="fw-bold text-info"><i class="fas fa-clipboard-list me-2"></i>使用說明</h6>
                     <div id="modalUsageInstructions" class="p-3 bg-light rounded border" style="min-height: 100px; white-space: pre-line;">
@@ -150,6 +158,7 @@
         </div>
     </div>
 </div>
+
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -261,24 +270,52 @@
         }
 
         // 4. 取得詳情並顯示 Modal
-        function showProductDetails(id) {
-            // 使用 AJAX 向後端請求 API (等一下要在 Controller 寫這段)
+                function showProductDetails(id) {
+            // 1. 預先清空舊內容
+            const $tagContainer = $('#modalTagsContainer'); // 確保變數已定義
+            $tagContainer.empty();
+            $('#modalContentDetails, #modalUsageInstructions, #modalNotes').text('載入中...');
+
             $.ajax({
-                url: '@Url.Action("GetDetails")/' + id,
+                url: '/Attractions/AttractionTicket/GetDetails/' + id,
                 type: 'GET',
                 success: function (data) {
-                    $('#modalContentDetails').text(data.contentDetails || '暫無詳細內容介紹');
-                    $('#modalUsageInstructions').text(data.usageInstructions || '暫無相關使用說明');
-                    // --- 補上這行 ---
-                    $('#modalNotes').text(data.notes || "無內部備註");
+                    // 2. 填充文字內容
+                    $('#modalContentDetails').text(data.contentDetails || "尚無資料");
+                    $('#modalUsageInstructions').text(data.usageInstructions || "尚無資料");
+                    $('#modalNotes').text(data.notes || "無備註");
+
+                    // 3. 處理標籤顯示
+                    if (data.tags && data.tags.length > 0) {
+                        let allTagsHtml = ''; // 用一個變數收集所有 HTML
+                        data.tags.forEach(function(tagName) {
+                            allTagsHtml += `
+                                <span class="badge badge-pill shadow-sm"
+                                      style="background-color: #e3f2fd;
+                                             color: #0d6efd;
+                                             border: 1px solid #b3d7ff;
+                                             padding: 6px 14px;
+                                             margin-right: 8px;
+                                             margin-bottom: 8px;
+                                             font-weight: 500;
+                                             letter-spacing: 0.5px;">
+                                    <i class="fas fa-tag fa-xs mr-1"></i> ${tagName}
+                                </span>`;
+                        });
+                        $tagContainer.html(allTagsHtml); // 一次性塞入
+                    } else {
+                        $tagContainer.html('<span class="text-muted small">暫無標籤</span>');
+                    }
+
+                    // 4. 顯示 Modal
                     $('#detailsModal').modal('show');
                 },
-                error: function () {
-                    Swal.fire('錯誤', '無法載入詳情資訊', 'error');
+                error: function (xhr) {
+                    console.error("Error details:", xhr.responseText);
+                    Swal.fire('錯誤', '無法載入詳情資訊，請檢查網路或權限', 'error');
                 }
             });
         }
-
         // 5. 成功訊息
         const successMsg = '@Html.Raw(TempData["SuccessMessage"])';
         if (successMsg) {

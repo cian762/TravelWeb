@@ -306,29 +306,28 @@ namespace TravelWeb.Areas.Attractions.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDetails(int id)
         {
-            // 嘗試抓取詳情資料
+            // 1. 抓取詳情資料
             var details = await _context.AttractionProductDetails
                                         .FirstOrDefaultAsync(d => d.ProductId == id);
 
-            if (details == null)
-            {
-                return Json(new
-                {
-                    contentDetails = "尚無資料",
-                    usageInstructions = "尚無資料",
-                    notes = "無備註"
-                });
-            }
+            // 2. 抓取標籤資料 (根據資料庫 image_5c2da5.png 的結構)
+            // 這裡直接透過 AttractionProductTags 串接 Tag 抓取名稱
+            var tagNames = await _context.AttractionProductTags
+                                         .Where(pt => pt.ProductId == id)
+                                         .Select(pt => pt.Tag.TagName) // 假設 Tag 表中存名稱的欄位是 TagName
+                                         .ToListAsync();
 
-            // 回傳包含內容、說明與備註的 JSON
+            // 3. 統一回傳內容
             return Json(new
             {
-                contentDetails = details.ContentDetails,
-                usageInstructions = details.UsageInstructions,
-                notes = details.Notes
+                // 如果 details 是 null，給予預設文字
+                contentDetails = details?.ContentDetails ?? "尚無資料",
+                usageInstructions = details?.UsageInstructions ?? "尚無資料",
+                notes = details?.Notes ?? "無備註",
+                // 回傳標籤陣列，若無則傳空陣列 []
+                tags = tagNames ?? new List<string>()
             });
         }
-
 
         private bool ProductExists(int id)
         {
