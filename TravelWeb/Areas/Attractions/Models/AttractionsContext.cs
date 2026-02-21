@@ -144,7 +144,7 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)").HasColumnName("price");
             entity.Property(e => e.ProductCode).HasMaxLength(50).HasColumnName("product_code");
-
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             // 關鍵修正：明確指定外鍵對應
             entity.HasOne(d => d.TicketType)
                   .WithMany(p => p.AttractionProducts)
@@ -175,10 +175,26 @@ public partial class AttractionsContext : DbContext
         {
             entity.HasKey(e => e.FavoriteId);
             entity.ToTable("AttractionProductFavorites", "Attractions");
+
+            // ↓ 補上這兩個缺少的欄位對應
+            entity.Property(e => e.FavoriteId).HasColumnName("favorite_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+
+            entity.Property(e => e.UserId).HasColumnName("user_id").HasMaxLength(50);
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.HasOne(d => d.Product).WithMany(p => p.AttractionProductFavorites)
-                .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_AttractionProductFavorites_AttractionProducts");
+
+            // DB 有設唯一約束，建議加上避免重複收藏
+            entity.HasIndex(e => new { e.UserId, e.ProductId })
+                  .IsUnique()
+                  .HasDatabaseName("UQ_Favorites_UserProduct");
+
+            entity.HasOne(d => d.Product)
+                  .WithMany(p => p.AttractionProductFavorites)
+                  .HasForeignKey(d => d.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade)  // ↓ 建議補上，對應 DB 設定
+                  .HasConstraintName("FK_AttractionProductFavorites_AttractionProducts");
+
+            // 方案一：不加 Member 的 HasOne 關係，只靠 UserId 字串對應
         });
 
         modelBuilder.Entity<AttractionTypeCategory>(entity =>
@@ -205,22 +221,41 @@ public partial class AttractionsContext : DbContext
 
         modelBuilder.Entity<ProductInventoryStatus>(entity =>
         {
-            entity.HasNoKey().ToTable("ProductInventoryStatus", "Attractions");
+            entity.HasKey(e => e.ProductId);  // ← 從 HasNoKey() 改成這個
+            entity.ToTable("ProductInventoryStatus", "Attractions");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.HasOne(d => d.Product).WithMany()
-                .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_ProductInventoryStatus_AttractionProducts");
+            entity.Property(e => e.InventoryMode).HasColumnName("inventory_mode").HasMaxLength(20);
+            entity.Property(e => e.DailyLimit).HasColumnName("daily_limit");
+            entity.Property(e => e.SoldQuantity).HasColumnName("sold_quantity");
+            entity.Property(e => e.LastUpdatedAt).HasColumnName("last_updated_at");
+
+            entity.HasOne(d => d.Product)
+                  .WithMany()
+                  .HasForeignKey(d => d.ProductId)
+                  .HasConstraintName("FK_ProductInventoryStatus_AttractionProducts");
         });
 
         modelBuilder.Entity<StockInRecord>(entity =>
         {
             entity.HasKey(e => e.StockInId);
             entity.ToTable("StockInRecords", "Attractions");
-            entity.Property(e => e.ProductCode).HasMaxLength(50).HasColumnName("product_code");
-            entity.HasOne(d => d.ProductCodeNavigation).WithMany(p => p.StockInRecords)
-                .HasPrincipalKey(p => p.ProductCode)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_StockInRecords_AttractionProducts");
+
+            entity.Property(e => e.StockInId).HasColumnName("stock_in_id");
+            entity.Property(e => e.ProductType).HasColumnName("product_type").HasMaxLength(20);
+            entity.Property(e => e.ProductCode).HasColumnName("product_code").HasMaxLength(50);
+            entity.Property(e => e.SupplierName).HasColumnName("supplier_name").HasMaxLength(100);
+            entity.Property(e => e.UnitCost).HasColumnName("unit_cost").HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.RemainingStock).HasColumnName("remaining_stock");
+            entity.Property(e => e.InventoryType).HasColumnName("inventory_type").HasMaxLength(20);
+            entity.Property(e => e.StockInDate).HasColumnName("stock_in_date");
+            entity.Property(e => e.Remarks).HasColumnName("remarks").HasMaxLength(500);
+
+            entity.HasOne(d => d.ProductCodeNavigation)
+                  .WithMany(p => p.StockInRecords)
+                  .HasPrincipalKey(p => p.ProductCode)
+                  .HasForeignKey(d => d.ProductCode)
+                  .HasConstraintName("FK_StockInRecords_AttractionProducts");
         });
 
         modelBuilder.Entity<Tag>(entity =>

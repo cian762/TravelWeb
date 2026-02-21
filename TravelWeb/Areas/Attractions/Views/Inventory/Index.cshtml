@@ -1,0 +1,83 @@
+﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.InventoryViewModel>
+@{
+    ViewData["Title"] = "票券庫存管理";
+}
+<div class="container-fluid">
+    <h2>票券庫存管理</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>產品代碼</th>
+                <th>票券名稱</th>
+                <th>庫存模式</th>
+                <th>每日上限</th>
+                <th>已售數量</th>
+                <th>最後更新</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ProductCode</td>
+                    <td>@item.Title</td>
+
+                    <td>
+                        @if (item.InventoryMode == "DAILY")
+                        {
+                            <form asp-action="UpdateInventoryMode" method="post" class="d-flex gap-1 align-items-center">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <input type="hidden" name="inventoryMode" value="DAILY" />
+                                <input type="number" name="dailyLimit" value="@item.DailyLimit"
+                                       min="1" style="width:80px" class="form-control form-control-sm" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">✓</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
+
+                    <td>@(item.DailyLimit.HasValue ? item.DailyLimit + " 張" : "—")</td>
+                    <td>@(item.SoldQuantity ?? 0) 張</td>
+                    <td>@(item.LastUpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</td>
+                    <td>
+                        <form asp-action="UpdateInventoryMode" method="post" class="d-flex gap-1">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <input type="hidden" name="dailyLimit" value="@item.DailyLimit" />
+
+                            <select name="inventoryMode" class="form-select form-select-sm" style="width:120px">
+                                <option value="UNLIMITED" selected="@(item.InventoryMode == "UNLIMITED" ? "selected" : null)">無限制</option>
+                                <option value="DAILY" selected="@(item.InventoryMode == "DAILY" ? "selected" : null)">每日上限</option>
+                                <option value="TOTAL" selected="@(item.InventoryMode == "TOTAL" ? "selected" : null)">總量限制</option>
+                            </select>
+
+                            <button type="submit" class="btn btn-sm btn-primary">儲存</button>
+                            <a asp-action="StockIn" asp-route-productCode="@item.ProductCode"
+                               class="btn btn-sm btn-outline-secondary">進貨紀錄</a>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleDailyLimit(select) {
+            var input = select.closest('form').querySelector('.daily-limit-input');
+            input.style.display = select.value === 'DAILY' ? 'block' : 'none';
+        }
+    </script>
+}

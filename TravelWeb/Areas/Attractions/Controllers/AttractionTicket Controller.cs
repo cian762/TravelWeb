@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TravelWeb.Areas.Attractions.Models;
 using TravelWeb.Models;
 
@@ -22,6 +23,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
             var tickets = await _context.AttractionProducts
                 .Include(p => p.Attraction)
                 .Include(p => p.TicketType)
+                  .Where(p => !p.IsDeleted)  // ← 加這行
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -74,7 +76,15 @@ namespace TravelWeb.Areas.Attractions.Controllers
                             _context.Add(detail);
                             await _context.SaveChangesAsync();
                         }
-
+                        // ↓ 在這裡加入，建立庫存狀態紀錄
+                        _context.ProductInventoryStatuses.Add(new ProductInventoryStatus
+                        {
+                            ProductId = product.ProductId,
+                            InventoryMode = "UNLIMITED",
+                            SoldQuantity = 0,
+                            LastUpdatedAt = DateTime.Now
+                        });
+                        await _context.SaveChangesAsync();
                         // 提交事務
                         await transaction.CommitAsync();
 
@@ -332,6 +342,68 @@ namespace TravelWeb.Areas.Attractions.Controllers
         private bool ProductExists(int id)
         {
             return _context.AttractionProducts.Any(e => e.ProductId == id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddFavorite(int productId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            // 避免重複收藏（DB 雖有唯一約束，但先在程式層擋掉比較乾淨）
+            var exists = await _context.AttractionProductFavorites
+                .AnyAsync(f => f.UserId == userId && f.ProductId == productId);
+
+            if (!exists)
+            {
+                _context.Add(new AttractionProductFavorite
+                {
+                    UserId = userId,
+                    ProductId = productId,
+                    CreatedAt = DateTime.Now
+                });
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { success = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFavorite(int productId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var favorite = await _context.AttractionProductFavorites
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.ProductId == productId);
+
+            if (favorite != null)
+            {
+                _context.Remove(favorite);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { success = true });
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null) return NotFound();
+
+            // 軟刪除：只標記，不真的刪除資料
+            product.IsDeleted = true;
+            product.IsActive = 0;
+            product.Status = "ARCHIVED";
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"票券「{product.Title}」已封存刪除。";
+            return RedirectToAction(nameof(Index));
         }
     }
    

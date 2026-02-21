@@ -27,6 +27,7 @@ public partial class AttractionProduct
 
     public int? IsActive { get; set; }
 
+    public bool IsDeleted { get; set; } = false;
     public int? TicketTypeCode { get; set; } // 必須與 TicketType 表的型別一致
 
     public virtual TicketType? TicketType { get; set; }
