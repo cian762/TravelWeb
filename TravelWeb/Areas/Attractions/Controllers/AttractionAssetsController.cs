@@ -116,7 +116,8 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     // 儲存所有圖片紀錄
                     await _context.SaveChangesAsync();
                 }
-
+                // ✨ [補上這一段]：設定新增成功的提示訊息
+                TempData["SuccessMessage"] = $"景點「{attraction.Name}」已成功新增！";
                 return RedirectToAction(nameof(Index));
             }
 

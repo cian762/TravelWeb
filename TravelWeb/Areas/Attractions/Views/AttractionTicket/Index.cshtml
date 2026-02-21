@@ -167,7 +167,33 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        // === 新增：監聽 TempData 並跳出卡片 ===
+               $(document).ready(function () {
+            // 1. 使用 Html.Raw 配合 JavaScriptEncoder 處理編碼問題
+            // 這樣能確保中文正常顯示，且不會因為字串內有引號或換行導致 JS 噴錯
+            const successMsg = @Html.Raw(Json.Serialize(TempData["SuccessMessage"] ?? ""));
+            const errorMsg = @Html.Raw(Json.Serialize(TempData["ErrorMessage"] ?? ""));
+
+            if (successMsg && successMsg !== "") {
+                Swal.fire({
+                    icon: 'success',
+                    title: '操作成功',
+                    text: successMsg, // 現在這裡是正確的中文了
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+
+            if (errorMsg && errorMsg !== "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: '發生錯誤',
+                    text: errorMsg
+                });
+            }
+        });
         function showProductDetails(id) {
             const $tagContainer = $('#modalTagsContainer');
             $tagContainer.empty();
