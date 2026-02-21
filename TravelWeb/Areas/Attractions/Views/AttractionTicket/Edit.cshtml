@@ -1,38 +1,57 @@
 ﻿@model TravelWeb.Areas.Attractions.Models.AttractionProduct
 
 @{
-    ViewData["Title"] = "編輯景點票券"; 
+    ViewData["Title"] = "編輯景點票券";
 }
 
+@* 引入 Select2 CSS *@
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/@@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+
 <style>
-    /* 讓詳細內容區塊的邊框變淡，並增加圓角 */
     .custom-detail-area {
-        border: 1px solid #dee2e6 !important; /* 降低對比度 */
-        background-color: #fdfdfd; /* 極淡的灰色背景，增加層次感 */
+        border: 1px solid #dee2e6 !important;
+        background-color: #fdfdfd;
         border-radius: 6px;
         padding: 15px;
     }
 
-    /* 調整 textarea 樣式，移除過重的陰影 */
-    .form-control.custom-textarea {
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    .form-control.custom-textarea:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .1);
+    }
+    /* Select2 樣式微調 */
+    .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+        background-color: #007bff;
+        border-color: #006fe6;
+        color: #fff;
+    }
+    /* 1. 隱藏 Select2 產生的多餘輔助文字 (解決那兩行字的問題) */
+    .select2-search__field {
+        margin-top: 0 !important;
     }
 
-        /* 當滑鼠點擊進去時的柔和效果 */
-        .form-control.custom-textarea:focus {
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .1);
-            outline: 0;
-        }
+    /* 2. 修正 Select2 容器高度，防止點擊時重疊 */
+    .select2-container--bootstrap4 .select2-selection--multiple {
+        min-height: 40px !important; /* 強制最小高度 */
+        border: 1px solid #ced4da !important;
+        display: flex !important;
+        align-items: center;
+        flex-wrap: wrap;
+    }
 
-    /* 弱化標題邊界感 */
-    .detail-label {
-        color: #495057;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
+    /* 3. 移除 Select2 自動產生的偽元素提示 */
+    .select2-container .select2-selection--multiple .select2-selection__rendered {
+        display: flex !important;
+        padding: 0 5px !important;
+    }
+    /* 解決 Select2 在多選模式下的顯示異常 */
+    .select2-container {
         display: block;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--multiple {
+        min-height: calc(1.5em + 0.75rem + 2px) !important;
     }
 </style>
 
@@ -41,11 +60,9 @@
 <hr />
 <div class="row">
     <div class="col-md-6">
-        @* 重要：asp-action 必須改為 Edit *@
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            @* 隱藏欄位：傳遞 ID 與 建立時間給後端，確保更新正確且時間不被覆蓋 *@
             <input type="hidden" asp-for="ProductId" />
             <input type="hidden" asp-for="CreatedAt" />
 
@@ -61,7 +78,7 @@
             @* 2. 產品代碼 *@
             <div class="form-group mb-3">
                 <label asp-for="ProductCode" class="control-label">產品代碼</label>
-                <input asp-for="ProductCode" class="form-control" placeholder="例如: TKT-101-001" />
+                <input asp-for="ProductCode" class="form-control" />
                 <span asp-validation-for="ProductCode" class="text-danger"></span>
             </div>
 
@@ -91,13 +108,11 @@
             @* 6. 最大購買數 *@
             <div class="form-group mb-3">
                 <label asp-for="MaxPurchaseQuantity" class="control-label">單筆最大購買數量</label>
-                <input asp-for="MaxPurchaseQuantity" type="number" class="form-control" min="1" placeholder="例如：10 (留空代表不限制)" />
-                <span class="text-muted small">※ 限制會員單筆訂單最多可購買的張數。</span>
-                <span asp-validation-for="MaxPurchaseQuantity" class="text-danger"></span>
+                <input asp-for="MaxPurchaseQuantity" type="number" class="form-control" min="1" />
             </div>
 
-            @* 7. 票券狀態 - 使用 asp-for 讓它自動對應資料庫的值 *@
-            <div class="form-group mb-4">
+            @* 7. 票券狀態 *@
+            <div class="form-group mb-3">
                 <label asp-for="Status" class="control-label">系統狀態</label>
                 <select asp-for="Status" class="form-control">
                     <option value="DRAFT">草稿 (DRAFT)</option>
@@ -105,36 +120,48 @@
                     <option value="INACTIVE">暫時下架 (INACTIVE)</option>
                     <option value="ARCHIVED">封存 (ARCHIVED)</option>
                 </select>
-                <span class="text-muted small">※ 設定為「已發佈 (ACTIVE)」時，前台才會顯示為銷售中。</span>
-                <span asp-validation-for="Status" class="text-danger"></span>
             </div>
 
-            <div class="card mt-4">
+            @* ★ 關鍵新增：標籤搜尋框 ★ *@
+            <div class="form-group mb-4">
+                <label class="control-label fw-bold"><i class="fas fa-tags me-1"></i> 產品標籤</label>
+                <select id="TagIds" name="TagIds" class="form-control" multiple="multiple">
+                    @if (ViewBag.CurrentTags != null)
+                    {
+                        foreach (var tag in ViewBag.CurrentTags)
+                        {
+                            <option value="@tag.Value" selected="selected">@tag.Text</option>
+                        }
+                    }
+                </select>
+                <small class="text-muted">請輸入關鍵字搜尋現有標籤（例如：2026）</small>
+            </div>
+
+            @* 票券詳細內容區塊 *@
+            <div class="card mt-4 mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>票券詳細內容</h5>
+                    <h5 class="mb-0">票券詳細內容</h5>
                 </div>
                 <div class="card-body">
                     <div class="form-group mb-3">
                         <label class="control-label fw-bold">內容介紹</label>
-                        @* 注意這裡的 name 屬性必須對應到 Model 的導覽屬性 *@
-                        <textarea name="AttractionProductDetail.ContentDetails" class="form-control" rows="5" placeholder="請輸入產品的詳細特色介紹...">@Model.AttractionProductDetail?.ContentDetails</textarea>
+                        <textarea name="AttractionProductDetail.ContentDetails" class="form-control" rows="5">@Model.AttractionProductDetail?.ContentDetails</textarea>
                     </div>
-
                     <div class="form-group mb-3">
                         <label class="control-label fw-bold">使用說明</label>
-                        <textarea name="AttractionProductDetail.UsageInstructions" class="form-control" rows="5" placeholder="請輸入兌換流程或使用限制...">@Model.AttractionProductDetail?.UsageInstructions</textarea>
+                        <textarea name="AttractionProductDetail.UsageInstructions" class="form-control" rows="5">@Model.AttractionProductDetail?.UsageInstructions</textarea>
                     </div>
                 </div>
             </div>
 
             <div class="form-group mb-3">
-                <label class="fw-bold text-muted">內部備註 (僅管理員可見)</label>
+                <label class="fw-bold text-muted">內部備註</label>
                 <input name="AttractionProductDetail.Notes" class="form-control form-control-sm"
-                       value="@Model.AttractionProductDetail?.Notes" placeholder="例如：2026活動用資料..." />
+                       value="@Model.AttractionProductDetail?.Notes" />
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn btn-primary shadow-sm">儲存變更</button>
+                <button type="submit" class="btn btn-primary">儲存變更</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">返回列表</a>
             </div>
         </form>
@@ -142,8 +169,34 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        $(document).ready(function() {
+            $('#TagIds').select2({
+                theme: 'bootstrap4',
+                width: '100%', // <-- 加上這行，Select2 就會佔滿整行空間
+                containerCssClass: ':all:', // 繼承原始 input 的所有 class
+                placeholder: '輸入關鍵字搜尋標籤...',
+                allowClear: true,
+                ajax: {
+                    url: '@Url.Action("Search", "Tags", new { area = "Attractions" })',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { term: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1
+            });
+        });
+    </script>
 }
 

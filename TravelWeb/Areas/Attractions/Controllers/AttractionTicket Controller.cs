@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Attractions.Models;
+using TravelWeb.Models;
 
 namespace TravelWeb.Areas.Attractions.Controllers
 {
@@ -211,24 +212,26 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, AttractionProduct product)
+        public async Task<IActionResult> Edit(int id, AttractionProduct product, int[] TagIds) // 關鍵：加入 TagIds 參數
         {
             if (id != product.ProductId) return NotFound();
 
-            // 移除不需由前端傳回的導覽屬性驗證
+            // 移除導覽屬性驗證，避免 ModelState.IsValid 為 false
             ModelState.Remove("Attraction");
             ModelState.Remove("TicketType");
             ModelState.Remove("AttractionProductDetail");
+            ModelState.Remove("AttractionProductTags"); // 移除標籤集合驗證
 
             if (ModelState.IsValid)
             {
+                using var transaction = await _context.Database.BeginTransactionAsync(); // 建議使用交易確保資料完整
                 try
                 {
                     // 1. 標準化狀態與連動銷售狀態
                     product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
                     product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
 
-                    // 2. 更新產品基本資料表 (AttractionProducts)
+                    // 2. 更新產品基本資料表
                     _context.Update(product);
 
                     // 3. 處理詳情資料表 (AttractionProductDetails)
@@ -238,41 +241,63 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
                     if (product.AttractionProductDetail != null)
                     {
-                        // 設定關聯 ID 與更新時間
                         product.AttractionProductDetail.ProductId = id;
                         product.AttractionProductDetail.LastUpdatedAt = DateTime.Now;
 
                         if (existingDetail != null)
-                        {
-                            // 情況 A：已有詳情，執行更新 (包含新增的 Notes 欄位)
-                            // 注意：EF 的 Update 會根據傳入的物件內容更新所有欄位
                             _context.Update(product.AttractionProductDetail);
-                        }
                         else
-                        {
-                            // 情況 B：還沒有詳情，執行新增
                             _context.Add(product.AttractionProductDetail);
+                    }
+
+                    // 4. ★ 核心修改：處理標籤 (AttractionProductTags) ★
+                    // 先刪除舊的關聯
+                    var oldTags = _context.AttractionProductTags.Where(pt => pt.ProductId == id);
+                    _context.AttractionProductTags.RemoveRange(oldTags);
+                    await _context.SaveChangesAsync(); // 先執行刪除
+
+                    // 插入新的選中關聯
+                    if (TagIds != null && TagIds.Length > 0)
+                    {
+                        foreach (var tagId in TagIds)
+                        {
+                            _context.AttractionProductTags.Add(new AttractionProductTag
+                            {
+                                ProductId = id,
+                                TagId = tagId
+                            });
                         }
                     }
 
                     await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
-                    TempData["SuccessMessage"] = "更新成功！詳情與備註資料已同步存檔。";
+                    TempData["SuccessMessage"] = "更新成功！產品資料與標籤已同步存檔。";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
+                    await transaction.RollbackAsync();
                     if (!ProductExists(product.ProductId)) return NotFound();
                     else throw;
                 }
                 catch (Exception ex)
                 {
+                    await transaction.RollbackAsync();
                     ModelState.AddModelError("", "儲存過程中發生錯誤：" + ex.Message);
                 }
             }
 
+            // 失敗時重新載入下拉選單與已選標籤
             ViewBag.AttractionList = new SelectList(_context.Attractions, "AttractionId", "Name", product.AttractionId);
             ViewBag.TicketTypeList = new SelectList(_context.TicketTypes, "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+
+            // 重新載入標籤顯示 (給 Select2 預填)
+            ViewBag.CurrentTags = _context.Tags
+                .Where(t => TagIds.Contains(t.TagId))
+                .Select(t => new SelectListItem { Value = t.TagId.ToString(), Text = t.TagName, Selected = true })
+                .ToList();
+
             return View(product);
         }
 

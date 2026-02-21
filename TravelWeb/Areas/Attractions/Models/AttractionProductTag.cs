@@ -6,12 +6,10 @@ namespace TravelWeb.Models
 {
     public partial class AttractionProductTag
     {
-        // 1. 定義兩個主鍵欄位
-        public int ProductId { get; set; }
-        public int TagId { get; set; }
+        public int ProductId { get; set; } // 對應 product_id
+        public int TagId { get; set; }     // 對應 tag_id
 
-        // 2. 導覽屬性 (Navigation Properties)
-        public virtual AttractionProduct Product { get; set; } = null!;
-        public virtual Tag Tag { get; set; } = null!;
+        public virtual AttractionProduct Product { get; set; }
+        public virtual Tag Tag { get; set; }
     }
 }

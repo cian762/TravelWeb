@@ -257,23 +257,28 @@ public partial class AttractionsContext : DbContext
 
         modelBuilder.Entity<AttractionProductTag>(entity =>
         {
-            // 設定複合主鍵 (PK)
+            // 1. 設定複合主鍵 (PK) - 對應 SQL 中的兩欄組合 PK
             entity.HasKey(e => new { e.ProductId, e.TagId });
 
-            entity.ToTable("AttractionProductTags");
+            // 2. 指定正確的 Schema (Attractions) 與 表名
+            entity.ToTable("AttractionProductTags", "Attractions");
 
-            // 設定與 Product 的關係
+            // 3. 鎖定資料庫欄位名稱，確保與 SQL 裡的底線格式完全一致
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.TagId).HasColumnName("tag_id");
+
+            // 4. 設定與 Product 的一對多關係
             entity.HasOne(d => d.Product)
-                .WithMany(p => p.AttractionProductTags) // 等下要在 Product 補上這一行
+                .WithMany(p => p.AttractionProductTags)
                 .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade) // 刪除產品時同步移除標籤關聯
                 .HasConstraintName("FK_AttractionProductTags_AttractionProducts");
 
-            // 設定與 Tag 的關係
+            // 5. 設定與 Tag 的一對多關係
             entity.HasOne(d => d.Tag)
-                .WithMany(p => p.AttractionProductTags) // 等下要在 Tag 補上這一行
+                .WithMany(p => p.AttractionProductTags)
                 .HasForeignKey(d => d.TagId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_AttractionProductTags_Tags");
         });
 
