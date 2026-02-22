@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "景點列表";
+    int? currentStatus = ViewBag.ApprovalStatus as int?;
 }
 
 <div class="page-inner">
@@ -13,7 +14,7 @@
                 <a href="#"><i class="flaticon-home"></i></a>
             </li>
             <li class="separator"><i class="flaticon-right-arrow"></i></li>
-            <li class="nav-item"><a href="#">景點區</a></li>
+        @*     <li class="nav-item"><a href="#">景點區</a></li> *@
         </ul>
     </div>
 
@@ -23,6 +24,39 @@
                 <div class="card-header">
                     <div class="d-flex align-items-center">
                         <h4 class="card-title">景點列表</h4>
+                   @* ★ 搜尋區塊 ★ *@
+                        <form method="get" class="d-flex align-items-center gap-2 ms-3 flex-wrap">
+                            <input type="text"
+                                   name="keyword"
+                                   value="@ViewBag.Keyword"
+                                   class="form-control form-control-sm"
+                                   style="width: 180px;"
+                                   placeholder="搜尋景點名稱..." />
+
+                            <select name="approvalStatus" class="form-control form-control-sm" style="width: 130px;">
+                                <option value="">全部狀態</option>
+                                <option value="1" selected="@(ViewBag.ApprovalStatus != null && (int)ViewBag.ApprovalStatus == 1)">已核准</option>
+                                <option value="0" selected="@(ViewBag.ApprovalStatus != null && (int)ViewBag.ApprovalStatus == 0)">審核中</option>
+                            </select>
+
+            <button type="submit" class="btn btn-sm btn-info btn-round">
+                <i class="fa fa-search"></i> 搜尋
+            </button>
+
+            @* 有搜尋條件時才顯示清除按鈕 *@
+            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || ViewBag.ApprovalStatus != null)
+            {
+                <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary btn-round">
+                    <i class="fa fa-times"></i> 清除
+                </a>
+            }
+        </form>
+
+
+
+
+
+
                         <a asp-area="Attractions" asp-controller="AttractionAssets" asp-action="Create" class="btn btn-primary btn-round ms-auto">
                             <i class="fa fa-plus"></i> 新增景點
                         </a>
@@ -113,11 +147,20 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="detailsModalLabel">景點詳細資訊</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="border:none; background:none;">
-                    <span aria-hidden="true" style="font-size: 24px;">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="detailsContent">
+            <div class="modal-body">
+                @* 1. 這裡放原本的詳細文字內容 *@
+                <div id="detailsContent"></div>
+
+                <hr />
+                @* 2. 這裡專門放標籤 *@
+                <div class="mb-3">
+                    <h6 class="fw-bold"><i class="fas fa-tags me-2"></i>景點標籤：</h6>
+                    <div id="attractionTags" class="d-flex flex-wrap gap-2 mt-2">
+                        @* 標籤會由 JS 動態產生成 span *@
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
@@ -184,12 +227,47 @@
             })
         }
 
-        // --- 查看詳情功能 ---
+               // --- 查看詳情功能 ---
         function showDetails(id) {
             $('#detailsModal').modal('show');
+            // 清空舊標籤並顯示載入中
+            $('#attractionTags').empty();
             $('#detailsContent').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>');
 
             $.get('@Url.Action("GetDetails")/' + id, function (data) {
+                // 1. 處理標籤區塊 (渲染到你 Modal 預留的 #attractionTags)
+                let tagHtml = '';
+                   if (data.tags && data.tags.length > 0) {
+        // 這裡加上 d-flex (彈性佈局) 和 justify-content-start (靠左對齊)
+        // gap-2 會讓標籤之間保持固定的小距離，而不會亂跳
+        tagHtml = `<div class="d-flex flex-wrap justify-content-start gap-2">`;
+        tagHtml += data.tags.map(t =>
+            `<span class="badge rounded-pill bg-primary px-3 py-2 shadow-sm" style="font-size:0.85rem; white-space:nowrap;">#${t}</span>`
+        ).join('');
+        tagHtml += `</div>`;
+                } else {
+                    tagHtml = '<span class="text-muted small">尚未設定標籤</span>';
+                }
+                $('#attractionTags').html(tagHtml);
+
+                // 2. 處理圖片區塊 (維持你原本的邏輯)
+                let imgHtml = '';
+                if (data.images && data.images.length > 0) {
+                    imgHtml = '<div class="row mt-3">';
+                    data.images.forEach(path => {
+                        imgHtml += `
+                            <div class="col-md-4 mb-3">
+                                <a href="${path}" target="_blank">
+                                    <img src="${path}" class="img-thumbnail w-100" style="height:150px; object-fit:cover;" title="點擊放大">
+                                </a>
+                            </div>`;
+                    });
+                    imgHtml += '</div>';
+                } else {
+                    imgHtml = '<p class="text-muted">暫無照片</p>';
+                }
+
+                // 3. 組合主體內容
                 let html = `
                     <div class="row">
                         <div class="col-md-6">
@@ -210,6 +288,11 @@
                             <p><strong>公休說明：</strong> ${data.closedDays || '無'}</p>
                             <p><strong>交通資訊：</strong><br>${data.transport || '無'}</p>
                         </div>
+                        <div class="col-12"><hr></div>
+                        <div class="col-12">
+                            <strong>景點照片：</strong>
+                            ${imgHtml}
+                        </div>
                     </div>
                 `;
                 $('#detailsContent').html(html);
@@ -221,15 +304,15 @@
         // --- 成功提示 ---
         @if (TempData["SuccessMessage"] != null)
         {
-                <text>
-                Swal.fire({
-                    icon: 'success',
-                    title: '完成！',
-                    text: '@Html.Raw(TempData["SuccessMessage"])',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                </text>
+                    <text>
+                    Swal.fire({
+                        icon: 'success',
+                        title: '完成！',
+                        text: '@Html.Raw(TempData["SuccessMessage"])',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    </text>
         }
     </script>
 }

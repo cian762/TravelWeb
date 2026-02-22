@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TravelWeb.Areas.Attractions.Models;
+namespace TravelWeb.Models; // 建議統一命名空間
 
 public partial class Tag
 {
@@ -9,5 +9,6 @@ public partial class Tag
 
     public string TagName { get; set; } = null!;
 
-    public virtual ICollection<AttractionProduct> Products { get; set; } = new List<AttractionProduct>();
+    // 這是對接中間表的集合
+    public virtual ICollection<AttractionProductTag> AttractionProductTags { get; set; } = new HashSet<AttractionProductTag>();
 }
