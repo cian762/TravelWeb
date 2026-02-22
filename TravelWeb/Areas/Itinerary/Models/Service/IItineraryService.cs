@@ -1,4 +1,5 @@
-﻿using TravelWeb.Areas.Itinerary.Models.ViewModel;
+﻿using System;
+using TravelWeb.Areas.Itinerary.Models.ViewModel;
 
 namespace TravelWeb.Areas.Itinerary.Models.Service
 {
@@ -6,5 +7,7 @@ namespace TravelWeb.Areas.Itinerary.Models.Service
     {
         Task<ItineraryDetailViewModel> GetItineraryManagementAsync();
         Task<VersionViewModel> GetVersionManagementAsync(int itineraryId);
+        void SetCurrentVersion(int versionId);
+        DiffViewModel GetDiff(int versionId);
     }
 }

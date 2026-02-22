@@ -4,7 +4,7 @@ namespace TravelWeb.Areas.Itinerary.Models.Service
 {
     public interface IDashBoardService
     {
-        DashBoardViewModel GetDashboardData();
+      Task<  DashBoardViewModel> GetDashboardData();
 
 
     }

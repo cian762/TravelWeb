@@ -1,0 +1,51 @@
+﻿@using TravelWeb.Areas.Itinerary.Models.ViewModel
+@model DiffViewModel
+@{
+    ViewData["Title"] = "Diff";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container mt-4">
+
+    <h2 class="mb-4">🔍 版本差異比較</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    舊版本 (@Model.OldVersionId)
+                </div>
+                <div class="card-body">
+                    <pre>@Model.OldContent</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    目前版本 (@Model.NewVersionId)
+                </div>
+                <div class="card-body">
+                    <pre>@Model.NewContent</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        @if (Model.IsDifferent)
+        {
+            <div class="alert alert-warning">
+                ⚠ 兩個版本內容不同
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success">
+                ✔ 兩個版本內容相同
+            </div>
+        }
+    </div>
+
+</div>
+
