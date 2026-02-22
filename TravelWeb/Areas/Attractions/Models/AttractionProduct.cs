@@ -28,7 +28,7 @@ public partial class AttractionProduct
     public int? IsActive { get; set; }
 
     public bool IsDeleted { get; set; } = false;
-    public string? TicketTypeCode { get; set; }
+    public int? TicketTypeCode { get; set; }  // 改回 int?
 
     public virtual TicketType? TicketType { get; set; }
     public virtual Attraction? Attraction { get; set; } = null!;
