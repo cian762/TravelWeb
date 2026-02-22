@@ -40,4 +40,5 @@ public partial class Attraction
     public virtual ICollection<AttractionProduct> AttractionProducts { get; set; } = new List<AttractionProduct>();
 
     public virtual ICollection<TripItineraryItem> TripItineraryItems { get; set; } = new List<TripItineraryItem>();
+    
 }

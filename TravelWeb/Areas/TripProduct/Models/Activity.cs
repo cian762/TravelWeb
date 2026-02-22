@@ -21,5 +21,7 @@ public partial class Activity
 
     public DateTime? UpdateAt { get; set; }
 
+    public virtual ICollection<ActivityImage> ActivityImages { get; set; } = new List<ActivityImage>();
+
     public virtual ICollection<TripItineraryItem> TripItineraryItems { get; set; } = new List<TripItineraryItem>();
 }

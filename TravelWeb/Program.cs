@@ -27,6 +27,10 @@ builder.Services.AddDbContext<TripDbContext>(O => O.UseSqlServer(builder.Configu
 builder.Services.AddScoped<ITripproducts, Tripproducts>();
 //行程細項連線用DI
 builder.Services.AddScoped<ITripItineraryItem, STripItineraryItem>();
+//行程檔期連線用DI
+builder.Services.AddScoped<ITripSchedules, STripSchedules>();
+
+
 builder.Services.AddDbContext<TravelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 builder.Services.AddScoped(typeof(IItineraryGenericRepository<>), typeof(ItineraryRepository<>));

@@ -19,11 +19,15 @@ public partial class TripDbContext : DbContext
 
     public virtual DbSet<Activity> Activities { get; set; }
 
+    public virtual DbSet<ActivityImage> ActivityImages { get; set; }
+
     public virtual DbSet<Attraction> Attractions { get; set; }
 
     public virtual DbSet<AttractionProduct> AttractionProducts { get; set; }
 
     public virtual DbSet<CancellationPolicy> CancellationPolicies { get; set; }
+
+    public virtual DbSet<Image> Images { get; set; }
 
     public virtual DbSet<ItineraryProductCollection> ItineraryProductCollections { get; set; }
 
@@ -71,6 +75,10 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.ProductName).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(10);
             entity.Property(e => e.TicketCategoryId).HasColumnName("TicketCategoryID");
+
+            entity.HasOne(d => d.TicketCategory).WithMany(p => p.AcitivityTickets)
+                .HasForeignKey(d => d.TicketCategoryId)
+                .HasConstraintName("FK_Acitivity_Tickets_TicketCategories");
         });
 
         modelBuilder.Entity<Activity>(entity =>
@@ -82,6 +90,21 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
             entity.Property(e => e.Title).HasMaxLength(50);
             entity.Property(e => e.UpdateAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<ActivityImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageSetId).HasName("PK_活動圖片表");
+
+            entity.ToTable("ActivityImages", "Activity");
+
+            entity.Property(e => e.ImageSetId).HasColumnName("ImageSetID");
+            entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
+            entity.Property(e => e.PublicId).HasColumnName("PublicID");
+
+            entity.HasOne(d => d.Activity).WithMany(p => p.ActivityImages)
+                .HasForeignKey(d => d.ActivityId)
+                .HasConstraintName("FK_活動圖片表_活動表");
         });
 
         modelBuilder.Entity<Attraction>(entity =>
@@ -176,6 +199,22 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.PolicyName).HasMaxLength(50);
             entity.Property(e => e.RefundRate).HasColumnType("decimal(3, 2)");
+        });
+
+        modelBuilder.Entity<Image>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("Images", "Attractions");
+
+            entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
+            entity.Property(e => e.ImagePath)
+                .HasMaxLength(255)
+                .HasColumnName("image_path");
+
+            entity.HasOne(d => d.Attraction).WithMany()
+                .HasForeignKey(d => d.AttractionId)
+                .HasConstraintName("FK_Images_Attractions");
         });
 
         modelBuilder.Entity<ItineraryProductCollection>(entity =>
@@ -383,7 +422,7 @@ public partial class TripDbContext : DbContext
 
             entity.ToTable("TripItineraryItems", "product");
 
-            entity.Property(e => e.ItineraryItemId).ValueGeneratedNever();
+            entity.Property(e => e.ItineraryItemId).ValueGeneratedOnAdd();
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
 
@@ -434,11 +473,10 @@ public partial class TripDbContext : DbContext
                     "TravelandProductRelation",
                     r => r.HasOne<TravelTag>().WithMany()
                         .HasForeignKey("TravelTagid")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("FK_TravelandProductRelation_TravelTags"),
                     l => l.HasOne<TripProduct>().WithMany()
                         .HasForeignKey("TripProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("FK_TravelandProductRelation_TripProducts"),
                     j =>
                     {
@@ -449,7 +487,7 @@ public partial class TripDbContext : DbContext
 
         modelBuilder.Entity<TripRegion>(entity =>
         {
-            entity.HasKey(e => e.RegionId).HasName("PK__TripRegi__ACD844436F68D83C");
+            entity.HasKey(e => e.RegionId).HasName("PK__TripRegi__ACD844437D83E734");
 
             entity.Property(e => e.RegionId).HasColumnName("RegionID");
             entity.Property(e => e.RegionName).HasMaxLength(50);
@@ -488,7 +526,7 @@ public partial class TripDbContext : DbContext
                     j =>
                     {
                         j.HasKey("ProductCode", "TicketCategoryId");
-                        j.ToTable("TripAndTicketRelation");
+                        j.ToTable("TripAndTicketRelation","dbo");
                         j.IndexerProperty<string>("ProductCode").HasMaxLength(50);
                     });
         });

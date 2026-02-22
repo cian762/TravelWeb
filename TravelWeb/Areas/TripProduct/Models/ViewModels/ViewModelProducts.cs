@@ -24,7 +24,6 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
         public decimal? DisplayPrice { get; set; }
         [DisplayName("上傳封面圖")]
         [NotMapped]
-        [Required(ErrorMessage = "請選擇圖片檔案")] 
         public IFormFile? ImageFile { get; set; }
         public string? CoverImage { get; set; }
         [DisplayName("請選擇地區")]
