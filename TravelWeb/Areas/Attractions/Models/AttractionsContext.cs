@@ -280,7 +280,8 @@ public partial class AttractionsContext : DbContext
 
             // 移除 HasMaxLength，因為 int 不支援長度設定
             entity.Property(e => e.TicketTypeCode)
-                  .HasColumnName("ticket_type_code");
+             .HasMaxLength(20)
+             .HasColumnName("ticket_type_code");
 
             entity.Property(e => e.TicketTypeName)
                   .HasMaxLength(50) // 對應你的 nvarchar(50)
