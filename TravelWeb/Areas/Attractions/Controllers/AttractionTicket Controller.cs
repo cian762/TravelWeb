@@ -18,12 +18,26 @@ namespace TravelWeb.Areas.Attractions.Controllers
         }
 
         // 只保留這一個 Index 方法
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? keyword, int? isActive)
         {
-            var tickets = await _context.AttractionProducts
+            var query = _context.AttractionProducts
                 .Include(p => p.Attraction)
                 .Include(p => p.TicketType)
-                  .Where(p => !p.IsDeleted)  // ← 加這行
+                .Where(p => !p.IsDeleted)
+                .AsQueryable();
+
+            // 依所屬景點名稱搜尋
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(p => p.Attraction.Name.Contains(keyword));
+
+            // 依銷售狀態篩選
+            if (isActive.HasValue)
+                query = query.Where(p => p.IsActive == isActive.Value);
+
+            ViewBag.Keyword = keyword;
+            ViewBag.IsActive = isActive;
+
+            var tickets = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
