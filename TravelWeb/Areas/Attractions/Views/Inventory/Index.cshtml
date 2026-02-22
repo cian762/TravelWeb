@@ -1,76 +1,200 @@
 ﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.InventoryViewModel>
 @{
     ViewData["Title"] = "票券庫存管理";
+    string currentMode = ViewBag.InventoryMode as string ?? "";
 }
-<div class="container-fluid">
-    <h2>票券庫存管理</h2>
+<div class="page-inner">
+    <div class="page-header">
+        <h4 class="page-title">票券庫存管理</h4>
+        <ul class="breadcrumbs">
+            <li class="nav-home"><a href="#"><i class="flaticon-home"></i></a></li>
+            <li class="separator"><i class="flaticon-right-arrow"></i></li>
+            <li class="nav-item">庫存管理</li>
+        </ul>
+    </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-    }
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <h4 class="card-title mb-0">庫存列表</h4>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>產品代碼</th>
-                <th>票券名稱</th>
-                <th>庫存模式</th>
-                <th>每日上限</th>
-                <th>已售數量</th>
-                <th>最後更新</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.ProductCode</td>
-                    <td>@item.Title</td>
+                        @* ★ 搜尋區塊 ★ *@
+                        <form method="get" class="d-flex align-items-center gap-2 ms-3 flex-wrap">
+                            <input type="text"
+                                   name="keyword"
+                                   value="@ViewBag.Keyword"
+                                   class="form-control form-control-sm"
+                                   style="width: 200px;"
+                                   placeholder="搜尋代碼或票券名稱..." />
 
-                    <td>
-                        @if (item.InventoryMode == "DAILY")
-                        {
-                            <form asp-action="UpdateInventoryMode" method="post" class="d-flex gap-1 align-items-center">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="productId" value="@item.ProductId" />
-                                <input type="hidden" name="inventoryMode" value="DAILY" />
-                                <input type="number" name="dailyLimit" value="@item.DailyLimit"
-                                       min="1" style="width:80px" class="form-control form-control-sm" />
-                                <button type="submit" class="btn btn-sm btn-outline-primary">✓</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <span>—</span>
-                        }
-                    </td>
-
-                    <td>@(item.DailyLimit.HasValue ? item.DailyLimit + " 張" : "—")</td>
-                    <td>@(item.SoldQuantity ?? 0) 張</td>
-                    <td>@(item.LastUpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</td>
-                    <td>
-                        <form asp-action="UpdateInventoryMode" method="post" class="d-flex gap-1">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="productId" value="@item.ProductId" />
-                            <input type="hidden" name="dailyLimit" value="@item.DailyLimit" />
-
-                            <select name="inventoryMode" class="form-select form-select-sm" style="width:120px">
-                                <option value="UNLIMITED" selected="@(item.InventoryMode == "UNLIMITED" ? "selected" : null)">無限制</option>
-                                <option value="DAILY" selected="@(item.InventoryMode == "DAILY" ? "selected" : null)">每日上限</option>
-                                <option value="TOTAL" selected="@(item.InventoryMode == "TOTAL" ? "selected" : null)">總量限制</option>
+                            <select name="inventoryMode" class="form-control form-control-sm" style="width: 130px;">
+                                <option value="">全部模式</option>
+                                @if (currentMode == "UNLIMITED")
+                                {
+                                    <option value="UNLIMITED" selected>無限制</option>
+                                    <option value="DAILY">每日上限</option>
+                                    <option value="TOTAL">總量限制</option>
+                                }
+                                else if (currentMode == "DAILY")
+                                {
+                                    <option value="UNLIMITED">無限制</option>
+                                    <option value="DAILY" selected>每日上限</option>
+                                    <option value="TOTAL">總量限制</option>
+                                }
+                                else if (currentMode == "TOTAL")
+                                {
+                                    <option value="UNLIMITED">無限制</option>
+                                    <option value="DAILY">每日上限</option>
+                                    <option value="TOTAL" selected>總量限制</option>
+                                }
+                                else
+                                {
+                                    <option value="UNLIMITED">無限制</option>
+                                    <option value="DAILY">每日上限</option>
+                                    <option value="TOTAL">總量限制</option>
+                                }
                             </select>
 
-                            <button type="submit" class="btn btn-sm btn-primary">儲存</button>
-                            <a asp-action="StockIn" asp-route-productCode="@item.ProductCode"
-                               class="btn btn-sm btn-outline-secondary">進貨紀錄</a>
+                            <button type="submit" class="btn btn-sm btn-info btn-round">
+                                <i class="fa fa-search"></i> 搜尋
+                            </button>
+
+                            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.InventoryMode as string))
+                            {
+                                <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary btn-round">
+                                    <i class="fa fa-times"></i> 清除
+                                </a>
+                            }
                         </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                    </div>
+                </div>
+
+                <div class="card-body">
+
+                    @* 搜尋結果提示 *@
+                    @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.InventoryMode as string))
+                    {
+                        <div class="alert alert-info py-2 mb-3">
+                            <i class="fa fa-filter me-1"></i>
+                            共找到 <strong>@Model.Count()</strong> 筆結果
+                            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string))
+                            {
+                                <span>，關鍵字：「<strong>@ViewBag.Keyword</strong>」</span>
+                            }
+                            @if (!string.IsNullOrEmpty(currentMode))
+                            {
+                                var modeText = currentMode == "UNLIMITED" ? "無限制" : currentMode == "DAILY" ? "每日上限" : "總量限制";
+                                <span>，庫存模式：<strong>@modeText</strong></span>
+                            }
+                        </div>
+                    }
+
+                    @* TempData 提示 *@
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <i class="fa fa-check me-1"></i> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mt-2">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>產品代碼</th>
+                                    <th>票券名稱</th>
+                                    <th>庫存模式</th>
+                                    <th>每日上限</th>
+                                    <th>已售數量</th>
+                                    <th>最後更新</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.Any())
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            <i class="fa fa-search me-2"></i>查無符合條件的庫存資料
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td><code class="text-primary">@item.ProductCode</code></td>
+                                            <td>@item.Title</td>
+                                            <td>
+                                                @if (item.InventoryMode == "DAILY")
+                                                {
+                                                    <form asp-action="UpdateInventoryMode" method="post" class="d-flex gap-1 align-items-center">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                                        <input type="hidden" name="inventoryMode" value="DAILY" />
+                                                        <input type="number" name="dailyLimit" value="@item.DailyLimit"
+                                                               min="1" style="width:80px" class="form-control form-control-sm" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">✓</button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+                                            <td>@(item.DailyLimit.HasValue? item.DailyLimit + " 張" : "—")</td>
+                                            <td>@(item.SoldQuantity ?? 0) 張</td>
+                                            <td>@(item.LastUpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</td>
+                                            <td>
+                                                <form asp-action="UpdateInventoryMode" method="post" class="d-flex gap-1">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="productId" value="@item.ProductId" />
+                                                    <input type="hidden" name="dailyLimit" value="@item.DailyLimit" />
+                                                    <select name="inventoryMode" class="form-select form-select-sm" style="width:120px">
+                                                        @if (item.InventoryMode == "UNLIMITED")
+                                                        {
+                                                            <option value="UNLIMITED" selected>無限制</option>
+                                                            <option value="DAILY">每日上限</option>
+                                                            <option value="TOTAL">總量限制</option>
+                                                        }
+                                                        else if (item.InventoryMode == "DAILY")
+                                                        {
+                                                            <option value="UNLIMITED">無限制</option>
+                                                            <option value="DAILY" selected>每日上限</option>
+                                                            <option value="TOTAL">總量限制</option>
+                                                        }
+                                                        else if (item.InventoryMode == "TOTAL")
+                                                        {
+                                                            <option value="UNLIMITED">無限制</option>
+                                                            <option value="DAILY">每日上限</option>
+                                                            <option value="TOTAL" selected>總量限制</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="UNLIMITED">無限制</option>
+                                                            <option value="DAILY">每日上限</option>
+                                                            <option value="TOTAL">總量限制</option>
+                                                        }
+                                                    </select>
+                                                    <button type="submit" class="btn btn-sm btn-primary">儲存</button>
+                                                    <a asp-action="StockIn" asp-route-productCode="@item.ProductCode"
+                                                       class="btn btn-sm btn-outline-secondary">進貨紀錄</a>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

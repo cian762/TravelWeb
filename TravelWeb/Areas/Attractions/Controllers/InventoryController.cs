@@ -21,9 +21,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
         }
 
         // 庫存總覽
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? keyword, string? inventoryMode)
         {
-            var inventories = await _context.ProductInventoryStatuses
+            var query = _context.ProductInventoryStatuses
                 .Join(_context.AttractionProducts.Where(p => !p.IsDeleted),
                     inv => inv.ProductId,
                     p => p.ProductId,
@@ -37,11 +37,21 @@ namespace TravelWeb.Areas.Attractions.Controllers
                         SoldQuantity = inv.SoldQuantity,
                         LastUpdatedAt = inv.LastUpdatedAt
                     })
-                .ToListAsync();
+                .AsQueryable();
 
-            return View(inventories);
+            // 產品代碼或票券名稱關鍵字搜尋
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(v => v.ProductCode.Contains(keyword) || v.Title.Contains(keyword));
+
+            // 庫存模式篩選
+            if (!string.IsNullOrWhiteSpace(inventoryMode))
+                query = query.Where(v => v.InventoryMode == inventoryMode);
+
+            ViewBag.Keyword = keyword;
+            ViewBag.InventoryMode = inventoryMode;
+
+            return View(await query.ToListAsync());
         }
-
         // 調整庫存模式
         [HttpPost]
         [ValidateAntiForgeryToken]
