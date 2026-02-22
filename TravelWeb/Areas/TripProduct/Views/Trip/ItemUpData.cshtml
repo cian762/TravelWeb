@@ -105,19 +105,16 @@
         z-index: 1020;
     }
 </style>
-<input type="hidden" id="max-days-limit" value="@Model.MaxDays" />
-<div id="msg-handler"
-     data-success="@TempData["SuccessMessage"]"
-     style="display:none;"></div>
+
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-md-8">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold text-dark">新增行程細項</h2>
+                <h2 class="fw-bold text-dark">修改行程細項</h2>
                 <a asp-action="ItemIndex" asp-route-id="@Model.TripProductId" class="btn btn-outline-secondary">返回列表</a>
             </div>
 
-            <form asp-action="CreateItem" asp-controller="Trip" asp-route-id="@Model.TripProductId" method="post" enctype="multipart/form-data" id="mainForm">
+            <form asp-action="IUpdataItem" asp-controller="Trip" asp-route-id="@Model.TripProductId" method="post" enctype="multipart/form-data" id="mainForm">
                 <input type="hidden" asp-for="ItineraryItemId" />
                 <input type="hidden" asp-for="TripProductId" />
 
@@ -131,7 +128,7 @@
                                     @* 💡 強制 readonly，並加入 onfocus="this.blur()" 徹底防止點擊輸入 *@
                                     <input asp-for="DayNumber"
                                            class="form-control form-control-lg bg-light"
-                                           type="text"
+                                           type="number"
                                            readonly
                                            onfocus="this.blur()"
                                            tabindex="-1" />
@@ -182,10 +179,8 @@
                         <div class="bg-light p-4 rounded-3 mb-4 border border-info shadow-sm">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-primary">📖 內容描述</label>
-                                @* 💡 關鍵：使用 asp-for 綁定 ViewModel 欄位 *@
-                                <textarea asp-for="ResourceDescription" class="form-control" rows="4" placeholder="在這裡編輯景點或活動的通用介紹..."></textarea>
-                                @* 💡 建議加上驗證訊息顯示 *@
-                                <span asp-validation-for="ResourceDescription" class="text-danger"></span>
+                                @* 💡 務必使用 asp-for="ResourceDescription"，它會自動填入 Model 的值 *@
+                                <textarea asp-for="ResourceDescription" class="form-control" rows="4"></textarea>
                             </div>
 
                             <div class="mb-2">
@@ -193,6 +188,22 @@
                                 <div id="imageContainer" class="d-flex flex-wrap gap-2 mb-3">
                                 </div>
                                 <input asp-for="FileImages" type="file" class="form-control" multiple accept="image/*" />
+                                <div class="current-images mb-3">
+                                    @if (Model.AllImagePaths != null && Model.AllImagePaths.Any())
+                                    {
+                                        <label class="form-label text-muted">🖼️ 目前圖片（上傳新圖將覆蓋舊圖）：</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach (var imgName in Model.AllImagePaths)
+                                            {
+                                                <div class="position-relative">
+                                                    <img src="@(imgName.StartsWith("/") ? Url.Content(imgName) : Url.Content("~/PImages/" + imgName))"
+                                                         class="img-thumbnail"
+                                                         style="width:100px; height:100px; object-fit:cover;" />
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         </div>
 
@@ -209,114 +220,72 @@
                 </div>
             </form>
         </div>
-
-        <div class="col-md-4">
-            <div class="sticky-top" style="top: 20px;">
-                <h5 class="mb-3"><i class="bi bi-calendar-check"></i> 當前行程進度</h5>
-                <div class="timeline-container p-3 border rounded bg-light" style="max-height: 80vh; overflow-y: auto;">
-                    @if (ViewBag.ExistingItems != null && ((IEnumerable<dynamic>)ViewBag.ExistingItems).Any())
-                    {
-                        var groupedItems = ((IEnumerable<dynamic>)ViewBag.ExistingItems)
-                        .GroupBy(i => i.DayNumber)
-                        .OrderBy(g => g.Key);
-
-                        foreach (var dayGroup in groupedItems)
-                        {
-                            <div class="day-section mb-4">
-                                <h6 class="text-primary fw-bold">第 @dayGroup.Key 天</h6>
-                                <div class="ms-2 border-start ps-3" style="border-left: 2px dashed #0d6efd !important;">
-                                    @foreach (var item in dayGroup.OrderBy(i => i.SortOrder))
-                                    {
-                                        <div class="timeline-item mb-3 position-relative">
-                                            <div class="position-absolute" style="left: -25px; top: 5px; width: 12px; height: 12px; background: #0d6efd; border-radius: 50%;"></div>
-
-                                            <div class="card shadow-sm border-0">
-                                                <div class="card-body p-2">
-                                                    <div class="d-flex justify-content-between">
-                                                        <span class="fw-bold text-dark">@item.ResourceName</span>
-                                                        <small class="text-muted">#@item.SortOrder</small>
-                                                    </div>
-                                                    @if (!string.IsNullOrEmpty(item.CustomText))
-                                                    {
-                                                        <p class="small text-secondary mb-0 mt-1">@item.CustomText</p>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="text-center py-5 text-muted">
-                            <i class="bi bi-map h1"></i>
-                            <p>目前還沒安排行程內容</p>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        $(document).ready(function () {
-            // --- 1. 提示訊息處理 ---
-            const success = $('#msg-handler').data('success');
-            if (success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '成功',
-                    text: success,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            }
-
-            // --- 2. 初始化 Select2 ---
+        $(document).ready(function() {
+            // 1. 初始化 Select2 搜尋框
             $('.select2-init').select2({
-                placeholder: "請輸入關鍵字搜尋...",
-                allowClear: true,
-                width: '100%' // 確保寬度正常
+                placeholder: "請手輸入關鍵字搜尋...",
+                allowClear: true
             });
+                    // 2. 行程類型切換邏輯
+        $('input[name="typeGroup"]').on('change', function() {
+            let type = $(this).attr('id').replace('btn', '').toLowerCase();
 
-            // --- 3. 行程類型切換 ---
-            $('input[name="typeGroup"]').on('change', function() {
-                let type = $(this).attr('id').replace('btn', '').toLowerCase();
-                $('.type-section').hide();
-                $('#section-' + type).fadeIn();
+            // 1. 先處理視覺切換
+            $('.type-section').hide();
+            $('#section-' + type).fadeIn();
 
-                // 清空選單與欄位
-                $('.select2-init').val(null).trigger('change');
-                $('#ResourceName, #ResourceDescription').val('');
-                $('#imageContainer').empty();
-                $('input[type="file"]').val('');
-            });
+            // 2. 💡 強效清空：確保切換類型時，前一個類型的所有痕跡都消失
 
-            // --- 4. AJAX 抓取詳細資料 ---
+            // 清空 Select2 下拉選單的值 (避免殘留 AttractionId 或 ActivityId)
+            // $('.select2-init').val(null).trigger('change');
+
+            // // 清空文字欄位
+            // $('#ResourceName').val('');
+            // $('#ResourceDescription').val('');
+
+            // 💡 關鍵：清空圖片預覽容器
+            $('#imageContainer').empty();
+
+            // 💡 關鍵：清空實體檔案選取器 (避免切換後剛選的檔案還掛在那裡)
+            $('input[type="file"]').val('');
+
+            // 3. 特殊類型處理
+            if(type === 'custom') {
+                console.log("切換至自定義資源模式");
+            }
+        });
+
+            // AJAX 抓取景點/活動的詳細資料與圖片
             $('.select2-init').on('select2:select', function (e) {
                 let type = $(this).data('type');
                 let id = e.params.data.id;
-                if (id) {
-                    $.get('/TripProduct/Trip/GetResourceDetail', { type: type, id: id }, function (data) {
-                        if (data) {
-                            let finalDescription = data.description || data.Description || "";
-                            $('#ResourceDescription').val(finalDescription);
 
+                if (id) {
+                  $.get('/TripProduct/Trip/GetResourceDetail', { type: type, id: id }, function (data) {
+                        if (data) {
+                            // 1. 填入描述
+                                  console.log("後端回傳原始資料：", data); // 💡 打開 F12 看看 console 裡屬性是大寫還是小寫
+                                    let finalDescription = data.description || data.Description || "";
+                                    $('#ResourceDescription').val(finalDescription);
+                            // 2. 處理圖片預覽
                             let imgHtml = '';
                             if (data.images && data.images.length > 0) {
                                 data.images.forEach(path => {
                                     let finalPath = path.startsWith('/') ? path : '/' + path;
+
                                     imgHtml += `
                                         <div class="position-relative d-inline-block me-2 mb-2">
-                                            <img src="${finalPath}" class="img-thumbnail" style="width: 120px; height: 90px; object-fit: cover;" onerror="this.src='/img/no-image.png';" />
+                                            <img src="${finalPath}" class="img-thumbnail"
+                                                 style="width: 120px; height: 90px; object-fit: cover;"
+                                                 onerror="this.src='/img/no-image.png';" />
                                             <span class="position-absolute top-0 start-0 badge bg-secondary" style="font-size:0.5rem">原有圖</span>
                                         </div>`;
                                 });
@@ -329,63 +298,75 @@
                 }
             });
 
-            // --- 5. 檔案預覽 ---
+            // 4. 處理「選擇檔案」後的即時預覽
             $('input[type="file"]').on('change', function(e) {
                 const container = $('#imageContainer');
                 const files = e.target.files;
                 for (let i = 0; i < files.length; i++) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
-                        container.append(`
+                        const previewHtml = `
                             <div class="position-relative d-inline-block me-2 mb-2">
-                                <img src="${event.target.result}" class="img-thumbnail" style="width: 120px; height: 90px; object-fit: cover; border: 2px solid #007bff;" />
+                                <img src="${event.target.result}" class="img-thumbnail"
+                                     style="width: 120px; height: 90px; object-fit: cover; border: 2px solid #007bff;" />
                                 <span class="position-absolute top-0 start-0 badge bg-primary">待上傳</span>
-                            </div>`);
+                            </div>`;
+                        container.append(previewHtml);
                     };
                     reader.readAsDataURL(files[i]);
                 }
             });
+                    $('#mainForm').on('submit', function(e) {
+            let inputDay = parseInt($('#DayNumber').val());
+            let maxDay = @(ViewBag.MaxDays ?? 1);
 
-            // --- 6. 表單送出檢查 (關鍵修正點) ---
-            $('#mainForm').on('submit', function(e) {
-                let inputDay = parseInt($('#DayNumber').val()) || 0;
-                // 💡 修正：確保天數正確抓取，且不因引號出錯
-                let maxDay = parseInt("@(Model?.MaxDays ?? 1)");
+            if (inputDay > maxDay) {
+                alert("這項產品只有 " + maxDay + " 天行程，請勿填寫超過！");
+                e.preventDefault(); // 攔截不讓它送出
+                return false;
+            }
+        });
+        });
+                $(document).ready(function () {
+            const attrId = '@Model.AttractionId';
+            const actId = '@Model.ActivityId';
 
-                if (inputDay > maxDay) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '超出天數限制',
-                        text: "這項產品只有 " + maxDay + " 天行程，請勿填寫超過！"
-                    });
-                    e.preventDefault();
-                    return false;
+            // 💡 只有在編輯模式（有 ID）時才觸發自動切換
+            if (attrId && attrId !== '0') {
+                $('#btnAttraction').click();
+            } else if (actId && actId !== '0') {
+                $('#btnActivity').click();
+            } else {
+                $('#btnCustom').click();
+            }
+                    $('#SortOrder').on('change keyup', function() {
+            let currentDay = $('#DayNumber').val();
+            let currentSort = $(this).val();
+            let exists = false;
+
+            // 💡 掃描右側預覽區塊中的序號標籤 (假設你的標籤 class 是 .badge 或有特定 ID)
+            $('.timeline-item').each(function() {
+                // 假設你的右側列表 HTML 有儲存 day 和 sort 資訊
+                let itemDay = $(this).data('day');
+                let itemSort = $(this).data('sort');
+
+                if (itemDay == currentDay && itemSort == currentSort) {
+                    exists = true;
+                    return false; // 跳出迴圈
                 }
             });
 
-            // --- 7. 序號重複檢查 ---
-            $('#SortOrder').on('change keyup', function() {
-                let currentDay = $('#DayNumber').val();
-                let currentSort = $(this).val();
-                let exists = false;
-
-                $('.timeline-item').each(function() {
-                    if ($(this).data('day') == currentDay && $(this).data('sort') == currentSort) {
-                        exists = true;
-                        return false;
-                    }
-                });
-
-                if (exists) {
-                    $(this).addClass('is-invalid');
-                    if($('#sort-error').length == 0) {
-                        $(this).after('<div id="sort-error" class="text-danger small">此序號已存在於第 ' + currentDay + ' 天</div>');
-                    }
-                } else {
-                    $(this).removeClass('is-invalid');
-                    $('#sort-error').remove();
+            if (exists) {
+                $(this).addClass('is-invalid');
+                // 可以在下方顯示一個紅字提示
+                if($('#sort-error').length == 0) {
+                    $(this).after('<div id="sort-error" class="text-danger small">此序號已存在於第 ' + currentDay + ' 天</div>');
                 }
-            });
-        }); // 這裡才是唯一的 ready 結尾
+            } else {
+                $(this).removeClass('is-invalid');
+                $('#sort-error').remove();
+            }
+        });
+        });
     </script>
 }

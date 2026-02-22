@@ -7,7 +7,7 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
 {
     public class ViewModelTripItineraryItems
     {
-
+        public int ItineraryItemId { get; set; }
         public int TripProductId { get; set; }
 
         [DisplayName("第幾天")]
@@ -28,14 +28,17 @@ namespace TravelWeb.Areas.TripProduct.Models.ViewModels
         [DisplayName("自訂資源名稱")]
         public string? ResourceName { get; set; }
 
-        // --- 內容描述 (這是要存進 Resources 表的 DefaultDescription) ---
-        [DisplayName("內容描述 (快照)")]
+       
+        [DisplayName("備註")]
         public string? CustomText { get; set; }
+        // --- 內容描述 (這是要存進 Resources 表的 DefaultDescription) ---
+        public string? ResourceDescription { get; set; }
 
         // --- 圖片處理關鍵欄位 ---
+        public string? ImagePath { get; set; }
 
-        [DisplayName("圖片快照路徑")]
-        public string? ImagePath { get; set; } // 💡 用來接收前端選中的那張「快照圖」路徑
+        [DisplayName("圖片路徑")]
+        public List<string> AllImagePaths { get; set; } = new List<string>();
 
         [DisplayName("上傳多張資源圖片")]
         public List<IFormFile>? FileImages { get; set; } // 💡 修改：從 IFormFile 改成 List，支援多圖上傳

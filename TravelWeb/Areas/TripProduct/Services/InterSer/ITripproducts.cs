@@ -5,7 +5,7 @@ namespace TravelWeb.Areas.TripProduct.Services.InterSer
     public interface ITripproducts
     {
         Task<ViewModelProducts> GetCreateViewModelAsync();
-        Task <bool> Create(ViewModelProducts vm);
+        Task <int> Create(ViewModelProducts vm);
         
        Task <bool> Update(ViewModelProducts vm);
        Task <string> Delete(int id);

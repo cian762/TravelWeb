@@ -16,7 +16,7 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
            _context = context;
         }
         //這是行程商品新增的方法
-        public async Task<bool> Create(ViewModelProducts vm)
+        public async Task<int> Create(ViewModelProducts vm)
         {
             var trip = new TravelWeb.Areas.TripProduct.Models.TripProduct();
             trip.ProductName = vm.ProductName;
@@ -58,8 +58,12 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
                 }
             }
             _context.TripProducts.Add(trip);
-            // 這裡存檔，會同時存入商品和中間表的關聯
-            return await _context.SaveChangesAsync() > 0;
+
+            // 2. 執行存檔
+            int result = await _context.SaveChangesAsync();
+
+            // 3. 判斷是否存檔成功：成功則回傳新生成的 ID，失敗則回傳 0
+            return result > 0 ? trip.TripProductId : 0;
         }
 
         

@@ -109,7 +109,7 @@
                                 }
                             </td>
                             <td>
-                                <div class="fw-bold fs-6 @(isInactive ? "" : "text-primary")">@item.ProductName</div>
+                                <div class="fw-bold fs-5 @(isInactive ? "" : "text-primary")">@item.ProductName</div>
                             </td>
                             <td>
                                    <span class="badge @(isInactive ? "bg-secondary text-white" : "bg-info text-dark") p-2 fs-5">@item.RegionName</span>
@@ -133,12 +133,12 @@
                                     }
                                     else
                                     {
-                                        @* 💡 上架時：亮藍色 (使用鮮豔的電光藍 #007bff) *@
-                                        <button class="btn shadow-sm py-2 text-white"
-                                                style="background-color: #007bff; border: none; width: 100%; font-weight: bold;"
-                                                onclick="openSchedule(@item.TripProductId)">
+                                        @* 💡 上架時：改成 <a> 標籤，直接跳轉到剛寫好的 SchedulesIndex *@
+                                        <a href="@Url.Action("SchedulesIndex", "Trip", new { id = item.TripProductId })"
+                                           class="btn shadow-sm py-2 text-white"
+                                           style="background-color: #007bff; border: none; width: 100%; font-weight: bold; display: block;">
                                             <i class="fas fa-clock me-2"></i>檔期管理
-                                        </button>
+                                        </a>
                                     }
                                 </div>
 
@@ -263,9 +263,7 @@
                     </text>
             }
         });
-             function openSchedule(id) {
-            alert('正在開啟商品 ID: ' + id + ' 的檔期管理視窗');
-        }
+            
                 function confirmDelete(id, name) {
             Swal.fire({
                 title: '確定要刪除嗎？',

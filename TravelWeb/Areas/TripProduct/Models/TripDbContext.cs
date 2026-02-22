@@ -422,7 +422,7 @@ public partial class TripDbContext : DbContext
 
             entity.ToTable("TripItineraryItems", "product");
 
-            entity.Property(e => e.ItineraryItemId).ValueGeneratedNever();
+            entity.Property(e => e.ItineraryItemId).ValueGeneratedOnAdd();
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
 
@@ -526,7 +526,7 @@ public partial class TripDbContext : DbContext
                     j =>
                     {
                         j.HasKey("ProductCode", "TicketCategoryId");
-                        j.ToTable("TripAndTicketRelation");
+                        j.ToTable("TripAndTicketRelation","dbo");
                         j.IndexerProperty<string>("ProductCode").HasMaxLength(50);
                     });
         });
