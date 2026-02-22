@@ -1,106 +1,81 @@
-﻿@model IEnumerable<TravelWeb.Areas.BoardManagement.Models.BoardDB.ReportLog>
+﻿@using TravelWeb.Areas.BoardManagement.Models.ViewModel
+@model ReportDetailsModel
 
 @{
     ViewData["Title"] = "ReportDetails";
     Layout = "_Layout";
 }
 
-<h1>ReportDetails</h1>
-
-@* <p>
-    <a asp-action="Create">Create New</a>
-</p> *@
-
 <div class="container">
+    <h1>ReportDetails</h1>
     <div class="row">
     <div class="col-9">
             <div class="table-responsive">
                 <table class="table">
-                <thead>
-                    <tr>
-                       @*  <th>
-                            @Html.DisplayNameFor(model => model.TargetId)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.TargetType)
-                        </th> *@
-                        <th>
-                            @Html.DisplayNameFor(model => model.UserId)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.ViolationType)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.Reason)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.Photo)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.Snapshot)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.CreatedAt)
-                        </th>
-                       
-                        <th>
-                            @Html.DisplayNameFor(model => model.UpdatedAt)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.Status)
-                        </th>
-                            <th>
-                                @Html.DisplayNameFor(model => model.ResultType)
-                            </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+                    <thead>
                         <tr>
-                           @*  <td>
-                                @Html.DisplayFor(modelItem => item.TargetId)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.TargetType)
-                            </td> *@
-                            <td>
-                                @Html.DisplayFor(modelItem => item.UserId)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.ViolationType)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Reason)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Photo)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Snapshot)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.CreatedAt)
-                            </td>
-                            
-                            <td>
-                                @Html.DisplayFor(modelItem => item.UpdatedAt)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Status)
-                            </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.ResultType)
-                                </td>
-                            @* <td>
-                                <a asp-action="Edit" asp-route-id="@item.LogId">Edit</a> |
-                                <a asp-action="Details" asp-route-id="@item.LogId">Details</a> |
-                                <a asp-action="Delete" asp-route-id="@item.LogId">Delete</a>
-                            </td> *@
+                            <th>
+                                檢舉者編號
+                            </th>
+                            <th>
+                                違規類型
+                            </th>
+                            <th>
+                                詳細說明
+                            </th>
+                            <th>
+                                附圖
+                            </th>
+                            <th>
+                                網頁快照
+                            </th>
+                            <th>
+                                檢舉成立時間
+                            </th>
+                            <th>
+                                審查結果更新時間
+                            </th>                            
+                            <th>
+                                審查結果
+                            </th>                            
                         </tr>
-                    }
-                </tbody>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.LogItems)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.UserId)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ViolationType)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Reason)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Photo)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Snapshot)
+                                </td>                                
+                                <td>                                   
+                                    <div>@Html.DisplayFor(modelItem => item.CreateDateText)</div>
+                                    <div style="white-space: nowrap;">@Html.DisplayFor(modelItem => item.CreateTimeText)</div>
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.UpdatedAt)
+                                </td>
+                                <td>                                    
+                                    <select asp-for="@item.ResultType"
+                                            asp-items="Model.ResultTypeLists"
+                                            data-log-id="@item.LogId"
+                                            class="form-select Result-updater">
+                                    </select>
+                                </td>                                
+                            </tr>
+                        }
+                    </tbody>
             </table>
             </div>
         </div>
@@ -108,10 +83,60 @@
             <div>
                 @* class="mb-3" *@
                 <label for="exampleFormControlTextarea1" class="form-label">審查備註</label>
-                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                <textarea class="form-control" id="noteTextarea" rows="3">@Model.auditNote.Note</textarea>
+                <button type="button" id="btnUpdateNote" class="btn btn-primary">確定</button>
             </div>
         </div>
 
     </div>
     </div>
+
+
+
+
+    <script>
+        $('.Result-updater').change(function() {
+        var logId = $(this).data('log-id'); // 確保 HTML 標籤上有 data-log-id
+        var newStatus = $(this).val();
+        $.ajax({
+            url: '@Url.Action("UpdateReport", "Board", new { area = "BoardManagement" })',
+            type: 'POST',
+            data: {
+                LogID: logId,
+                ResultID: newStatus
+            },
+            success: function(response) {
+                // alert("更新成功！");
+            },
+            error: function() {
+                // alert("更新失敗");
+            }
+        });
+    });
+
+          $('#btnUpdateNote').click(function() {
+        var id = '@Model.auditNote.TargetId';
+        var content = $('#noteTextarea').val();
+        $.ajax({
+            url: '@Url.Action("UpdateNote", "Board", new { area = "BoardManagement" })',
+            type: 'POST',
+            data: {
+                id: id,
+                noteContent: content
+            },
+            success: function(response) {
+                 if (response.success) {
+
+                }
+                else {
+                }
+            }
+
+
+        });
+    });
+    </script>
+
+
+
 
