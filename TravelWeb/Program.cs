@@ -58,7 +58,7 @@ builder.Services.AddDbContext<AttractionsContext>(options =>
 //-----------------------------------------------------------------------------
 
 
-//ActivityDBcontext �A�ȵ��U 260213_���a�j
+//ActivityDBcontext 服務註冊
 builder.Services.AddDbContext<ActivityDbContext>(options => 
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
 );
@@ -67,7 +67,7 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
 builder.Services.AddDbContext<MemberSystemContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 
-//�[�J Cloudinary ���ݹϧɵ��U 260216_���a�j
+//Cloudinary 服務註冊
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 
@@ -93,10 +93,12 @@ app.UseAuthorization();
 
 
 app.MapAreaControllerRoute("app", "Activity", "{controller}/{action}");
+
 // Area ��ѳ]�w (������b�w�]��ѤW��)
 app.MapControllerRoute(
     name: "MyAreas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
 // Area ��ѳ]�w (��{�ӫ~)
 app.MapControllerRoute(
      name: "Trip",

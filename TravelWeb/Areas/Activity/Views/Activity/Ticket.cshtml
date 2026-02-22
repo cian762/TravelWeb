@@ -9,10 +9,10 @@
     <h1>活動商品總覽</h1>
 
     <p>
-        <a asp-action="ActivityCreate" class="btn btn-primary">創建新商品</a>
+        <a asp-action="TicketCreate" class="btn btn-primary">創建新商品</a>
     </p>
-    <table class="table">
-        <thead>
+    <table id="myTable" class="table table-hover">
+        <thead class="thead-dark">
             <tr>
                 <th>
                     @Html.DisplayNameFor(model => model[0].ProductCode)
@@ -42,7 +42,7 @@
             {
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.ProductCode)
+                        <a asp-area="Activity" asp-controller="Activity" asp-action="TicketEdit" asp-route-ProductCode="@item.ProductCode">@item.ProductCode</a>
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.ProductName)
@@ -64,13 +64,17 @@
                         {
                             <span class="badge bg-warning fs-5">預告中</span>
                         }
-                        else if(item.Status == "販售中")
+                        else if (item.Status == "販售中")
                         {
                             <span class="badge bg-success fs-5">販售中</span>
                         }
-                        else if(item.Status == "已下架")
+                        else if (item.Status == "已下架")
                         {
                             <span class="badge bg-danger fs-5">已下架</span>
+                        }
+                        else if (item.Status == "已售完")
+                        {
+                            <span class="badge bg-black fs-5">已售完</span>
                         }
                     </td>
                 </tr>
@@ -79,4 +83,12 @@
     </table>
 </div>
 
-
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $("#myTable").DataTable()
+        });
+    </script>
+}

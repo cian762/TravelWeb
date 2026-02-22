@@ -3,86 +3,120 @@
 @{
 
     ViewData["Title"] = "活動編輯 | " + Model.Title;
+}
 
+
+@section Styles{
+
+    <style>
+        .thumb-wrapper {
+            transition: 0.3s;
+            opacity: 0.6;
+            border: 2px solid transparent !important;
+        }
+
+
+        .active-thumb {
+            opacity: 1;
+            border-color: #0d6efd !important;
+        }
+    </style>
 
 }
 
 
 
-<style>
-    .thumb-wrapper {
-        transition: 0.3s;
-        opacity: 0.6;
-        border: 2px solid transparent !important;
-    }
-
-        .thumb-wrapper:hover {
-            opacity: 1;
-            border-color: #0d6efd !important;
-        }
-
-    .active-thumb {
-        opacity: 1;
-        border-color: #0d6efd !important;
-    }
-</style>
-
 @section Scripts
 {
     <script>
-        document.getElementById('formFileMultiple').addEventListener('change',function(event)
-        {
-            const container = document.getElementById('previewContainer');
-            const mainImg = document.getElementById('mainImg')
-            const files = event.target.files;
+        // 儲存所有「新選取」的檔案 (File 物件)
+            let newUploadFiles = [];
 
-            container.innerHTML = "";
+            // --- 處理新照片選取 (累加功能) ---
+            document.getElementById('formFileMultiple').addEventListener('change', function (event) {
+                const container = document.getElementById('previewContainer');
+                const mainImg = document.getElementById('mainImg');
+                const files = Array.from(event.target.files);
 
-            if (files.length > 0) {
-                // 使用 Array.from 是為了相容舊瀏覽器，Razor 有時會卡在 forEach 的語法
-                Array.from(files).forEach((file, index) => {
+                files.forEach(file => {
+                    // 避免重複加入
+                    if (newUploadFiles.some(f => f.name === file.name && f.size === file.size)) return;
+
+                    newUploadFiles.push(file);
                     const reader = new FileReader();
 
                     reader.onload = function (e) {
                         const imgSrc = e.target.result;
 
-                        if (index === 0) {
-                            mainImg.src = imgSrc;
-                        }
-
-                        // 建立縮圖 HTML
+                        // 建立縮圖容器 (加上 bg-warning 橘色背景區分新圖)
                         const thumbDiv = document.createElement('div');
-                        thumbDiv.className = 'thumb-wrapper border rounded-2 p-1' + (index === 0 ? ' active-thumb' : '');
-
-                        // 注意：這裡直接傳遞 imgSrc
-                        thumbDiv.onclick = function() {
-                            changeImage(this, imgSrc);
-                        };
+                        thumbDiv.className = 'thumb-wrapper border bg-warning rounded-2 p-1 d-flex flex-column';
+                        thumbDiv.onclick = function() { changeImage(this, imgSrc); };
 
                         const img = document.createElement('img');
                         img.src = imgSrc;
-                        img.style.cssText = 'width: 120px; height: 120px; object-fit: contain;';
+                        img.style.cssText = 'width: 120px; height: 120px; object-fit: contain; pointer-events: none;';
+
+                        const btn = document.createElement('button');
+                        btn.textContent = '移除';
+                        btn.type = 'button';
+                        btn.className = 'btn btn-danger btn-sm mt-1';
+
+                        btn.onclick = function (e) {
+                            e.stopPropagation();
+                            newUploadFiles = newUploadFiles.filter(f => f !== file);
+                            syncInputFiles(); // 同步回原生 input
+                            thumbDiv.remove();
+                            resetMainImage();
+                        };
 
                         thumbDiv.appendChild(img);
+                        thumbDiv.appendChild(btn);
                         container.appendChild(thumbDiv);
                     };
                     reader.readAsDataURL(file);
                 });
-            }
-        });
-
-        function changeImage(element, newSrc) {
-            // 1. 更換主圖路徑
-            document.getElementById('mainImg').src = newSrc;
-
-            // 2. 移除所有縮圖的選取狀態
-            document.querySelectorAll('.thumb-wrapper').forEach(el => {
-                el.classList.remove('active-thumb');
+                syncInputFiles();
             });
 
-            // 3. 幫點擊的縮圖加上選取狀態
-            element.classList.add('active-thumb');
-        }
+            // 將陣列同步到原生 Input 檔案清單的關鍵
+            function syncInputFiles() {
+                const dt = new DataTransfer();
+                newUploadFiles.forEach(f => dt.items.add(f));
+                document.getElementById('formFileMultiple').files = dt.files;
+            }
+
+            // --- 處理既有照片的移除 ---
+            function removeExistingImage(element, url) {
+                if(confirm("確定要移除這張現有的照片嗎？")) {
+                    // 1. 建立隱藏欄位，name 屬性必須與後端 ViewModel 的屬性對應
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'DeletedUrls'; // 後端接收用的名稱
+                    input.value = url;
+                    document.getElementById('deletedImagesContainer').appendChild(input);
+
+                    // 2. 移除畫面上的元素
+                    element.closest('.thumb-wrapper').remove();
+                    resetMainImage();
+                }
+            }
+
+            // --- 通用工具函數 ---
+            function changeImage(element, newSrc) {
+                document.getElementById('mainImg').src = newSrc;
+                document.querySelectorAll('.thumb-wrapper').forEach(el => el.classList.remove('active-thumb'));
+                element.classList.add('active-thumb');
+            }
+
+            function resetMainImage() {
+                const firstThumb = document.querySelector('.thumb-wrapper img');
+                if (firstThumb) {
+                    document.getElementById('mainImg').src = firstThumb.src;
+                } else {
+                    document.getElementById('mainImg').src = "";
+                }
+            }
     </script>
 
 }
@@ -119,15 +153,23 @@
                              style="object-fit: contain; background-color: #f8f9fa;">
                     }
                 </div>
-
-                <div class="d-flex justify-content-start gap-2 overflow-auto  border rounded-3 shadow-sm bg-white" style="height: 150px; flex-shrink: 0;">
-                    @foreach (var img in Model.ImgUrls)
+                <div id="previewContainer" class="d-flex justify-content-start gap-2 overflow-auto  border rounded-3 shadow-sm bg-white" style="height: 150px; flex-shrink: 0;">
+                    @for (int i = 0; i < Model.ImgUrls?.Count; i++)
                     {
-                        <div class="thumb-wrapper border rounded-2 p-1 active-thumb" onclick="changeImage(this, '@img')">
-                            <img src="@img" style="width: 120px; height: 120px; object-fit: contain;">
+                        var img = Model.ImgUrls[i];
+                        <div class="thumb-wrapper border rounded-2 p-1 d-flex flex-column @(i == 0 ? "active-thumb" : "")"
+                             onclick="changeImage(this, '@img')">
+                            <img src="@img" style="width: 120px; height: 120px; object-fit: contain; pointer-events: none;">
+
+                            @* 既有圖片移除 *@
+                            <button type="button" class="btn btn-danger btn-sm mt-1"
+                                    onclick="event.stopPropagation(); removeExistingImage(this, '@img')">
+                                移除
+                            </button>
                         </div>
                     }
                 </div>
+
             </div>
         </div>
        
@@ -135,7 +177,8 @@
         <div class="col-8">
             <form method="post" class="p-4 border rounded-3 shadow-sm h-100 bg-light d-flex flex-column justify-content-between" enctype="multipart/form-data" asp-action="ActivityEdit" asp-route-id="@Model.ActivityId">
                 <input type="hidden" asp-for="ActivityId">
-
+                <div id="deletedImagesContainer"></div>
+                
                 <div class="form-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-3" asp-for="Title">活動名稱</label>
