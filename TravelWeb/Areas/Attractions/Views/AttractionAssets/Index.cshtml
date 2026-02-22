@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "景點列表";
+    int? currentStatus = ViewBag.ApprovalStatus as int?;
 }
 
 <div class="page-inner">
@@ -23,6 +24,39 @@
                 <div class="card-header">
                     <div class="d-flex align-items-center">
                         <h4 class="card-title">景點列表</h4>
+                   @* ★ 搜尋區塊 ★ *@
+                        <form method="get" class="d-flex align-items-center gap-2 ms-3 flex-wrap">
+                            <input type="text"
+                                   name="keyword"
+                                   value="@ViewBag.Keyword"
+                                   class="form-control form-control-sm"
+                                   style="width: 180px;"
+                                   placeholder="搜尋景點名稱..." />
+
+                            <select name="approvalStatus" class="form-control form-control-sm" style="width: 130px;">
+                                <option value="">全部狀態</option>
+                                <option value="1" selected="@(ViewBag.ApprovalStatus != null && (int)ViewBag.ApprovalStatus == 1)">已核准</option>
+                                <option value="0" selected="@(ViewBag.ApprovalStatus != null && (int)ViewBag.ApprovalStatus == 0)">審核中</option>
+                            </select>
+
+            <button type="submit" class="btn btn-sm btn-info btn-round">
+                <i class="fa fa-search"></i> 搜尋
+            </button>
+
+            @* 有搜尋條件時才顯示清除按鈕 *@
+            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || ViewBag.ApprovalStatus != null)
+            {
+                <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary btn-round">
+                    <i class="fa fa-times"></i> 清除
+                </a>
+            }
+        </form>
+
+
+
+
+
+
                         <a asp-area="Attractions" asp-controller="AttractionAssets" asp-action="Create" class="btn btn-primary btn-round ms-auto">
                             <i class="fa fa-plus"></i> 新增景點
                         </a>

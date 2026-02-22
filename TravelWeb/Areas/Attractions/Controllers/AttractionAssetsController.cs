@@ -20,13 +20,26 @@ namespace TravelWeb.Areas.Attractions.Controllers
             _hostEnvironment = hostEnvironment; // 👈 這裡對應賦值
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? keyword, int? approvalStatus)
         {
-            // 只抓取 IsDeleted 為 false 的景點
-            var list = await _context.Attractions
-                                      .Include(a => a.Region) // 假設你的導覽屬性叫 Region
-                                     .Where(a => !a.IsDeleted)
-                                     .ToListAsync();
+            var query = _context.Attractions
+                                .Include(a => a.Region)
+                                .Where(a => !a.IsDeleted)
+                                .AsQueryable();
+
+            // 景點名稱關鍵字搜尋
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(a => a.Name.Contains(keyword));
+
+            // 審核狀態篩選 (0=審核中, 1=已核准)
+            if (approvalStatus.HasValue)
+                query = query.Where(a => a.ApprovalStatus == approvalStatus.Value);
+
+            // 把搜尋條件傳回 View，讓搜尋框保留輸入值
+            ViewBag.Keyword = keyword;
+            ViewBag.ApprovalStatus = approvalStatus;
+
+            var list = await query.ToListAsync();
             return View(list);
         }
 
