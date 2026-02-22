@@ -414,6 +414,44 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\core\bootstrap.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\core\jquery-3.7.1.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\core\popper.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\demo.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\kaiadmin.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\kaiadmin.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\bootstrap-notify\bootstrap-notify.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\bootstrap-tagsinput\bootstrap-tagsinput.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\bootstrap-toggle\bootstrap-toggle.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\chart-circle\circles.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\chart.js\chart.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\datatables\datatables.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\datepicker\bootstrap-datetimepicker.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\dropzone\dropzone.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\fullcalendar\fullcalendar.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\gmaps\gmaps.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\jquery-scrollbar\jquery.scrollbar.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\jquery.magnific-popup\jquery.magnific-popup.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\jquery.sparkline\jquery.sparkline.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\jquery.validate\jquery.validate.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\jsvectormap\jsvectormap.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\jsvectormap\world.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\list.js\list.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\moment\moment.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\owl-carousel\ajax-loader.gif" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\owl-carousel\owl.carousel.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\owl-carousel\owl.video.play.png" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\select2\select2.full.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\sortable\sortable.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\sticky-sidebar\sticky-sidebar.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\summernote\summernote-lite.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\sweetalert\sweetalert.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\plugin\webfont\webfont.min.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\setting-demo.js" />
+    <Content Include="kaiadmin-lite-1.2.0\assets\js\setting-demo2.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="efpt.config.json.user" />
     <None Include="wwwroot\css\assets\css\bootstrap.min.css" />
     <None Include="wwwroot\css\assets\css\demo.css" />
@@ -839,12 +877,10 @@
     <Folder Include="Areas\Activity\Repository\IActivityRepositories\" />
     <Folder Include="Areas\Activity\Repository\ActivityRepositories\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
-    <Folder Include="Areas\BoardManagement\Data\" />
-    <Folder Include="Areas\BoardManagement\Models\ViewModel\" />
+    <Folder Include="Areas\BoardManagement\Models\IRepository\" />
     <Folder Include="Areas\Itinerary\Data\" />
     <Folder Include="Areas\Itinerary\Views\" />
     <Folder Include="Areas\Itinerary\Models\ItineraryDBContext\" />
-    <Folder Include="Areas\BoardManagement\Models\" />
     <Folder Include="Areas\Member\Controllers\" />
     <Folder Include="Areas\Member\Data\" />
     <Folder Include="Areas\Member\Models\" />

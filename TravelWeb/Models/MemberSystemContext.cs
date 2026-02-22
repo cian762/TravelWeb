@@ -31,8 +31,8 @@ public partial class MemberSystemContext : DbContext
 
     public virtual DbSet<MemberList> MemberLists { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=.;Database=Member_System;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True");
+    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //    => optionsBuilder.UseSqlServer("Server=.;Database=Member_System;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,7 +144,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.MemberId);
 
-            entity.ToTable("Member_Information");
+            entity.ToTable("Member_Information", "Member");
 
             entity.Property(e => e.MemberId).HasMaxLength(50);
             entity.Property(e => e.AvatarUrl).HasMaxLength(255);

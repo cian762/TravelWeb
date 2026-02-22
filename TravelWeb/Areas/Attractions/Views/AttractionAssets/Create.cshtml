@@ -31,6 +31,19 @@
         border-left: 4px solid #31ce36;
         padding-left: 10px;
     }
+
+
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+
+
 </style>
 
 <div class="page-inner">
@@ -40,7 +53,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <form asp-action="Create" method="post">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     <div class="card-body">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -100,12 +113,50 @@
                                 </div>
                             </div>
 
+                            <div class="form-group mb-4">
+                                <label class="control-label fw-bold mb-2">景點標籤類別</label>
+                                <div class="card shadow-sm border-0 bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @{
+                                                // 1. 安全地從 ViewBag 取出資料並轉型
+                                                var categoryList = ViewBag.Categories as IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionTypeCategory>;
+                                            }
+
+                                            @if (categoryList != null && categoryList.Any())
+                                            {
+                                                foreach (var cat in categoryList)
+                                                {
+                                                    // 2. 這裡使用 label 搭配 hidden checkbox 做出按鈕感
+                                                    <div class="tag-item">
+                                                        <input type="checkbox" class="btn-check" name="selectedCategoryIds"
+                                                               value="@cat.AttractionTypeId" id="cat_@cat.AttractionTypeId" autocomplete="off">
+                                                        <label class="btn btn-outline-primary rounded-pill px-3 shadow-sm bg-white" for="cat_@cat.AttractionTypeId">
+                                                            #@cat.AttractionTypeName
+                                                        </label>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="text-muted p-2">
+                                                    <i class="fas fa-exclamation-circle me-1"></i> 資料庫中尚未建立任何標籤類別。
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                       
+                            
+
                             <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label asp-for="Latitude">緯度 (Latitude)</label>
                                     <input asp-for="Latitude"
                                            type="number"
-                                           step="0.000001"
+                                           step="any"
                                            class="form-control"
                                            placeholder="例如：25.033976" />
                                     <span asp-validation-for="Latitude" class="text-danger"></span>
@@ -114,7 +165,7 @@
                                     <label asp-for="Longitude">經度 (Longitude)</label>
                                     <input asp-for="Longitude"
                                            type="number"
-                                           step="0.000001"
+                                           step="any"
                                            class="form-control"
                                            placeholder="例如：121.564660" />
                                     <span asp-validation-for="Longitude" class="text-danger"></span>
@@ -138,7 +189,17 @@
                             </div>
                         </div>
                     </div>
-
+                        <div class="card-body">
+                            <div class="section-box">
+                                <span class="section-title">圖片管理</span>
+                                <div class="form-group">
+                                    <label>上傳景點照片 (可多選)</label>
+                                    <input type="file" name="imageFiles" class="form-control" multiple accept="image/*" />
+                                    <small class="form-text text-muted">支援 jpg, png, webp 格式</small>
+                                </div>
+                                <div id="imagePreview" class="mt-3 d-flex flex-wrap" style="gap: 10px;"></div>
+                            </div>
+                        </div>
                     <div class="card-action text-right">
                         <button type="submit" class="btn btn-success">確認儲存景點</button>
                         <a asp-action="Index" class="btn btn-danger">取消</a>
@@ -184,6 +245,20 @@
 
             function resetSelect(selector, defaultText) {
                 $(selector).empty().append($('<option>', { value: '', text: defaultText })).prop('disabled', true);
+            }
+        });
+
+                $('#imgInput').change(function() {
+            var preview = $('#imagePreview');
+            preview.empty();
+            if (this.files) {
+                $.each(this.files, function(i, file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.append('<img src="' + e.target.result + '" style="width:100px; height:100px; object-fit:cover; border-radius:5px; border:1px solid #ddd;">');
+                    }
+                    reader.readAsDataURL(file);
+                });
             }
         });
     </script>

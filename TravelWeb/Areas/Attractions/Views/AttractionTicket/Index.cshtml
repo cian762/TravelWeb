@@ -1,0 +1,315 @@
+﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionProduct>
+
+@{
+    ViewData["Title"] = "景點票券管理 - 標籤對齊修正版";
+    
+    int? currentIsActive = ViewBag.IsActive as int?;
+    var sel1 = currentIsActive == 1 ? " selected" : "";
+    var sel0 = currentIsActive == 0 ? " selected" : "";
+
+}
+
+@* ==========================================================================
+   強力 CSS 覆蓋區塊：解決標籤死活不肯靠左的問題
+   ========================================================================== 
+*@
+<style>
+    /* 1. 強制容器回歸原始靠左狀態，清除任何 grid 或 justify-content-between 的影響 */
+    #modalTagsContainer {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important; /* 絕對靠左 */
+        align-items: center !important;
+        gap: 8px !important; /* 標籤間距 */
+        width: 100% !important;
+        text-align: left !important;
+        padding: 5px 0 !important;
+    }
+
+    /* 2. 定義標籤本體，確保不會被拉長或壓扁 */
+    .force-left-tag {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: auto !important; /* 寬度隨文字長度 */
+        padding: 5px 14px !important;
+        background-color: #0d6efd !important; /* 品牌藍 */
+        color: #ffffff !important;
+        border-radius: 50px !important; /* 膠囊狀 */
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        flex: 0 0 auto !important; /* 禁止標籤撐開佔據剩餘空間 */
+    }
+
+    /* 3. 確保 Modal 內部結構不干擾排版 */
+    .tag-section-reset {
+        text-align: left !important;
+        display: block !important;
+    }
+</style>
+
+<div class="page-inner">
+    <div class="page-header">
+        <h4 class="page-title">票券產品管理</h4>
+        <ul class="breadcrumbs">
+            <li class="nav-home"><a href="#"><i class="flaticon-home"></i></a></li>
+            <li class="separator"><i class="flaticon-right-arrow"></i></li>
+            <li class="nav-item">票券管理</li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h4 class="card-title">票券列表</h4>
+                    <form method="get" class="d-flex align-items-center gap-2 ms-3 flex-wrap">
+                        <input type="text"
+                               name="keyword"
+                               value="@ViewBag.Keyword"
+                               class="form-control form-control-sm"
+                               style="width: 180px;"
+                               placeholder="搜尋景點名稱..." />
+
+                        <select name="isActive" class="form-control form-control-sm" style="width: 130px;">
+                            <option value="">全部狀態</option>
+                            @if (currentIsActive == 1)
+                            {
+                                <option value="1" selected>銷售中</option>
+                                <option value="0">已下架</option>
+                            }
+                            else if (currentIsActive == 0)
+                            {
+                                <option value="1">銷售中</option>
+                                <option value="0" selected>已下架</option>
+                            }
+                            else
+                            {
+                                <option value="1">銷售中</option>
+                                <option value="0">已下架</option>
+                            }
+                        </select>
+
+                        <button type="submit" class="btn btn-sm btn-info btn-round">
+                            <i class="fa fa-search"></i> 搜尋
+                        </button>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || ViewBag.IsActive != null)
+                        {
+                            <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary btn-round">
+                                <i class="fa fa-times"></i> 清除
+                            </a>
+                        }
+
+                    </form>
+                    <a asp-action="Create" class="btn btn-primary btn-round ms-auto">
+                        <i class="fa fa-plus"></i> 新增票券
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>產品代碼</th>
+                                    <th>票券名稱</th>
+                                    <th>所屬景點</th>
+                                    <th>售價</th>
+                                    <th>每人限購</th>
+                                    <th>系統狀態</th>
+                                    <th>銷售狀態</th>
+                                    <th style="width: 15%">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td><code class="text-primary">@item.ProductCode</code></td>
+                                        <td>
+                                            <div class="fw-bold">@item.Title</div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-bookmark me-1"></i> @(item.TicketType?.TicketTypeName ?? "未分類")
+                                            </small>
+                                        </td>
+                                        <td>@(item.Attraction?.Name ?? "未指定")</td>
+                                        <td class="text-danger fw-bold">@item.Price?.ToString("C0")</td>
+                                        <td>@(item.MaxPurchaseQuantity > 0 ? $"{item.MaxPurchaseQuantity} 張" : "無限制")</td>
+                                        <td>
+                                            <button type="button" class="btn btn-xs btn-outline-info btn-round"
+                                                    onclick="changeStatus(@item.ProductId, '@(item.Status?.ToUpper() ?? "DRAFT")', '@item.Title')">
+                                                <i class="fas fa-sync-alt"></i> @(item.Status ?? "DRAFT")
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-xs @(item.IsActive == 1 ? "btn-success" : "btn-secondary") btn-round"
+                                                    onclick="toggleActive(@item.ProductId, @(item.IsActive == 1 ? 0 : 1), '@item.Title')">
+                                                @(item.IsActive == 1 ? "銷售中" : "已下架")
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                                <button type="button" class="btn btn-sm btn-outline-info" onclick="showProductDetails(@item.ProductId)"><i class="fas fa-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@item.ProductId, '@item.Title')"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                            <form id="delete-form-@item.ProductId" asp-action="Delete" asp-route-id="@item.ProductId" method="post" style="display:none;">
+                                                @Html.AntiForgeryToken()
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* --- Modal 詳情區 --- *@
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>票券詳細內容</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <h6 class="fw-bold text-info"><i class="fas fa-align-left me-2"></i>內容介紹</h6>
+                    <div id="modalContentDetails" class="p-3 bg-light rounded border" style="white-space: pre-line;"></div>
+                </div>
+
+                @* 標籤區域：強制對齊修正 *@
+                <div class="tag-section-reset mb-4 p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #0d6efd;">
+                    <h6 class="text-secondary small font-weight-bold mb-3"><i class="fas fa-tags me-1"></i> 相關標籤</h6>
+                    <div id="modalTagsContainer">
+                        @* 由 JS 動態生成 *@
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-info"><i class="fas fa-clipboard-list me-2"></i>使用說明</h6>
+                    <div id="modalUsageInstructions" class="p-3 bg-light rounded border" style="white-space: pre-line;"></div>
+                </div>
+
+                <div class="mt-3 p-2 bg-light border-start border-4 border-info">
+                    <h6 class="fw-bold text-info"><i class="fas fa-sticky-note me-2"></i>內部備註</h6>
+                    <div id="modalNotes" class="text-muted small"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // === 新增：監聽 TempData 並跳出卡片 ===
+               $(document).ready(function () {
+            // 1. 使用 Html.Raw 配合 JavaScriptEncoder 處理編碼問題
+            // 這樣能確保中文正常顯示，且不會因為字串內有引號或換行導致 JS 噴錯
+            const successMsg = @Html.Raw(Json.Serialize(TempData["SuccessMessage"] ?? ""));
+            const errorMsg = @Html.Raw(Json.Serialize(TempData["ErrorMessage"] ?? ""));
+
+            if (successMsg && successMsg !== "") {
+                Swal.fire({
+                    icon: 'success',
+                    title: '操作成功',
+                    text: successMsg, // 現在這裡是正確的中文了
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+
+            if (errorMsg && errorMsg !== "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: '發生錯誤',
+                    text: errorMsg
+                });
+            }
+        });
+        function showProductDetails(id) {
+            const $tagContainer = $('#modalTagsContainer');
+            $tagContainer.empty();
+            $('#modalContentDetails, #modalUsageInstructions, #modalNotes').text('載入中...');
+
+            $.ajax({
+                url: '/Attractions/AttractionTicket/GetDetails/' + id,
+                type: 'GET',
+                success: function (data) {
+                    $('#modalContentDetails').text(data.contentDetails || "尚無資料");
+                    $('#modalUsageInstructions').text(data.usageInstructions || "尚無資料");
+                    $('#modalNotes').text(data.notes || "無備註");
+
+                    if (data.tags && data.tags.length > 0) {
+                        let html = ''; // 這次不包額外的 div，直接放進已設定好的 container
+                        data.tags.forEach(function(t) {
+                            html += `<span class="force-left-tag"># ${t}</span>`;
+                        });
+                        $tagContainer.html(html);
+                    } else {
+                        $tagContainer.html('<span class="text-muted small">尚未設定標籤</span>');
+                    }
+                    $('#detailsModal').modal('show');
+                }
+            });
+        }
+
+        // --- 以下為狀態變更與刪除邏輯 ---
+        function quickPost(action, data) {
+            const form = document.createElement('form');
+            form.method = 'POST'; form.action = action;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) form.appendChild(token.cloneNode());
+            for (const key in data) {
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = key; input.value = data[key];
+                form.appendChild(input);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function toggleActive(id, newStatus, title) {
+            const token = $('input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url: '@Url.Action("ToggleActive", "AttractionTicket")',
+                type: 'POST',
+                data: { id: id, isActive: newStatus, __RequestVerificationToken: token },
+                success: function () { location.reload(); }
+            });
+        }
+
+        function changeStatus(id, current, title) {
+            Swal.fire({
+                title: '變更系統狀態',
+                input: 'select',
+                inputOptions: { 'DRAFT': '草稿', 'ACTIVE': '已發佈', 'INACTIVE': '已下架', 'ARCHIVED': '封存' },
+                inputValue: current,
+                showCancelButton: true
+            }).then((result) => {
+                if (result.isConfirmed) quickPost('@Url.Action("UpdateStatus")', { id: id, status: result.value });
+            });
+        }
+
+        function confirmDelete(id, name) {
+            Swal.fire({ title: '確定刪除？', text: name, icon: 'warning', showCancelButton: true }).then((result) => {
+                if (result.isConfirmed) document.getElementById('delete-form-' + id).submit();
+            });
+        }
+
+
+
+
+    </script>
+}
