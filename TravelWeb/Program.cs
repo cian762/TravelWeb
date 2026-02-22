@@ -6,6 +6,8 @@ using TravelWeb.Areas.Activity.Service.ActivityServices;
 using TravelWeb.Areas.Activity.Service.IActivityServices;
 using TravelWeb.Areas.Attractions.Models;//景點的
 using TravelWeb.Areas.BoardManagement.Models.BoardDB;
+using TravelWeb.Areas.BoardManagement.Models.IService;
+using TravelWeb.Areas.BoardManagement.Models.Service;
 using TravelWeb.Areas.Itinerary.Models.ItineraryDBModel;
 using TravelWeb.Areas.Itinerary.Models.Service;
 using TravelWeb.Areas.Itinerary.Repository;
@@ -44,6 +46,7 @@ builder.Services.AddScoped<IItineraryCompareService, ItineraryCompareService>();
 // 註冊 BoardDbContext，並指定使用 SQL Server 以及連接字串
 builder.Services.AddDbContext<BoardDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+builder.Services.AddScoped<INoteService, NoteService>();
 
 //景點連線DI-----------------------------------------------------------------
 builder.Services.AddDbContext<AttractionsContext>(options =>

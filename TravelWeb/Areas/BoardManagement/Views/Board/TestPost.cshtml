@@ -1,0 +1,128 @@
+﻿@model IEnumerable<TravelWeb.Areas.BoardManagement.Models.ViewModel.PostCardModel>
+
+@{
+    ViewData["Title"] = "TestPost";
+    Layout = "_Layout";
+}
+
+
+<div class="container">
+    <h1>測試檢舉功能用模擬文章瀑布流</h1>
+    <div class="row">
+
+        @foreach (var item in Model)
+        {
+            <div class="col-3">
+                <div class="card" style="width: 18rem;">
+                    <img src="@Html.DisplayFor(modelItem => item.ArticlePhoto)" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">@Html.DisplayFor(modelItem => item.Title)</h5>
+                        <a href="#"
+                           data-bs-toggle="modal"
+                           data-bs-target="#ReportBackdrop"
+                           class="btn btn-danger btnReport"
+                           id="btnReport"
+                           data-reportid="@item.ArticleID">檢舉</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
+
+<!-- 檢舉彈窗 -->
+<div class="modal fade" id="ReportBackdrop" data-post-id="" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class=" col-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"></span>
+                                    <input type="text" id="Username" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                </div>
+                            </div>
+                            <div class=" col-6">
+                                <select id="ViolationType" class="form-select col-6" aria-label="Default select example">
+                                    <option selected disabled>請選擇違規類型</option>
+                                    <option value="1">我就是不喜歡</option>
+                                    <option value="2">霸凌或擾人的聯繫</option>
+                                    <option value="3">自殺、自殘或飲食失調</option>
+                                    <option value="4">暴力、仇恨或剝削</option>
+                                    <option value="5">販售或推廣管制商品</option>
+                                    <option value="6">裸露或性行為</option>
+                                    <option value="7">詐騙、詐欺或垃圾訊息</option>
+                                    <option value="8">不實資訊</option>
+                                    <option value="9">智慧財產權</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlTextarea1" class="form-label">詳細說明</label>
+                        <textarea class="form-control" id="ReportDetails" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="formFile" class="form-label">上傳圖片</label>
+                        <input class="form-control" type="file" id="formFile">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="btnAddReport">檢舉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>   
+      $('.btnReport').click(function() {          
+        var id = $(this).data('reportid'); // 抓取按鈕上的 data-id
+        $('#ReportBackdrop').attr('data-post-id', id); // 塞進彈窗
+
+    });
+
+    $('#btnAddReport').click(function() {
+        const modal = document.getElementById('ReportBackdrop');
+        var postId = modal.getAttribute('data-post-id');
+        const Username = document.getElementById('Username').value;
+        const selectValue = document.getElementById('ViolationType').value;
+        const textareaValue = document.getElementById('ReportDetails').value;
+    // 3. 獲取 File 上傳檔案的資訊 (注意：檔案不是拿 .value，而是拿檔案物件)
+    // const fileInput = document.getElementById('formFile');
+    // const selectedFile = fileInput.files[0]; 獲取使用者選的第一個檔案    
+        $.ajax({
+            url: '@Url.Action("AddReport", "Board", new { area = "BoardManagement" })',
+            type: 'POST',
+            data: {
+                ArticleID:postId,
+                UserId:Username,
+                ViolationType:selectValue,
+                ReportDetails:textareaValue
+            },
+            success: function(response) {
+                 if (response.success) {
+                     $('#ReportBackdrop').modal('hide');
+                     console.log("前端：後端處理成功！");
+                   alert('儲存成功！');
+                } else {
+                     alert('儲存失敗'+Username);
+                 }
+            }
+        });
+    });
+</script>

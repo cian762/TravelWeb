@@ -4,12 +4,8 @@
     ViewData["Title"] = "貼文檢舉管理中心";
     Layout = "_Layout";
 }
-
+<div class="container">
 <h1>貼文檢舉管理中心</h1>
-
-@* <p>
-    <a asp-action="Create">Create New</a>
-</p> *@
 <table class="table">
     <thead>
         <tr>
@@ -68,12 +64,16 @@
                     @(item.IsViolation == true ? "違規已隱藏" : "無違規正常")
                 @* @Html.DisplayFor(modelItem => item.IsViolation) *@
             </td>
-            <td>                  
-                <a asp-action="Edit" asp-route-id="@item.TargetId">Edit</a> |
-                <a asp-area="BoardManagement" asp-controller="Board" asp-action="ReportDetails" asp-route-id="@item.TargetId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.TargetId">Delete</a>
-            </td>
+            <td> 
+                <a asp-area="BoardManagement" 
+                asp-controller="Board" 
+                asp-action="ReportDetails" 
+                asp-route-id="@item.TargetId"
+                           class="btn btn-outline-info rounded-pill">查看詳情</a>
+                    </td>
         </tr>
 }
     </tbody>
 </table>
+
+</div>

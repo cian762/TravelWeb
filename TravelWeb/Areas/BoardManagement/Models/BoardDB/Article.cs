@@ -20,6 +20,7 @@ public partial class Article
     public byte Status { get; set; }
 
     public bool IsViolation { get; set; }
+    public string? PhotoUrl { get; set; }
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }
