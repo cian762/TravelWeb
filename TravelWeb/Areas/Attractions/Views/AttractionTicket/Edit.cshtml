@@ -175,23 +175,33 @@
     }
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
+
+            // ★ 只保留這一個 select2() 呼叫，刪掉原本那兩個 ★
             $('#TagIds').select2({
                 theme: 'bootstrap4',
-                width: '100%', // <-- 加上這行，Select2 就會佔滿整行空間
-                containerCssClass: ':all:', // 繼承原始 input 的所有 class
-                placeholder: '輸入關鍵字搜尋標籤...',
+                width: '100%',
+                placeholder: '輸入關鍵字搜尋或建立標籤...',
                 allowClear: true,
+
+                // 允許建立新標籤
+                tags: true,
+                createTag: function (params) {
+                    var term = $.trim(params.term);
+                    if (term === '') return null;
+                    return {
+                        id: 'NEW:' + term,
+                        text: term + '（新增）',
+                        newTag: true
+                    };
+                },
+
                 ajax: {
                     url: '@Url.Action("Search", "Tags", new { area = "Attractions" })',
                     dataType: 'json',
                     delay: 250,
-                    data: function (params) {
-                        return { term: params.term };
-                    },
-                    processResults: function (data) {
-                        return { results: data };
-                    },
+                    data: function (params) { return { term: params.term }; },
+                    processResults: function (data) { return { results: data }; },
                     cache: true
                 },
                 minimumInputLength: 1
@@ -199,4 +209,3 @@
         });
     </script>
 }
-

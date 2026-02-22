@@ -3,7 +3,8 @@
 @{
     ViewData["Title"] = "新增景點票券";
 }
-
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/@@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
 <style>
     /* 讓詳細內容區塊的邊框變淡，並增加圓角 */
     .custom-detail-area {
@@ -34,9 +35,11 @@
         margin-bottom: 0.5rem;
         display: block;
     }
+    
 </style>
-<h1>新增景點票券</h1>
 
+
+<h1>新增景點票券</h1>
 <hr />
 <div class="row">
     <div class="col-md-6">
@@ -100,6 +103,12 @@
                 <span class="text-muted small">※ 只有設定為「已發佈」時，系統才會自動同步為銷售中。</span>
             </div>
 
+            @* 產品標籤 *@
+            <div class="form-group mb-4 mt-3">
+                <label class="control-label fw-bold"><i class="fas fa-tags me-1"></i> 產品標籤</label>
+                <select id="TagIds" name="TagIds" class="form-control" multiple="multiple"></select>
+                <small class="text-muted">輸入關鍵字搜尋現有標籤，搜尋不到時按 Enter 可直接建立新標籤</small>
+            </div>
             <div class="card mt-4 border-0 shadow-sm">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>票券詳細內容</h5>
@@ -129,4 +138,39 @@
         </form>
     </div>
 </div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#TagIds').select2({
+                theme: 'bootstrap4',
+                width: '100%',
+                placeholder: '輸入關鍵字搜尋或建立標籤...',
+                allowClear: true,
+                tags: true,
+                createTag: function (params) {
+                    var term = $.trim(params.term);
+                    if (term === '') return null;
+                    return {
+                        id: 'NEW:' + term,
+                        text: term + '（新增）',
+                        newTag: true
+                    };
+                },
+                ajax: {
+                    url: '@Url.Action("Search", "Tags", new { area = "Attractions" })',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) { return { term: params.term }; },
+                    processResults: function (data) { return { results: data }; },
+                    cache: true
+                },
+                minimumInputLength: 1,
+                    dropdownParent: $('body')
+            });
+          
+        });
+    </script>
+}
 

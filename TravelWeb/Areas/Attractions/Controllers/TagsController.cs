@@ -23,6 +23,23 @@ namespace TravelWeb.Areas.Attractions.Controllers
             return Json(tags);
         }
 
-     
+        [HttpPost]
+        public async Task<IActionResult> GetOrCreate([FromBody] string tagName)
+        {
+            if (string.IsNullOrWhiteSpace(tagName))
+                return BadRequest();
+
+            var existing = await _context.Tags
+                .FirstOrDefaultAsync(t => t.TagName == tagName.Trim());
+
+            if (existing != null)
+                return Json(new { id = existing.TagId, text = existing.TagName });
+
+            var newTag = new Tag { TagName = tagName.Trim() };
+            _context.Tags.Add(newTag);
+            await _context.SaveChangesAsync();
+
+            return Json(new { id = newTag.TagId, text = newTag.TagName });
+        }
     }
 }
