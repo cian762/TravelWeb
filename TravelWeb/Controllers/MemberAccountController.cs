@@ -31,6 +31,10 @@ namespace TravelWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(MemberList model)
         {
+            // 💡 1. 把前端不會輸入、由後台產生的欄位從驗證清單中移除
+            ModelState.Remove("MemberCode");
+
+            // ModelState.Remove("Id"); 
             if (!ModelState.IsValid)
             {
                 return View(model);

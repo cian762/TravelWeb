@@ -11,6 +11,9 @@
 
 <form asp-action="Create" method="post">
 
+    <!-- 💡 這個很重要：它會幫您印出卡住資料庫寫入的「隱藏錯誤訊息」 -->
+    <div asp-validation-summary="All" class="text-danger mb-3 fw-bold"></div>
+
     <div class="mb-3">
         <label>Email</label>
         <input asp-for="Email" class="form-control" />
@@ -29,17 +32,24 @@
         <span asp-validation-for="Phone" class="text-danger"></span>
     </div>
 
-    <div class="mt-3 d-flex gap-2">
 
+    <!-- ========================== -->
+    <!-- 按鈕區塊新增在這邊 -->
+    <!-- ========================== -->
+    <div class="mt-4 d-flex gap-2">
+
+        <!-- 送出表單的按鈕 -->
         <button type="submit" class="btn btn-primary">
-            新增
+            註冊
         </button>
 
+        <!-- 清除表單內容的按鈕 -->
         <button type="reset" class="btn btn-secondary">
             清除
         </button>
 
+        <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+
     </div>
-    <br />
-    <button type="submit" class="btn btn-primary">註冊</button>
+
 </form>

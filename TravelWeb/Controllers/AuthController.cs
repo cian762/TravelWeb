@@ -22,7 +22,6 @@ namespace TravelWeb.Controllers
             return View();
         }
 
-        // 處理登入
         [HttpPost]
         public IActionResult Login(string account, string password)
         {
@@ -34,69 +33,76 @@ namespace TravelWeb.Controllers
 
             string hashedPassword = HashPassword(password);
 
-            MemberList? user = null;
+            // ============================
+            // 1️⃣ 先檢查會員 (Member_List)
+            // ============================
+            MemberList? member = null;
 
-            // 🔎 判斷是不是 Email
             if (account.Contains("@"))
             {
-                user = _context.MemberLists
+                member = _context.MemberLists
                     .FirstOrDefault(x => x.Email == account
                                       && x.PasswordHash == hashedPassword);
             }
             else
             {
-                user = _context.MemberLists
+                member = _context.MemberLists
                     .FirstOrDefault(x => x.MemberCode == account
                                       && x.PasswordHash == hashedPassword);
             }
 
-            if (user == null)
+            if (member != null)
             {
-                ViewBag.Error = "帳號或密碼錯誤";
-                return View();
-            }
+                // 存 Session
+                HttpContext.Session.SetString("UserCode", member.MemberCode);
+                HttpContext.Session.SetString("Role", "Member");
 
-            // 🔥 判斷角色（依 MemberCode 開頭）
-            string role = "";
+                // 寫入登入紀錄
+                var loginRecord = new LogInRecord
+                {
+                    MemberCode = member.MemberCode,
+                    LoginAt = DateTime.Now
+                };
 
-            if (user.MemberCode.StartsWith("G"))
-            {
-                role = "Admin";
-            }
-            else if (user.MemberCode.StartsWith("M"))
-            {
-                role = "Member";
-            }
-            else
-            {
-                ViewBag.Error = "帳號格式錯誤";
-                return View();
-            }
+                _context.LogInRecords.Add(loginRecord);
+                _context.SaveChanges();
 
-            // 存 Session
-            HttpContext.Session.SetString("UserCode", user.MemberCode);
-            HttpContext.Session.SetString("Role", role);
-
-            // 🔥 登入成功寫入 LoginRecord
-            var loginRecord = new LogInRecord
-            {
-                MemberCode = user.MemberCode,
-                LoginAt = DateTime.Now
-            };
-
-            _context.LogInRecords.Add(loginRecord);
-            _context.SaveChanges();
-
-            // 導向不同頁面
-            if (role == "Admin")
-            {
-                return RedirectToAction("Index", "LoginRecords");
-            }
-            else
-            {
                 return RedirectToAction("Index", "Home");
             }
+
+            // ============================
+            // 2️⃣ 再檢查管理員 (Administrator)
+            // ============================
+            Administrator? admin = null;
+
+            if (account.Contains("@"))
+            {
+                admin = _context.Administrators
+                    .FirstOrDefault(x => x.Email == account
+                                      && x.PasswordHash == hashedPassword);
+            }
+            else
+            {
+                admin = _context.Administrators
+                    .FirstOrDefault(x => x.AdminId == account
+                                      && x.PasswordHash == hashedPassword);
+            }
+
+            if (admin != null)
+            {
+                HttpContext.Session.SetString("UserCode", admin.AdminId);
+                HttpContext.Session.SetString("Role", "Admin");
+
+                return RedirectToAction("Index", "LoginRecords");
+            }
+
+            // ============================
+            // 都找不到
+            // ============================
+            ViewBag.Error = "帳號或密碼錯誤";
+            return View();
         }
+
 
         public IActionResult Logout()
         {

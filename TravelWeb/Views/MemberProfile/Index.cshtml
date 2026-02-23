@@ -1,0 +1,128 @@
+﻿@model TravelWeb.ViewModels.MemberProfileViewModel
+
+<h2>會員資料</h2>
+
+<div class="card p-4">
+
+    <!-- 頭像 -->
+    <div class="text-center mb-4">
+        @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+        {
+            <img src="@Model.AvatarUrl" width="150" class="rounded-circle" />
+        }
+        else
+        {
+            <img src="/images/default-avatar.png" width="150" class="rounded-circle" />
+        }
+    </div>
+
+    <!-- 🔥 如果是本人就顯示可編輯表單 -->
+    @if (Model.IsOwner)
+    {
+        <form asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
+
+            <input type="hidden" asp-for="MemberId" />
+
+            <div class="mb-3">
+                <label>姓名</label>
+                <input asp-for="Name" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label>狀態</label>
+                <input asp-for="Status" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label>更換頭像</label>
+                <input type="file" name="avatarFile" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                儲存修改
+            </button>
+        </form>
+    }
+    else
+    {
+        <!-- 🔥 別人只能看 -->
+        <div class="mb-3">
+            <label>姓名</label>
+            <input value="@Model.Name" class="form-control" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label>狀態</label>
+            <input value="@Model.Status" class="form-control" readonly />
+        </div>
+    }
+
+    <hr />
+    <h5>聯絡資訊</h5>
+
+    @if (Model.IsOwner || Model.IsAdmin)
+    {
+        <div class="mb-3">
+            <label>Email</label>
+            <input value="@Model.Email" class="form-control" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label>電話</label>
+            <input value="@Model.Phone" class="form-control" readonly />
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            聯絡資訊僅限本人或管理員查看
+        </div>
+    }
+
+
+    <!-- 🔥 管理員才會看到升級按鈕 -->
+    @if (Model.IsAdmin)
+    {
+        <hr />
+        <form asp-controller="Administrator"
+              asp-action="UpgradeToAdmin"
+              method="post">
+
+            <input type="hidden" name="memberId" value="@Model.MemberId" />
+
+            <button type="submit" class="btn btn-danger">
+                升級為管理員
+            </button>
+        </form>
+    }
+
+    @if (Context.Session.GetString("UserCode") != Model.MemberId)
+    {
+        <form asp-action="BlockUser" method="post">
+            <input type="hidden" name="blockedId" value="@Model.MemberId" />
+
+            <button type="button" class="btn btn-danger" onclick="showBlockForm()">
+                封鎖
+            </button>
+
+            <a href="#" class="btn btn-warning">檢舉</a>
+
+            <div id="blockForm" style="display:none;" class="mt-2">
+                <textarea name="reason" class="form-control"
+                      placeholder="請填寫封鎖原因" required></textarea>
+                <button type="submit" class="btn btn-danger mt-2">
+                    確認封鎖
+                </button>
+            </div>
+        </form>
+    }
+
+</div>
+
+
+@section Scripts{
+    <script>
+        function showBlockForm() {
+            document.getElementById("blockForm").style.display = "block";
+        }
+    </script>}
