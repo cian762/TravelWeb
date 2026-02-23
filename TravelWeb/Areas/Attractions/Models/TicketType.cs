@@ -5,8 +5,8 @@ namespace TravelWeb.Areas.Attractions.Models;
 
 public partial class TicketType
 {
-    // ID 是主鍵，絕對不能是 Null
-    public int TicketTypeCode { get; set; }
+
+    public int TicketTypeCode { get; set; }  // 改回 int
 
     // 名稱在資料庫是不允許 Null 的
     public string TicketTypeName { get; set; } = null!;
