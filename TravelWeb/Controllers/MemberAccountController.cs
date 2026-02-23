@@ -31,8 +31,13 @@ namespace TravelWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(MemberList model)
         {
+           
+            ModelState.Remove("MemberCode");
+
+            // 檢查驗證是否通過
             if (!ModelState.IsValid)
             {
+                // 如果還是被擋下，請看網頁畫面上印出什麼紅字！
                 return View(model);
             }
 
@@ -43,22 +48,22 @@ namespace TravelWeb.Controllers
                 return View(model);
             }
 
-
             // 檢查 Email 是否重複
-            bool emailExists = await _context.MemberLists
-                .AnyAsync(m => m.Email == model.Email);
+            //bool emailExists = await _context.MemberLists
+            //    .AnyAsync(m => m.Email == model.Email);
 
-            if (emailExists)
-            {
-                ModelState.AddModelError("Email", "此 Email 已被註冊");
-                return View(model);
-            }
+            //if (emailExists)
+            //{
+            //    ModelState.AddModelError("Email", "此 Email 已被註冊");
+            //    return View(model);
+            //}
 
             if (string.IsNullOrEmpty(model.PasswordHash))
             {
                 ModelState.AddModelError("PasswordHash", "密碼不可為空");
                 return View(model);
             }
+
             // 自動產生 MemberCode
             var random = new Random().Next(100, 999);
             model.MemberCode = "M" + DateTime.Now.ToString("yyyyMMddHHmmss") + random;
@@ -66,10 +71,12 @@ namespace TravelWeb.Controllers
             // 密碼加密
             model.PasswordHash = HashPassword(model.PasswordHash);
 
+            // 寫入資料庫
             _context.MemberLists.Add(model);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Create");
+            // 註冊成功後，重新導向回 Create 頁面 (或您可以改成跳轉到 Home/Index)
+            return RedirectToAction("Create", "MemberInformations", new { memberCode = model.MemberCode });
         }
 
         // ==========================

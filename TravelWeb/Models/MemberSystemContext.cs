@@ -31,8 +31,9 @@ public partial class MemberSystemContext : DbContext
 
     public virtual DbSet<MemberList> MemberLists { get; set; }
 
-    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //    => optionsBuilder.UseSqlServer("Server=.;Database=Member_System;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){ }
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//        => optionsBuilder.UseSqlServer("Server=.;Database=Travel;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,7 +41,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.AdminId);
 
-            entity.ToTable("Administrator");
+            entity.ToTable("Administrator", "Member");
 
             entity.Property(e => e.AdminId).HasMaxLength(50);
             entity.Property(e => e.Email).HasMaxLength(100);
@@ -51,7 +52,7 @@ public partial class MemberSystemContext : DbContext
 
         modelBuilder.Entity<Authorization>(entity =>
         {
-            entity.ToTable("Authorization");
+            entity.ToTable("Authorization", "Member");
 
             entity.Property(e => e.AuthorizationId).ValueGeneratedNever();
             entity.Property(e => e.AdminId).HasMaxLength(50);
@@ -75,7 +76,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.MemberId);
 
-            entity.ToTable("blocked");
+            entity.ToTable("blocked", "Member");
 
             entity.Property(e => e.MemberId).HasMaxLength(50);
             entity.Property(e => e.BlockedId).HasMaxLength(50);
@@ -86,7 +87,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.ComplaintId);
 
-            entity.ToTable("Complaint_Record");
+            entity.ToTable("Complaint_Record", "Member");
 
             entity.Property(e => e.ComplaintId).HasMaxLength(50);
             entity.Property(e => e.AdminId).HasMaxLength(50);
@@ -107,7 +108,7 @@ public partial class MemberSystemContext : DbContext
 
         modelBuilder.Entity<LogInRecord>(entity =>
         {
-            entity.ToTable("Log_in_record");
+            entity.ToTable("Log_in_record", "Member");
 
             entity.Property(e => e.LoginRecordId).ValueGeneratedNever();
             entity.Property(e => e.LoginAt).HasColumnType("datetime");
@@ -122,7 +123,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.ComplaintId);
 
-            entity.ToTable("Member_Complaint");
+            entity.ToTable("Member_Complaint", "Member");
 
             entity.Property(e => e.ComplaintId).HasMaxLength(50);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -152,16 +153,6 @@ public partial class MemberSystemContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(50);
 
-            entity.HasOne(d => d.MemberCodeNavigation).WithMany(p => p.MemberInformations)
-                .HasForeignKey(d => d.MemberCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_Information_Member_List");
-
-            entity.HasOne(d => d.Member).WithOne(p => p.MemberInformation)
-                .HasForeignKey<MemberInformation>(d => d.MemberId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_Information_blocked");
-
             entity.HasMany(d => d.Followeds).WithMany(p => p.Followers)
                 .UsingEntity<Dictionary<string, object>>(
                     "MemberFollowing",
@@ -176,7 +167,7 @@ public partial class MemberSystemContext : DbContext
                     j =>
                     {
                         j.HasKey("FollowerId", "FollowedId").HasName("PK_Member_Following_1");
-                        j.ToTable("Member_Following");
+                        j.ToTable("Member_Following", "Member");
                         j.IndexerProperty<string>("FollowerId").HasMaxLength(50);
                         j.IndexerProperty<string>("FollowedId").HasMaxLength(50);
                     });
@@ -195,7 +186,7 @@ public partial class MemberSystemContext : DbContext
                     j =>
                     {
                         j.HasKey("FollowerId", "FollowedId").HasName("PK_Member_Following_1");
-                        j.ToTable("Member_Following");
+                        j.ToTable("Member_Following", "Member");
                         j.IndexerProperty<string>("FollowerId").HasMaxLength(50);
                         j.IndexerProperty<string>("FollowedId").HasMaxLength(50);
                     });
@@ -205,7 +196,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.MemberCode);
 
-            entity.ToTable("Member_List");
+            entity.ToTable("Member_List", "Member");
 
             entity.Property(e => e.MemberCode).HasMaxLength(50);
             entity.Property(e => e.Email).HasMaxLength(100);

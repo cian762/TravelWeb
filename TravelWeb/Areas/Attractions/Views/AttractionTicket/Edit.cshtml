@@ -191,10 +191,18 @@
                     if (term === '') return null;
                     return {
                         id: 'NEW:' + term,
-                        text: term + '（新增）',
+                        text: term,
                         newTag: true
                     };
                 },
+
+                        // 新增這段：選到新標籤時顯示「溫泉（新增）」給使用者看
+        templateSelection: function (data) {
+            if (data.newTag) {
+                return data.text + '（新增）';
+            }
+            return data.text;
+        },
 
                 ajax: {
                     url: '@Url.Action("Search", "Tags", new { area = "Attractions" })',
