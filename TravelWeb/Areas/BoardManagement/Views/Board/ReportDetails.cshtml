@@ -63,7 +63,7 @@
                                     <div>@Html.DisplayFor(modelItem => item.CreateDateText)</div>
                                     <div style="white-space: nowrap;">@Html.DisplayFor(modelItem => item.CreateTimeText)</div>
                                 </td>
-                                <td>
+                                <td class="UpdatedAt" id="UpdatedAt+@item.LogId">
                                     @Html.DisplayFor(modelItem => item.UpdatedAt)
                                 </td>
                                 <td>                                    
@@ -94,10 +94,19 @@
 
 
 
-    <script>
+<script>
+        // 1. 給 test-1 加上兩個 class
+    $('#test-1').addClass('active submenu');
+
+    // 2. 給 sidebarLayouts 加上 show
+    $('#sidebarLayouts').addClass('show');
+
+    // 3. 給 test-3 加上 active
+    $('#test-3').addClass('active');
         $('.Result-updater').change(function() {
         var logId = $(this).data('log-id'); // 確保 HTML 標籤上有 data-log-id
         var newStatus = $(this).val();
+        var $select = $(this);
         $.ajax({
             url: '@Url.Action("UpdateReport", "Board", new { area = "BoardManagement" })',
             type: 'POST',
@@ -106,7 +115,14 @@
                 ResultID: newStatus
             },
             success: function(response) {
-                // alert("更新成功！");
+               $('[id="UpdatedAt+' + logId + '"]').text(response.updatedAt);
+               alert("修改成功!");
+               // 加上綠框與勾勾圖示
+               $select.addClass('is-valid');
+               // 2秒後自動移除，恢復原狀
+               setTimeout(function() {
+               $select.removeClass('is-valid');
+               }, 2000);
             },
             error: function() {
                 // alert("更新失敗");
@@ -135,7 +151,7 @@
 
         });
     });
-    </script>
+</script>
 
 
 

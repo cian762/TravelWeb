@@ -89,7 +89,16 @@
 
 
 
-<script>   
+<script> 
+    // 1. 給 test-1 加上兩個 class
+    $('#test-1').addClass('active submenu');
+
+    // 2. 給 sidebarLayouts 加上 show
+    $('#sidebarLayouts').addClass('show');
+
+    // 3. 給 test-3 加上 active
+    $('#test-4').addClass('active');
+
       $('.btnReport').click(function() {          
         var id = $(this).data('reportid'); // 抓取按鈕上的 data-id
         $('#ReportBackdrop').attr('data-post-id', id); // 塞進彈窗
