@@ -15,6 +15,9 @@
                     <thead>
                         <tr>
                             <th>
+                                <input class="form-check-input fs-4" type="checkbox" id="checkAll">
+                            </th>
+                            <th>
                                 檢舉者編號
                             </th>
                             <th>
@@ -44,6 +47,11 @@
                         @foreach (var item in Model.LogItems)
                         {
                             <tr>
+                                <td>
+                                    <div>
+                                        <input class="form-check-input row-checkbox fs-4" type="checkbox" id="checkboxNoLabel" value="@item.LogId">
+                                    </div>
+                                </td>
                                 <td>
                                     @Html.DisplayFor(modelItem => item.UserId)
                                 </td>
@@ -107,6 +115,7 @@
         var logId = $(this).data('log-id'); // 確保 HTML 標籤上有 data-log-id
         var newStatus = $(this).val();
         var $select = $(this);
+        const Updated = $('[id="UpdatedAt+' + logId + '"]');
         $.ajax({
             url: '@Url.Action("UpdateReport", "Board", new { area = "BoardManagement" })',
             type: 'POST',
@@ -115,13 +124,14 @@
                 ResultID: newStatus
             },
             success: function(response) {
-               $('[id="UpdatedAt+' + logId + '"]').text(response.updatedAt);
-               alert("修改成功!");
-               // 加上綠框與勾勾圖示
+               Updated.text(response.updatedAt);
                $select.addClass('is-valid');
+               Updated.addClass('text-success');
                // 2秒後自動移除，恢復原狀
                setTimeout(function() {
                $select.removeClass('is-valid');
+               Updated.removeClass('text-success');
+               
                }, 2000);
             },
             error: function() {
