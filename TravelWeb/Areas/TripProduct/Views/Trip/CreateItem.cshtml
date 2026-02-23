@@ -301,33 +301,55 @@
             });
 
             // --- 4. AJAX 抓取詳細資料 ---
-            $('.select2-init').on('select2:select', function (e) {
-                let type = $(this).data('type');
-                let id = e.params.data.id;
-                if (id) {
-                    $.get('/TripProduct/Trip/GetResourceDetail', { type: type, id: id }, function (data) {
-                        if (data) {
-                            let finalDescription = data.description || data.Description || "";
-                            $('#ResourceDescription').val(finalDescription);
+                          $('.select2-init').on('select2:select', function (e) {
+            let type = $(this).data('type');
+            let id = e.params.data.id;
+            if (id) {
+                $.get('/TripProduct/Trip/GetResourceDetail', { type: type, id: id }, function (data) {
+                    if (data) {
+                        let finalDescription = data.description || data.Description || "";
+                        $('#ResourceDescription').val(finalDescription);
 
-                            let imgHtml = '';
-                            if (data.images && data.images.length > 0) {
-                                data.images.forEach(path => {
-                                    let finalPath = path.startsWith('/') ? path : '/' + path;
-                                    imgHtml += `
-                                        <div class="position-relative d-inline-block me-2 mb-2">
-                                            <img src="${finalPath}" class="img-thumbnail" style="width: 120px; height: 90px; object-fit: cover;" onerror="this.src='/img/no-image.png';" />
-                                            <span class="position-absolute top-0 start-0 badge bg-secondary" style="font-size:0.5rem">原有圖</span>
-                                        </div>`;
-                                });
-                                $('#imageContainer').html(imgHtml);
-                            } else {
-                                $('#imageContainer').html('<span class="text-muted small">尚無原有圖片</span>');
-                            }
+                        let imgHtml = '';
+                        if (data.images && data.images.length > 0) {
+                            data.images.forEach(path => {
+                                if (!path) return;
+
+                                let finalPath = "";
+
+                                // 核心判斷：如果是雲端網址 (Cloudinary)
+                                if (path.toLowerCase().startsWith('http')) {
+                                    finalPath = path; // 直接使用網址
+                                }
+                                else {
+                                    // 如果是本地路徑，徹底清洗開頭多餘符號
+                                    let cleanPath = path.replace(/^~/, '')         // 移除 ASP.NET 波浪號
+                                                        .replace(/^[\\\/]+/, '')   // 移除開頭所有斜線或反斜線
+                                                        .replace(/\\/g, '/');      // 轉反斜線為斜線
+
+                                    // 統一補上一個斜線，指向地端 wwwroot
+                                    finalPath = '/' + cleanPath;
+                                }
+
+                                console.log("[圖片路徑處理] 原始:", path, " -> 最終:", finalPath);
+
+                                imgHtml += `
+                                    <div class="position-relative d-inline-block me-2 mb-2">
+                                        <img src="${finalPath}" class="img-thumbnail"
+                                             style="width: 120px; height: 90px; object-fit: cover;"
+                                             onerror="this.src='/img/no-image.png'; console.error('載入失敗的路徑:', '${finalPath}');" />
+                                        <span class="position-absolute top-0 start-0 badge bg-secondary" style="font-size:0.5rem">原有圖</span>
+                                    </div>`;
+                            });
+                            $('#imageContainer').html(imgHtml);
+                        } else {
+                            $('#imageContainer').html('<span class="text-muted small">尚無原有圖片</span>');
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
+        });
+           
 
             // --- 5. 檔案預覽 ---
             $('input[type="file"]').on('change', function(e) {
