@@ -12,7 +12,7 @@
           type="image/x-icon" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <!-- Fonts and icons -->
     <script src="~/css/assets/js/plugin/webfont/webfont.min.js"></script>
     <script>
@@ -52,10 +52,12 @@
                 <div class="logo-header" data-background-color="dark">
                     <a asp-controller="Home" asp-action="Index" class="logo">
                         @* 暫時修改為連回主頁 *@
-                        <img src="assets/img/kaiadmin/logo_light.svg"
+                        <i class="bi bi-suitcase h3 text-white"></i>
+                        <H3 class="ms-3 text-white">TW Explore</H3>
+                        @* <img src="assets/img/kaiadmin/logo_light.svg"
                              alt="navbar brand"
                              class="navbar-brand"
-                             height="20" />
+                             height="20" /> *@
                     </a>
                     <div class="nav-toggle">
                         <button class="btn btn-toggle toggle-sidebar">
@@ -102,7 +104,7 @@
                         <li class="nav-item">
                             <a data-bs-toggle="collapse" href="#base">
                                 <i class="fas fa-layer-group"></i>
-                                <p>Base</p>
+                                <p>會員管理</p>
                                 <span class="caret"></span>
                             </a>
                             <div class="collapse" id="base">
@@ -209,7 +211,7 @@
                                     </li>
                                     <li>
                                         <a class="nav-link text-dark" asp-area="Attractions" asp-controller="RecycleBin" asp-action="Index">
-                                            <i class="fas fa-trash-alt me-1"></i>
+                                            @* <i class="fas fa-trash-alt me-1"></i> *@
                                             <span class="sub-item">資源回收桶</span>
                                         </a>
                                     </li>
@@ -271,14 +273,7 @@
                             </div>
 
                         </li>
-                        <li class="nav-item">
-                        <li class="nav-item">
-                            <a href="../../documentation/index.html">
-                                <i class="fas fa-file"></i>
-                                <p>Documentation</p>
-                                <span class="badge badge-secondary">1</span>
-                            </a>
-                        </li>                       
+                       
                     </ul>
                 </div>
             </div>
