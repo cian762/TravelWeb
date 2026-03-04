@@ -4,8 +4,8 @@ namespace TravelWeb.Areas.Activity.Service.IActivityServices
 {
     public interface IPhotoService
     {
-        Task<ImageUploadResult> AddPhotoAsync(IFormFile file);
+        Task<List<ImageUploadResult>> AddPhotoAsync(List<IFormFile> file);
 
-        Task<DeletionResult> DeletePhotoAsync(string publicId);
+        Task DeletePhotoAsync(List<string>? publicIds);
     }
 }

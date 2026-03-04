@@ -313,12 +313,29 @@
                             let imgHtml = '';
                             if (data.images && data.images.length > 0) {
                                 data.images.forEach(path => {
-                                    let finalPath = path.startsWith('/') ? path : '/' + path;
+                                    // let finalPath = path.startsWith('/') ? path : '/' + path;
+                                    console.log(path)
+
+
+                                    let finalSrc = path;
+
+                                    // 2. 如果你擔心部署到子目錄的問題，可以這樣寫：
+                                    const rootPath = '@Url.Content("~")'; // 伺服器會解析成 "/"
+                                    if (!path.startsWith("http")) {
+                                        // 確保不會拼成 // (雙斜線) 或把斜線拼在最後面
+                                        finalSrc = (rootPath + path).replace(/\/+/g, '/');
+                                    }
+
+                                    console.log(finalSrc);
                                     imgHtml += `
                                         <div class="position-relative d-inline-block me-2 mb-2">
-                                            <img src="${finalPath}" class="img-thumbnail" style="width: 120px; height: 90px; object-fit: cover;" onerror="this.src='/img/no-image.png';" />
+                                            <img src="${finalSrc}"
+                                                 class="img-thumbnail"
+                                                 style="width: 120px; height: 90px; object-fit: cover;"
+                                                 onerror="this.src='/img/no-image.png';" />
                                             <span class="position-absolute top-0 start-0 badge bg-secondary" style="font-size:0.5rem">原有圖</span>
                                         </div>`;
+
                                 });
                                 $('#imageContainer').html(imgHtml);
                             } else {

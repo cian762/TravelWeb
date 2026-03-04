@@ -1,4 +1,4 @@
-﻿@model TravelWeb.Areas.Activity.Models.ViewModels.ActivityEditViewModel
+﻿@model TravelWeb.Areas.Activity.Models.ViewModels.ActivityInfoViewModel
 
 
 @{
@@ -96,8 +96,11 @@
                                 // 抓取剩餘的第一個縮圖路徑
                                 mainImg.src = remainingThumbs[0].src;
                                 container.querySelector('.thumb-wrapper').classList.add('active-thumb');
-                            } else {
-                                mainImg.src = "";                            }
+                            } 
+                            else 
+                            {
+                                mainImg.src = "";
+                            }
                         };
 
                         thumbDiv.appendChild(img);
