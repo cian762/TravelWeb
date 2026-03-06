@@ -11,8 +11,6 @@ public partial class AttractionProduct
 
     public int AttractionId { get; set; }
 
-    public int? RegionId { get; set; }
-
     public string Title { get; set; } = null!;
 
     public string? Status { get; set; }
@@ -29,9 +27,7 @@ public partial class AttractionProduct
 
     public int? TicketTypeCode { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public virtual Attraction Attraction { get; set; } = null!;
-
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-
-    public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
 }
