@@ -1,4 +1,5 @@
-﻿using TravelWeb.Areas.Activity.Models.ViewModels;
+﻿using TravelWeb.Areas.Activity.Models.EFModel;
+using TravelWeb.Areas.Activity.Models.ViewModels;
 
 namespace TravelWeb.Areas.Activity.Service.IActivityServices
 {
@@ -6,12 +7,17 @@ namespace TravelWeb.Areas.Activity.Service.IActivityServices
     {
         Task<IEnumerable<ActivityTicketViewModel>> GetAllActTicketsAsync();
 
+        Task<List<AcitivityTicket>> GetActTicketByActIdAsync(int activityId);
+
         Task<ActivityTicketViewModel> GetActTicketByProductCodeAsync(string ProductCode);
 
         Task CreateActTicketAsync(ActivityTicketViewModel vm);
 
-        Task EditActTicketAsync(ActivityTicketViewModel vm);
+        Task EditActTicketAsync(string ProductCode, ActivityTicketViewModel vm);
 
         //Task DeleteActTicket(int id);
+
+
+        Task<List<string>> TakeTicketCategoryNames();
     }
 }
