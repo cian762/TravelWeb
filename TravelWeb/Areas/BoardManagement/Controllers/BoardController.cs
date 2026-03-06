@@ -88,7 +88,7 @@ namespace TravelWeb.Areas.BoardManagement.Controllers
                 };
                 _noteService.AddReport(log);
                 Console.WriteLine("AddReport");
-                return Json(new { success = true });
+                return Json(new { success = true});
 
             }
             catch(Exception ex)
@@ -112,7 +112,10 @@ namespace TravelWeb.Areas.BoardManagement.Controllers
             { 
                 Console.WriteLine($"{LogID} {ResultID}");
                 _noteService.UpdateReportLog(LogID, ResultID);                
-                return Json(new { success = true });
+                return Json(new { success = true ,
+                    updatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    
+                });
 
             }
             catch

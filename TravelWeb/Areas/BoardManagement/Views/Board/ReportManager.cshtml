@@ -6,7 +6,7 @@
 }
 <div class="container">
 <h1>貼文檢舉管理中心</h1>
-<table class="table">
+    <table class="table table-hover">
     <thead>
         <tr>
             <th>
@@ -43,7 +43,7 @@
                     @Html.DisplayFor(modelItem => item.TargetId)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.TargetId)
+                    @Html.DisplayFor(modelItem => item.Title)
                 </td>
             <td>
                 @Html.DisplayFor(modelItem => item.ReportCount)
@@ -77,3 +77,14 @@
 </table>
 
 </div>
+
+<script>
+        // 1. 給 test-1 加上兩個 class
+    $('#test-1').addClass('active submenu');
+
+    // 2. 給 sidebarLayouts 加上 show
+    $('#sidebarLayouts').addClass('show');
+
+    // 3. 給 test-3 加上 active
+    $('#test-3').addClass('active');
+</script>

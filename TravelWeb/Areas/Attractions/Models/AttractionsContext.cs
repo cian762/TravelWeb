@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
 using System.Collections.Generic;
@@ -278,9 +279,9 @@ public partial class AttractionsContext : DbContext
             entity.HasKey(e => e.TicketTypeCode);
             entity.ToTable("TicketTypes", "Attractions");
 
-            // 移除 HasMaxLength，因為 int 不支援長度設定
+        
             entity.Property(e => e.TicketTypeCode)
-                  .HasColumnName("ticket_type_code");
+         .HasColumnName("ticket_type_code");  // 移除 HasMaxLength(20)
 
             entity.Property(e => e.TicketTypeName)
                   .HasMaxLength(50) // 對應你的 nvarchar(50)
@@ -316,6 +317,8 @@ public partial class AttractionsContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_AttractionProductTags_Tags");
         });
+
+       
 
         OnModelCreatingPartial(modelBuilder);
     }
