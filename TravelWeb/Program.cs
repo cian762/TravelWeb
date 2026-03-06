@@ -65,6 +65,8 @@ builder.Services.AddDbContext<ActivityDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 builder.Services.AddScoped<IActivityInfoRepository, ActivityInfoRepository>();
 builder.Services.AddScoped<IActivityInfoService, ActivityInfoService>();
+builder.Services.AddScoped<IActivityTicketReposiotry, ActivityTicketRepository>();
+builder.Services.AddScoped<IActivityTicketService, ActivityTicketService>();
 
 
 //Member

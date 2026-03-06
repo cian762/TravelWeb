@@ -173,7 +173,6 @@ public partial class ActivityDbContext : DbContext
 
             entity.Property(e => e.ImageSetId).HasColumnName("ImageSetID");
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
-            entity.Property(e => e.PublicId).HasColumnName("PublicID");
 
             entity.HasOne(d => d.Activity).WithMany(p => p.ActivityImages)
                 .HasForeignKey(d => d.ActivityId)
@@ -228,7 +227,7 @@ public partial class ActivityDbContext : DbContext
 
             entity.HasOne(d => d.Activity).WithMany(p => p.ActivityTicketDetails)
                 .HasForeignKey(d => d.ActivityId)
-                .HasConstraintName("FK_活動商品表細節_活動表");
+                .HasConstraintName("FK_Activity_TicketDetails_Activities");
 
             entity.HasOne(d => d.ProductCodeNavigation).WithOne(p => p.ActivityTicketDetail)
                 .HasForeignKey<ActivityTicketDetail>(d => d.ProductCode)
@@ -279,7 +278,9 @@ public partial class ActivityDbContext : DbContext
 
             entity.ToTable("Tags_Regions", "Activity");
 
-            entity.Property(e => e.RegionId).HasColumnName("RegionID");
+            entity.Property(e => e.RegionId)
+                .ValueGeneratedNever()
+                .HasColumnName("RegionID");
             entity.Property(e => e.RegionName).HasMaxLength(10);
             entity.Property(e => e.Uid).HasColumnName("UID");
 
