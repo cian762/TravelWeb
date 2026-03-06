@@ -46,7 +46,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         // GET: Attractions/AttractionTicket/Create
         public IActionResult Create()
         {
-            var attractions = _context.Attractions.ToList();
+            var attractions = _context.Attractions.Where(a => !a.IsDeleted).ToList();
             ViewBag.AttractionList = new SelectList(attractions, "AttractionId", "Name");
             ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName");
             return View();

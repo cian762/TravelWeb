@@ -1,0 +1,178 @@
+﻿@{
+    ViewData["Title"] = "資源回收桶";
+
+    var deletedAttractions = ViewBag.DeletedAttractions as IEnumerable<TravelWeb.Areas.Attractions.Models.Attraction>
+                             ?? Enumerable.Empty<TravelWeb.Areas.Attractions.Models.Attraction>();
+
+    var deletedTickets = ViewBag.DeletedTickets as IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionProduct>
+                         ?? Enumerable.Empty<TravelWeb.Areas.Attractions.Models.AttractionProduct>();
+
+    string activeTab = TempData["ActiveTab"] as string ?? "attractions";
+}
+
+<div class="page-inner">
+    <div class="page-header">
+        <h4 class="page-title">資源回收桶</h4>
+        <ul class="breadcrumbs">
+            <li class="nav-home"><a href="#"><i class="flaticon-home"></i></a></li>
+            <li class="separator"><i class="flaticon-right-arrow"></i></li>
+            <li class="nav-item">資源回收桶</li>
+        </ul>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fa fa-check me-1"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-trash-restore me-2 text-warning"></i>已刪除的項目
+                        </h4>
+                        <span class="ms-3 text-muted small">恢復後景點狀態將重設為「審核中」，票券狀態將重設為「草稿」</span>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <ul class="nav nav-tabs mb-4" id="recycleTabs">
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "attractions" ? "active" : "")"
+                               href="#pane-attractions" data-bs-toggle="tab">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                景點
+                                <span class="badge bg-danger ms-1">@deletedAttractions.Count()</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "tickets" ? "active" : "")"
+                               href="#pane-tickets" data-bs-toggle="tab">
+                                <i class="fas fa-ticket-alt me-1"></i>
+                                票券
+                                <span class="badge bg-danger ms-1">@deletedTickets.Count()</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+
+                        @* ── 景點 Tab ── *@
+                        <div class="tab-pane fade @(activeTab == "attractions" ? "show active" : "")" id="pane-attractions">
+                            @if (!deletedAttractions.Any())
+                            {
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                                    <p>回收桶是空的，沒有被刪除的景點</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>編號</th>
+                                                <th>區域</th>
+                                                <th>景點名稱</th>
+                                                <th>地址</th>
+                                                <th>電話</th>
+                                                <th style="width: 150px;">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in deletedAttractions)
+                                            {
+                                                <tr class="table-danger">
+                                                    <td>@item.AttractionId</td>
+                                                    <td>
+                                                        <span class="badge badge-info">@(item.Region?.RegionName ?? "—")</span>
+                                                    </td>
+                                                    <td><strong>@item.Name</strong></td>
+                                                    <td>@item.Address</td>
+                                                    <td>@item.Phone</td>
+                                                    <td>
+                                                        <form method="post"
+                                                              action="/Attractions/RecycleBin/RestoreAttraction/@item.AttractionId">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-sm btn-success">
+                                                                <i class="fas fa-trash-restore me-1"></i> 恢復
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+
+                        @* ── 票券 Tab ── *@
+                        <div class="tab-pane fade @(activeTab == "tickets" ? "show active" : "")" id="pane-tickets">
+                            @if (!deletedTickets.Any())
+                            {
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                                    <p>回收桶是空的，沒有被刪除的票券</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>產品代碼</th>
+                                                <th>票券名稱</th>
+                                                <th>所屬景點</th>
+                                                <th>售價</th>
+                                                <th style="width: 150px;">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in deletedTickets)
+                                            {
+                                                <tr class="table-danger">
+                                                    <td><code class="text-primary">@item.ProductCode</code></td>
+                                                    <td>
+                                                        <div class="fw-bold">@item.Title</div>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-bookmark me-1"></i>
+                                                            @(item.TicketType?.TicketTypeName ?? "未分類")
+                                                        </small>
+                                                    </td>
+                                                    <td>@(item.Attraction?.Name ?? "—")</td>
+                                                    <td class="text-danger fw-bold">@item.Price?.ToString("C0")</td>
+                                                    <td>
+                                                        <form method="post"
+                                                              action="/Attractions/RecycleBin/RestoreTicket/@item.ProductId">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-sm btn-success">
+                                                                <i class="fas fa-trash-restore me-1"></i> 恢復
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
