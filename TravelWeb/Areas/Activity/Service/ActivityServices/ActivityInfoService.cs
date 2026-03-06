@@ -18,7 +18,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
             _photoService = photoService;
         }
 
-        public async Task<IEnumerable<ActivityInfoViewModel>> GetAllActInfo()
+        public async Task<IEnumerable<ActivityInfoViewModel>> GetAllActInfoAsync()
         {
             var vm = await _activityInfoRepository.Get()
                                 .Select(m => new ActivityInfoViewModel
@@ -37,7 +37,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
             return vm;
         }
 
-        public async Task<ActivityInfoViewModel?> GetActInfoById(int id)
+        public async Task<ActivityInfoViewModel?> GetActInfoByIdAsync(int id)
         {
 
             if (_activityInfoRepository.Get().Any(a => a.ActivityId == id) != false) 
@@ -65,7 +65,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
             return null;
         }
 
-        public async Task CreateActInfo(ActivityInfoViewModel vm, List<IFormFile> images)
+        public async Task CreateActInfoAsync(ActivityInfoViewModel vm, List<IFormFile> images)
         {
             var imageDetails = await _photoService.AddPhotoAsync(images);
             await _activityInfoRepository.CreateAsync(vm, imageDetails);
@@ -73,7 +73,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
 
         }
 
-        public async Task EditActInfo(ActivityInfoViewModel vm, List<IFormFile> images, List<string> imageDeleteUrls)
+        public async Task EditActInfoAsync(ActivityInfoViewModel vm, List<IFormFile> images, List<string> imageDeleteUrls)
         {
             var imageDetails = await _photoService.AddPhotoAsync(images);
 
@@ -83,10 +83,12 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
             await _activityInfoRepository.SaveChangeAsync();
         }
 
-        public Task DeleteActInfo()
+        public async Task DeleteActInfoAsync(int id)
         {
-            throw new NotImplementedException();
+            await _activityInfoRepository.DeleteAsync(id);
+            await _activityInfoRepository.SaveChangeAsync();
         }
+
 
 
         public List<string> ProvideTypeTag() 

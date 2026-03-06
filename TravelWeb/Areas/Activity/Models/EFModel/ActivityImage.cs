@@ -13,5 +13,7 @@ public partial class ActivityImage
 
     public string? ImageUrl { get; set; }
 
+    public bool? IsCoverImage { get; set; }
+
     public virtual Activity? Activity { get; set; }
 }

@@ -5,15 +5,15 @@ namespace TravelWeb.Areas.Activity.Service.IActivityServices
 {
     public interface IActivityInfoService
     {
-        Task<IEnumerable<ActivityInfoViewModel>> GetAllActInfo();
+        Task<IEnumerable<ActivityInfoViewModel>> GetAllActInfoAsync();
 
-        Task<ActivityInfoViewModel?> GetActInfoById(int id);
+        Task<ActivityInfoViewModel?> GetActInfoByIdAsync(int id);
 
-        Task CreateActInfo(ActivityInfoViewModel vm, List<IFormFile> images);
+        Task CreateActInfoAsync(ActivityInfoViewModel vm, List<IFormFile> images);
 
-        Task EditActInfo(ActivityInfoViewModel vm, List<IFormFile> images, List<string> imageDeleteUrls);
+        Task EditActInfoAsync(ActivityInfoViewModel vm, List<IFormFile> images, List<string> imageDeleteUrls);
 
-        Task DeleteActInfo();
+        Task DeleteActInfoAsync(int id);
 
         List<string> ProvideTypeTag();
     

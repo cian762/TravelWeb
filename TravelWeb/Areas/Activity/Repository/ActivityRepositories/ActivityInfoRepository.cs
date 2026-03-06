@@ -21,6 +21,7 @@ namespace TravelWeb.Areas.Activity.Repository.ActivityRepositories
         public IQueryable<Models.EFModel.Activity> Get()
         {
             var acts = _dbContext.Activities
+                .Where(a => a.SoftDelete == false)
                 .Include(a=>a.Regions)
                 .Include(a=>a.Types)
                 .AsNoTracking()
@@ -81,6 +82,7 @@ namespace TravelWeb.Areas.Activity.Repository.ActivityRepositories
                 }
             }
 
+            act.SoftDelete = false;
             _dbContext.Activities.Add(act);
         }
 
@@ -165,9 +167,14 @@ namespace TravelWeb.Areas.Activity.Repository.ActivityRepositories
             }
         }
 
-        public async Task DeleteAsync()
+        public async Task DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var act = await _dbContext.Activities.FirstOrDefaultAsync(a => a.ActivityId == id);
+
+            if (act != null) 
+            {
+                act.SoftDelete = true;
+            }
         }
 
 

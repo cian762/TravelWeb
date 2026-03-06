@@ -11,9 +11,10 @@ namespace TravelWeb.Areas.Activity.Repository.IActivityRepositories
 
         Task UpdateAsync(ActivityInfoViewModel vm, List<ImageUploadResult> imageUploadDetails, List<string> imageDeleteUrls);
 
-        Task DeleteAsync();
+        Task DeleteAsync(int id);
 
         Task SaveChangeAsync();
+
         List<string>? FindPublicId(List<string> imageDeleteUrls);
 
         List<string> GetTypeTag();
