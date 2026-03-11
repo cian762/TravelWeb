@@ -155,16 +155,6 @@ public partial class MemberSystemContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(50);
 
-            entity.HasOne(d => d.MemberCodeNavigation).WithMany(p => p.MemberInformations)
-                .HasForeignKey(d => d.MemberCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_Information_Member_List");
-
-            entity.HasOne(d => d.Member).WithOne(p => p.MemberInformation)
-                .HasForeignKey<MemberInformation>(d => d.MemberId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_Information_blocked");
-
             entity.HasMany(d => d.Followeds).WithMany(p => p.Followers)
                 .UsingEntity<Dictionary<string, object>>(
                     "MemberFollowing",
