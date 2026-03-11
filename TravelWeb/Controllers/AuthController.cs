@@ -73,19 +73,19 @@ namespace TravelWeb.Controllers
                 return View();
             }
 
-            // 存 Session
+                // 存 Session
             HttpContext.Session.SetString("UserCode", user.MemberCode);
             HttpContext.Session.SetString("Role", role);
 
             // 🔥 登入成功寫入 LoginRecord
-            var loginRecord = new LogInRecord
-            {
+                var loginRecord = new LogInRecord
+                {
                 MemberCode = user.MemberCode,
-                LoginAt = DateTime.Now
-            };
+                    LoginAt = DateTime.Now
+                };
 
-            _context.LogInRecords.Add(loginRecord);
-            _context.SaveChanges();
+                _context.LogInRecords.Add(loginRecord);
+                _context.SaveChanges();
 
             // 導向不同頁面
             if (role == "Admin")
@@ -96,7 +96,14 @@ namespace TravelWeb.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
+
+            // ============================
+            // 都找不到
+            // ============================
+            ViewBag.Error = "帳號或密碼錯誤";
+            return View();
         }
+
 
         public IActionResult Logout()
         {

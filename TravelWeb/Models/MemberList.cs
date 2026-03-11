@@ -15,6 +15,7 @@ public partial class MemberList
 
     public string? PasswordHash { get; set; }
 
+    [DisplayName("電話")]
     public string? Phone { get; set; }
 
     public virtual ICollection<Authorization> Authorizations { get; set; } = new List<Authorization>();

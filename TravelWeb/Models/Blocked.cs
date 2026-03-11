@@ -14,4 +14,6 @@ public partial class Blocked
     public DateOnly? BlockedDate { get; set; }
 
     public string? Reason { get; set; }
+
+    public virtual MemberInformation? MemberInformation { get; set; }
 }

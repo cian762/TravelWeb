@@ -1,0 +1,55 @@
+﻿@model TravelWeb.ViewModels.MemberProfileViewModel
+
+<h2 class="mb-4">會員個人資料</h2>
+
+<div class="card">
+    <div class="card-body">
+
+        <div class="mb-3">
+            <label class="fw-bold">會員識別碼</label>
+            <p>@Model.MemberId</p>
+        </div>
+
+        <div class="mb-3">
+            <label class="fw-bold">姓名</label>
+            <p>@Model.Name</p>
+        </div>
+
+        <div class="mb-3">
+            <label class="fw-bold">狀態</label>
+            <p>@Model.Status</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+        {
+            <div class="mb-3">
+                <img src="@Model.AvatarUrl"
+                     style="width:150px;height:150px;object-fit:cover;border-radius:10px;" />
+            </div>
+        }
+
+        <hr />
+
+        @if (ViewBag.CanViewPrivateData == true)
+        {
+            <h5>帳號資料</h5>
+
+            <div class="mb-3">
+                <label class="fw-bold">Email</label>
+                <p>@Model.Email</p>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">電話</label>
+                <p>@Model.Phone</p>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary">
+                此為會員公開資料，帳號資訊僅本人可見
+            </div>
+        }
+
+    </div>
+</div>

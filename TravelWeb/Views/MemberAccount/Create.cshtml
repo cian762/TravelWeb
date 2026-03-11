@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="card-body p-4 p-md-5 bg-white">
-                    <form asp-action="Create" method="post">
+<form asp-action="Create" method="post">
 
                         <!-- 顯示系統錯誤訊息區塊 -->
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
@@ -27,7 +27,7 @@
                             <div class="input-group shadow-sm">
                                 <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
                                 <input asp-for="Email" class="form-control" placeholder="example@email.com" />
-                            </div>
+    </div>
                             <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
@@ -37,7 +37,7 @@
                             <div class="input-group shadow-sm">
                                 <span class="input-group-text bg-light"><i class="bi bi-unlock"></i></span>
                                 <input asp-for="PasswordHash" type="text" class="form-control" placeholder="請設定您的密碼" />
-                            </div>
+    </div>
                             <span asp-validation-for="PasswordHash" class="text-danger small"></span>
                         </div>
 
@@ -49,7 +49,7 @@
                                 <!-- 注意：這裡的 name="confirmPassword" 必須對應到 Controller 裡的新參數 -->
                                 <input name="confirmPassword" type="password" class="form-control" placeholder="請再次輸入密碼確認" required />
                             </div>
-                        </div>
+    </div>
 
                         <!-- 電話 -->
                         <div class="mb-4">
@@ -67,17 +67,17 @@
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-bold rounded-pill">
                                 確認註冊
-                            </button>
+        </button>
                             <button type="reset" class="btn btn-light btn-lg text-secondary border shadow-sm rounded-pill mt-2">
                                 清除重填
-                            </button>
+        </button>
                         </div>
 
                     </form>
                 </div>
             </div>
 
-        </div>
+    </div>
     </div>
 </div>
 
