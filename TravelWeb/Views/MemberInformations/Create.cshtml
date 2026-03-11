@@ -1,42 +1,96 @@
 ﻿@model TravelWeb.Models.MemberInformation
 
 @{
-    ViewData["Title"] = "新增個人資料";
+    ViewData["Title"] = "建立個人資料";
 }
 
-<h2 class="mb-4">新增個人資料</h2>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
 
-<form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-success text-white text-center py-4 border-0 rounded-top-4">
+                    <h3 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill"></i> 建立個人資料</h3>
+                    <small class="text-light">最後一步！請完善您的基本資料</small>
+                </div>
 
-    <!-- 隱藏欄位：會員識別碼 -->
-    <input type="hidden" asp-for="MemberCode" />
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <!-- 記得 enctype="multipart/form-data" 才能上傳圖片 -->
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
 
-    <div class="form-group mb-3">
-        <label asp-for="Name" class="form-label">姓名</label>
-        <input asp-for="Name" class="form-control" />
+                        <!-- 隱藏的 MemberCode，負責把兩張表串起來 -->
+                        <input type="hidden" asp-for="MemberCode" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+
+                        <!-- 姓名 -->
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label fw-bold text-secondary">真實姓名</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                                <input asp-for="Name" class="form-control" placeholder="請輸入您的姓名" required />
+                            </div>
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 性別下拉選單 -->
+                        <div class="mb-4">
+                            <label asp-for="Gender" class="form-label fw-bold text-secondary">性別</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light"><i class="bi bi-gender-ambiguous"></i></span>
+                                <select asp-for="Gender" class="form-select" required>
+                                    <option value="">-- 請選擇您的性別 --</option>
+                                    <!-- 注意：請確認您的 Model 中 Gender 是存數字還是字串 -->
+                                    <option value="1">男</option>
+                                    <option value="0">女</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="Gender" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 生日 (內建日期選擇器) -->
+                        <div class="mb-4">
+                            <label asp-for="BirthDate" class="form-label fw-bold text-secondary">出生年月日</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light"><i class="bi bi-calendar-date"></i></span>
+                                <input asp-for="BirthDate" type="date" class="form-control" required />
+                            </div>
+                            <span asp-validation-for="BirthDate" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 頭像上傳 -->
+                        <div class="mb-5">
+                            <label class="form-label fw-bold text-secondary">上傳個人頭像</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light"><i class="bi bi-image"></i></span>
+                                <input type="file" name="avatarFile" class="form-control" accept="image/*" />
+                            </div>
+                            <small class="text-muted mt-1 d-block">建議上傳正方形圖片，格式支援 JPG, PNG。</small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- 送出按鈕 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg shadow-sm fw-bold rounded-pill">
+                                <i class="bi bi-check-circle"></i> 完成並進入首頁
+                            </button>
+                            <!-- 清除重填的按鈕改為 type="reset" -->
+                            <button type="reset" class="btn btn-light btn-lg text-secondary border shadow-sm rounded-pill mt-2">
+                                清除重填
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
     </div>
+</div>
 
-    <div class="form-group mb-3">
-        <label asp-for="Gender" class="form-label">性別</label>
-        <select asp-for="Gender" class="form-control">
-            <option value="">請選擇</option>
-            <option value="0">女</option>
-            <option value="1">男</option>
-        </select>
-    </div>
-
-    <div class="form-group mb-3">
-        <label asp-for="BirthDate" class="form-label">生日</label>
-        <input asp-for="BirthDate" type="date" class="form-control" />
-    </div>
-
-    <!-- 頭像上傳 -->
-    <div class="mb-3">
-        <label>上傳頭像</label>
-        <input type="file" name="avatarFile" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">新增</button>
-    <a asp-action="Create" class="btn btn-secondary">清除</a>
-
-</form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

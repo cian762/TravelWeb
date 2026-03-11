@@ -113,6 +113,7 @@ namespace TravelWeb.Controllers
                 byte[] hash = sha.ComputeHash(bytes);
                 return Convert.ToBase64String(hash);
             }
+
         }
     }
 }

@@ -4,7 +4,7 @@ using TravelWeb.Areas.Activity.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
 using TravelWeb.Areas.Activity.Service.ActivityServices;
 using TravelWeb.Areas.Activity.Service.IActivityServices;
-using TravelWeb.Areas.Attractions.Models;//景點的
+using TravelWeb.Areas.Attractions.Models;
 using TravelWeb.Areas.BoardManagement.Models.BoardDB;
 using TravelWeb.Areas.BoardManagement.Models.IService;
 using TravelWeb.Areas.BoardManagement.Models.Service;
@@ -18,9 +18,18 @@ using TravelWeb.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+// ==========================================
+// 🔥 1. 在 builder.Build() 之前，註冊 Session 服務
+// ==========================================
+builder.Services.AddDistributedMemoryCache(); // Session 需要用到記憶體快取
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // 設定 Session 閒置多久會過期 (通常設 30 分鐘)
+    options.Cookie.HttpOnly = true; // 提高安全性
+    options.Cookie.IsEssential = true;
+});
 //行程商品連線DI
 builder.Services.AddDbContext<TripDbContext>(O => O.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 //行程商品主頁用DI
@@ -89,6 +98,18 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// ==========================================
+// 🔥 2. 啟用 Session 中介軟體 (位置非常重要！)
+// 必須放在 app.UseRouting() 之後，app.UseAuthorization() 與 app.MapControllerRoute() 之前！
+// ==========================================
+app.UseSession();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Auth}/{action=Login}/{id?}"); // 這是我們剛剛改好的預設進入登入頁
+
 app.UseAuthorization();
 
 
@@ -108,6 +129,6 @@ app.MapControllerRoute(
 // �쥻���w�]���
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Auth}/{action=Login}/{id?}");
 
 app.Run();
