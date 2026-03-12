@@ -37,20 +37,6 @@ namespace TravelWeb.Controllers
             return View(model);
         }
 
-        private string GenerateMemberId(string email)
-        {
-            if (string.IsNullOrEmpty(email) || !email.Contains("@"))
-                return null;
-
-            var parts = email.Split('@');
-            string accountPart = parts[0];          // 1245
-            string domainPart = parts[1];           // gmail.com
-
-            string domainFirstChar = domainPart.Substring(0, 1).ToLower();  // g
-
-            return "@" + accountPart + domainFirstChar;
-        }
-
         // ==========================
         // POST: 儲存個人資料
         // ==========================
@@ -78,7 +64,7 @@ namespace TravelWeb.Controllers
 
             // 1. 自動產生 MemberId (信箱@前字串 + 隨機3位數)
             var memberAccount = await _context.MemberLists
-    .FirstOrDefaultAsync(m => m.MemberCode == model.MemberCode);
+                .FirstOrDefaultAsync(m => m.MemberCode == model.MemberCode);
 
             if (memberAccount != null && !string.IsNullOrEmpty(memberAccount.Email))
             {

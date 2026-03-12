@@ -68,7 +68,7 @@ builder.Services.AddDbContext<AttractionsContext>(options =>
 
 
 //ActivityDBcontext 服務註冊
-builder.Services.AddDbContext<ActivityDbContext>(options => 
+builder.Services.AddDbContext<ActivityDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
 );
 

@@ -4,25 +4,20 @@ using System.Security.Cryptography;
 using System.Text;
 using TravelWeb.Models;
 
-
-
 namespace TravelWeb.Controllers
 {
     public class MemberAccountController : Controller
     {
-
         private readonly MemberSystemContext _context;
         public MemberAccountController(MemberSystemContext context)
         {
             _context = context;
         }
 
-
         public IActionResult Create()
         {
             return View();
         }
-
 
         // ==========================
         // POST: 建立會員帳號
@@ -80,15 +75,13 @@ namespace TravelWeb.Controllers
             // 3. 準備寫入資料庫
             var random = new Random().Next(100, 999);
             model.MemberCode = "M" + DateTime.Now.ToString("yyyyMMddHHmmss") + random;
-
-            // 密碼加密
             model.PasswordHash = HashPassword(model.PasswordHash);
 
             // 🔥 除錯雷達 2：捕捉「資料庫寫入失敗」的真實原因
             try
             {
-            _context.MemberLists.Add(model);
-            await _context.SaveChangesAsync();
+                _context.MemberLists.Add(model);
+                await _context.SaveChangesAsync();
 
                 // 成功！跳轉到填寫詳細資料頁面
                 return RedirectToAction("Create", "MemberInformations", new { id = model.MemberCode });
@@ -116,6 +109,5 @@ namespace TravelWeb.Controllers
                 return Convert.ToBase64String(hash);
             }
         }
-
     }
 }

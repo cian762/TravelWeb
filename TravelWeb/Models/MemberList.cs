@@ -8,7 +8,6 @@ namespace TravelWeb.Models;
 [Table("Member_List", Schema = "Member")]
 public partial class MemberList
 {
-    [Key]
     public string MemberCode { get; set; } = null!;
 
     public string? Email { get; set; }
