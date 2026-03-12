@@ -111,7 +111,6 @@ public partial class MemberSystemContext : DbContext
             // 🔥 補上 "Member"
             entity.ToTable("Log_in_record", "Member");
 
-            entity.Property(e => e.LoginRecordId).ValueGeneratedOnAdd();
             entity.Property(e => e.LoginAt).HasColumnType("datetime");
             entity.Property(e => e.MemberCode).HasMaxLength(50);
 

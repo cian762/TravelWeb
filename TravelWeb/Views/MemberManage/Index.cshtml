@@ -1,0 +1,166 @@
+﻿@model IEnumerable<TravelWeb.ViewModels.MemberDetailsViewModel>
+
+@{
+    ViewData["Title"] = "會員清單管理";
+}
+
+<div class="container-fluid mt-4 px-4">
+    <!-- 頁面標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="bi bi-people-fill"></i> 會員清單管理</h2>
+        <span class="text-muted">共找到 @Model.Count() 筆資料</span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🔍 頂部控制面板 (搜尋與過濾) -->
+    <!-- ========================================== -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4 bg-light rounded-4">
+
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+
+                <!-- 關鍵字搜尋 (MemberCode, Email, MemberId, Name) -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-secondary small"><i class="bi bi-search"></i> 關鍵字搜尋</label>
+                    <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="輸入代碼、信箱或姓名..." />
+                </div>
+
+                <!-- 狀態下拉選單 -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-secondary small">帳號狀態</label>
+                    <select name="status" asp-items="ViewBag.StatusList" class="form-select">
+                        <option value="">全部狀態</option>
+                    </select>
+                </div>
+
+                <!-- 性別下拉選單 -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-secondary small">性別</label>
+                    <select name="gender" asp-items="ViewBag.GenderList" class="form-select">
+                        <option value="">全部性別</option>
+                    </select>
+                </div>
+
+                <!-- 生日(年份)下拉選單 -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-secondary small">出生年份</label>
+                    <select name="birthYear" asp-items="ViewBag.YearList" class="form-select">
+                        <option value="">全部年份</option>
+                    </select>
+                </div>
+
+                <!-- 生日(月份)下拉選單 -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-secondary small">出生月份</label>
+                    <select name="birthMonth" asp-items="ViewBag.MonthList" class="form-select">
+                        <option value="">全部月份</option>
+                    </select>
+                </div>
+
+                <!-- 按鈕區 -->
+                <div class="col-md-12 text-end mt-4">
+                    <!-- 清除條件按鈕：直接連回 Index 不帶任何參數 -->
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 me-2">
+                        <i class="bi bi-eraser"></i> 清除條件
+                    </a>
+                    <!-- 搜尋按鈕 -->
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm fw-bold">
+                        <i class="bi bi-funnel"></i> 篩選查詢
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 📋 資料表格區塊 -->
+    <!-- ========================================== -->
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4 py-3">系統識別碼 (MemberCode)</th>
+                        <th>登入信箱 (Email)</th>
+                        <th>會員代號 (MemberId)</th>
+                        <th>真實姓名</th>
+                        <th>帳號狀態</th>
+                        <th class="text-end pe-4">最後登入時間</th>
+                    </tr>
+                </thead>
+
+                <tbody class="bg-white">
+                    @if (!Model.Any())
+                    {
+                        <!-- 當沒有搜尋到結果時的防呆畫面 -->
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-search fs-1 d-block mb-3 text-light"></i>
+                                <h5 class="fw-bold">找不到符合條件的會員資料</h5>
+                                <p class="mb-0">請嘗試更換搜尋關鍵字，或放寬過濾條件。</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <!-- 依據 Status 動態決定 Badge 的顏色 -->
+                            string statusBadgeClass = item.Status switch
+                            {
+                                "正常" => "bg-success",
+                                "停權" => "bg-danger",
+                                "警示" => "bg-warning text-dark",
+                                "尚未填寫" => "bg-secondary",
+                                _ => "bg-secondary"
+                            };
+
+                            <tr>
+                                <!-- 1. MemberCode -->
+                                <td class="ps-4 fw-bold text-primary">@item.MemberCode</td>
+
+                                <!-- 2. Email -->
+                                <td class="text-muted">@item.Email</td>
+
+                                <!-- 3. MemberId -->
+                                <td><span class="fw-semibold text-dark">@item.MemberId</span></td>
+
+                                <!-- 4. Name -->
+                                <td>@item.Name</td>
+
+                                <!-- 5. Status (加上精美的膠囊標籤) -->
+                                <td>
+                                    <span class="badge @statusBadgeClass rounded-pill px-3 py-2 shadow-sm fs-6">
+                                        @item.Status
+                                    </span>
+                                </td>
+
+                                <!-- 6. 最後登入時間 -->
+                                <td class="text-end pe-4 text-muted small">
+                                    @if (item.LastLoginTime.HasValue)
+                                    {
+                                        <!-- 格式化日期：2023-10-27 14:30 -->
+                                        <i class="bi bi-clock"></i>
+ 
+                                        @item.LastLoginTime.Value.ToString("yyyy-MM-dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary fst-italic">從未登入</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <!-- 頁尾留白 -->
+    <div class="mb-5"></div>
+</div>
