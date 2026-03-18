@@ -31,7 +31,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
                                     OfficialLink = m.OfficialLink,
                                     UpdateAt = m.UpdateAt,
                                     RegionName = m.Regions.Select(r => r.RegionName).ToList(),
-                                    TypeName = m.Types.Select(t => t.ActivityType).ToList()
+                                    TypeName = m.Types.Select(t => t.ActivityType).ToList()!
                                 })
                                 .ToListAsync();
             return vm;
@@ -54,7 +54,7 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
                     Description = m.Description,
                     OfficialLink = m.OfficialLink,
                     RegionName = m.Regions.Select(r => r.RegionName).ToList(),
-                    TypeName = m.Types.Select(t => t.ActivityType).ToList(),
+                    TypeName = m.Types.Select(t => t.ActivityType).ToList()!,
                     ImgUrls = m.ActivityImages.Where(i => i.ActivityId == m.ActivityId).Select(u => u.ImageUrl).ToList()!,
                 }).FirstOrDefaultAsync();
 

@@ -12,6 +12,7 @@ namespace TravelWeb.Areas.Activity.Controllers
     [Route("Act")]
     public class ActivityController : Controller
     {
+        private readonly ActivityDbContext _dbcontext;
 
         private readonly IActivityInfoService _activityInfoService;
 
@@ -21,10 +22,11 @@ namespace TravelWeb.Areas.Activity.Controllers
 
         private List<string> RegionNameCollection { get; set; }
 
-        public ActivityController(IActivityInfoService activityInfoService,IActivityTicketService activityTicketService)
+        public ActivityController(IActivityInfoService activityInfoService,IActivityTicketService activityTicketService,ActivityDbContext dbcontext)
         {
             _activityInfoService = activityInfoService;
             _activityTicketService = activityTicketService;
+            _dbcontext = dbcontext;
 
             TypeNameCollection = _activityInfoService.ProvideTypeTag();
             RegionNameCollection = _activityInfoService.ProvideRegionTag();
@@ -303,18 +305,52 @@ namespace TravelWeb.Areas.Activity.Controllers
 
 
 
-        //// 活動排程設定
-        //[HttpGet("Schedule")]
-        //public IActionResult ActivitySetUp() 
-        //{
-        //    return View();
-        //}
+        // 活動排程設定
+        [HttpGet("Schedule")]
+        public IActionResult ActivitySetUp()
+        {
+            var plan = _dbcontext.ActivityPublishStatuses
+                .Include(a => a.Activity)
+                .Select(a => new ActivityScheduleViewModel
+                {
+                    Title = a.Activity.Title,
+                    StartTime = a.Activity.StartTime,
+                    EndTime = a.Activity.EndTime,
+                    PublishTime = a.PublishTime,
+                    UnPublishTime = a.UnPublishTime,
+                    Status = a.Status
+                }).ToList();
+
+            return View("Schedule", plan);
+        }
+
+
+
+        [HttpGet("GetScheduleInfo")]
+        // AJAX 拉取資料放到 FullCalendar
+        public IActionResult GetScheduleInfo() 
+        {
+            var plan = _dbcontext.ActivityPublishStatuses
+                   .Include(a => a.Activity)
+                   .Select(a => new 
+                   {
+                       title = a.Activity.Title,
+                       start = a.PublishTime,
+                       end = a.UnPublishTime,
+                       allDay = true,
+                   }).ToList();
+            return Json(plan);
+        }
+
+
 
         //[HttpPost("Schedule")]
         //public IActionResult ActivitySetUp(int a) 
         //{
         //    return RedirectToAction(nameof(ActivitySetUp));
         //}
+
+
 
         //活動熱度分析
 

@@ -22,11 +22,7 @@ namespace TravelWeb.Areas.Activity.Repository.ActivityRepositories
         {
             var acts = _dbContext.Activities
                 .Where(a => a.SoftDelete == false)
-                .Include(a=>a.Regions)
-                .Include(a=>a.Types)
-                .AsNoTracking()
                 .AsSplitQuery();
-                
             return acts;
         }
 
