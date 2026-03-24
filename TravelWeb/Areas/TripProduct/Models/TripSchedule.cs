@@ -23,10 +23,6 @@ public partial class TripSchedule
 
     public byte[] RowVersion { get; set; } = null!;
 
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-
-    public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
-
     public virtual TripProduct TripProduct { get; set; } = null!;
 
     public virtual ICollection<TicketCategory> TicketCategories { get; set; } = new List<TicketCategory>();

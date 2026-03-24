@@ -37,8 +37,11 @@ public partial class Attraction
 
     public DateTime CreatedAt { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public virtual ICollection<AttractionProduct> AttractionProducts { get; set; } = new List<AttractionProduct>();
 
+    public virtual ICollection<Image> Images { get; set; } = new List<Image>();
+
     public virtual ICollection<TripItineraryItem> TripItineraryItems { get; set; } = new List<TripItineraryItem>();
-    
 }
