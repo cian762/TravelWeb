@@ -20,10 +20,4 @@ public partial class OrderItem
     public virtual Order Order { get; set; } = null!;
 
     public virtual ICollection<OrderItemTicket> OrderItemTickets { get; set; } = new List<OrderItemTicket>();
-
-    public virtual AttractionProduct? ProductCode1 { get; set; }
-
-    public virtual TripSchedule? ProductCode2 { get; set; }
-
-    public virtual AcitivityTicket? ProductCodeNavigation { get; set; }
 }

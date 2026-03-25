@@ -317,16 +317,28 @@
         const tripId = "@ViewBag.TripProductId";
 
         // 2. 顯示 SweetAlert 訊息
+              // 2. 顯示 SweetAlert 訊息
         @if (TempData["SuccessMessage"] != null)
         {
                 <text>
-                Swal.fire({ icon: 'success', title: '成功！', text: '@Html.Raw(TempData["SuccessMessage"])', timer: 2000, showConfirmButton: false });
+                Swal.fire({
+                    icon: 'success',
+                    title: '成功！',
+                    text: `@Html.Raw(TempData["SuccessMessage"])`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 </text>
         }
+
         @if (TempData["ErrorMessage"] != null)
         {
                 <text>
-                Swal.fire({ icon: 'error', title: '發生錯誤', html: '@Html.Raw(TempData["ErrorMessage"])' });
+                Swal.fire({
+                    icon: 'error',
+                    title: '發生錯誤',
+                    html: `@Html.Raw(TempData["ErrorMessage"])`
+                });
                 </text>
         }
 

@@ -29,7 +29,8 @@ public partial class AttractionProduct
 
     public bool IsDeleted { get; set; } = false;
     public int? TicketTypeCode { get; set; }  // 改回 int?
-
+    public decimal? OriginalPrice { get; set; }
+    public int? ValidityDays { get; set; }
     public virtual TicketType? TicketType { get; set; }
     public virtual Attraction? Attraction { get; set; } = null!;
 

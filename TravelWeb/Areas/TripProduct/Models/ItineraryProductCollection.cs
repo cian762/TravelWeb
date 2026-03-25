@@ -12,4 +12,6 @@ public partial class ItineraryProductCollection
     public int? TripProductId { get; set; }
 
     public virtual MemberInformation? Member { get; set; }
+
+    public virtual TripProduct? TripProduct { get; set; }
 }
