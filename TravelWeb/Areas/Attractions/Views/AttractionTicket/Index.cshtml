@@ -1,53 +1,67 @@
 ﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.AttractionProduct>
 
 @{
-    ViewData["Title"] = "景點票券管理 - 標籤對齊修正版";
-    
+    ViewData["Title"] = "景點票券管理";
     int? currentIsActive = ViewBag.IsActive as int?;
-    var sel1 = currentIsActive == 1 ? " selected" : "";
-    var sel0 = currentIsActive == 0 ? " selected" : "";
-
 }
 
-@* ==========================================================================
-   強力 CSS 覆蓋區塊：解決標籤死活不肯靠左的問題
-   ========================================================================== 
-*@
 <style>
-    /* 1. 強制容器回歸原始靠左狀態，清除任何 grid 或 justify-content-between 的影響 */
     #modalTagsContainer {
         display: flex !important;
         flex-wrap: wrap !important;
-        justify-content: flex-start !important; /* 絕對靠左 */
+        justify-content: flex-start !important;
         align-items: center !important;
-        gap: 8px !important; /* 標籤間距 */
+        gap: 8px !important;
         width: 100% !important;
-        text-align: left !important;
         padding: 5px 0 !important;
     }
-
-    /* 2. 定義標籤本體，確保不會被拉長或壓扁 */
     .force-left-tag {
         display: inline-flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        width: auto !important; /* 寬度隨文字長度 */
         padding: 5px 14px !important;
-        background-color: #0d6efd !important; /* 品牌藍 */
+        background-color: #0d6efd !important;
         color: #ffffff !important;
-        border-radius: 50px !important; /* 膠囊狀 */
+        border-radius: 50px !important;
         font-size: 13px !important;
         font-weight: 500 !important;
         white-space: nowrap !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-        flex: 0 0 auto !important; /* 禁止標籤撐開佔據剩餘空間 */
+        flex: 0 0 auto !important;
     }
-
-    /* 3. 確保 Modal 內部結構不干擾排版 */
-    .tag-section-reset {
-        text-align: left !important;
-        display: block !important;
+    /* Modal 欄位分隔線 */
+    .modal-section {
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        margin-bottom: 12px;
     }
+    .modal-section-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #6c757d;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .modal-section-body {
+        font-size: 0.92rem;
+        color: #212529;
+        white-space: pre-line;
+    }
+    /* 費用包含 / 不包含 清單 */
+    .include-list, .exclude-list { list-style: none; padding: 0; margin: 0; }
+    .include-list li::before { content: "✓ "; color: #198754; font-weight: 700; }
+    .exclude-list li::before { content: "✕ "; color: #dc3545; font-weight: 700; }
+    /* 內部備註樣式 */
+    .notes-badge {
+        background: #fff3cd;
+        border-left: 3px solid #ffc107;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: #664d03;
+    }
+    /* 未填寫提示 */
+    .not-filled { color: #adb5bd; font-style: italic; font-size: 0.85rem; }
 </style>
 
 <div class="page-inner">
@@ -66,43 +80,23 @@
                 <div class="card-header d-flex align-items-center">
                     <h4 class="card-title">票券列表</h4>
                     <form method="get" class="d-flex align-items-center gap-2 ms-3 flex-wrap">
-                        <input type="text"
-                               name="keyword"
-                               value="@ViewBag.Keyword"
-                               class="form-control form-control-sm"
-                               style="width: 180px;"
+                        <input type="text" name="keyword" value="@ViewBag.Keyword"
+                               class="form-control form-control-sm" style="width: 180px;"
                                placeholder="搜尋景點名稱..." />
-
                         <select name="isActive" class="form-control form-control-sm" style="width: 130px;">
                             <option value="">全部狀態</option>
-                            @if (currentIsActive == 1)
-                            {
-                                <option value="1" selected>銷售中</option>
-                                <option value="0">已下架</option>
-                            }
-                            else if (currentIsActive == 0)
-                            {
-                                <option value="1">銷售中</option>
-                                <option value="0" selected>已下架</option>
-                            }
-                            else
-                            {
-                                <option value="1">銷售中</option>
-                                <option value="0">已下架</option>
-                            }
+                            <option value="1" selected="@(currentIsActive == 1 ? "selected" : null)">銷售中</option>
+                            <option value="0" selected="@(currentIsActive == 0 ? "selected" : null)">已下架</option>
                         </select>
-
                         <button type="submit" class="btn btn-sm btn-info btn-round">
                             <i class="fa fa-search"></i> 搜尋
                         </button>
-
                         @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || ViewBag.IsActive != null)
                         {
                             <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary btn-round">
                                 <i class="fa fa-times"></i> 清除
                             </a>
                         }
-
                     </form>
                     <a asp-action="Create" class="btn btn-primary btn-round ms-auto">
                         <i class="fa fa-plus"></i> 新增票券
@@ -131,11 +125,14 @@
                                         <td>
                                             <div class="fw-bold">@item.Title</div>
                                             <small class="text-muted">
-                                                <i class="fas fa-bookmark me-1"></i> @(item.TicketType?.TicketTypeName ?? "未分類")
+                                                <i class="fas fa-bookmark me-1"></i>
+                                                @(item.TicketType?.TicketTypeName ?? "未分類")
                                             </small>
                                         </td>
                                         <td>@(item.Attraction?.Name ?? "未指定")</td>
-                                        <td class="text-danger fw-bold">@item.Price?.ToString("C0")</td>
+                                        <td class="text-danger fw-bold">
+                                            @item.Price?.ToString("C0")
+                                        </td>
                                         <td>@(item.MaxPurchaseQuantity > 0 ? $"{item.MaxPurchaseQuantity} 張" : "無限制")</td>
                                         <td>
                                             <button type="button" class="btn btn-xs btn-outline-info btn-round"
@@ -144,18 +141,28 @@
                                             </button>
                                         </td>
                                         <td>
-                                            <button type="button" class="btn btn-xs @(item.IsActive == 1 ? "btn-success" : "btn-secondary") btn-round"
+                                            <button type="button"
+                                                    class="btn btn-xs @(item.IsActive == 1 ? "btn-success" : "btn-secondary") btn-round"
                                                     onclick="toggleActive(@item.ProductId, @(item.IsActive == 1 ? 0 : 1), '@item.Title')">
                                                 @(item.IsActive == 1 ? "銷售中" : "已下架")
                                             </button>
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                                                <button type="button" class="btn btn-sm btn-outline-info" onclick="showProductDetails(@item.ProductId)"><i class="fas fa-eye"></i></button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@item.ProductId, '@item.Title')"><i class="fas fa-trash"></i></button>
+                                                <a asp-action="Edit" asp-route-id="@item.ProductId"
+                                                   class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                                <button type="button" class="btn btn-sm btn-outline-info"
+                                                        onclick="showProductDetails(@item.ProductId)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        onclick="confirmDelete(@item.ProductId, '@item.Title')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
-                                            <form id="delete-form-@item.ProductId" asp-action="Delete" asp-route-id="@item.ProductId" method="post" style="display:none;">
+                                            <form id="delete-form-@item.ProductId"
+                                                  asp-action="Delete" asp-route-id="@item.ProductId"
+                                                  method="post" style="display:none;">
                                                 @Html.AntiForgeryToken()
                                             </form>
                                         </td>
@@ -170,37 +177,81 @@
     </div>
 </div>
 
-@* --- Modal 詳情區 --- *@
+@* ── Detail Modal ──────────────────────────────────────────────────── *@
 <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>票券詳細內容</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="mb-4">
-                    <h6 class="fw-bold text-info"><i class="fas fa-align-left me-2"></i>內容介紹</h6>
-                    <div id="modalContentDetails" class="p-3 bg-light rounded border" style="white-space: pre-line;"></div>
-                </div>
 
-                @* 標籤區域：強制對齊修正 *@
-                <div class="tag-section-reset mb-4 p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #0d6efd;">
-                    <h6 class="text-secondary small font-weight-bold mb-3"><i class="fas fa-tags me-1"></i> 相關標籤</h6>
-                    <div id="modalTagsContainer">
-                        @* 由 JS 動態生成 *@
+                @* ── 基本資訊 ── *@
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="modal-section-title">有效天數</div>
+                        <div id="modalValidityDays" class="modal-section-body"></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="modal-section-title">取消政策</div>
+                        <div id="modalCancelPolicy" class="modal-section-body"></div>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <h6 class="fw-bold text-info"><i class="fas fa-clipboard-list me-2"></i>使用說明</h6>
-                    <div id="modalUsageInstructions" class="p-3 bg-light rounded border" style="white-space: pre-line;"></div>
+                @* 有效期說明 *@
+                <div class="modal-section mb-3" id="validityNoteSection">
+                    <div class="modal-section-title">有效期說明</div>
+                    <div id="modalValidityNote" class="modal-section-body"></div>
                 </div>
 
-                <div class="mt-3 p-2 bg-light border-start border-4 border-info">
-                    <h6 class="fw-bold text-info"><i class="fas fa-sticky-note me-2"></i>內部備註</h6>
-                    <div id="modalNotes" class="text-muted small"></div>
+                @* ── 費用包含 / 不包含 ── *@
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="modal-section">
+                            <div class="modal-section-title">費用包含</div>
+                            <ul id="modalIncludes" class="include-list mb-0"></ul>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="modal-section">
+                            <div class="modal-section-title">費用不包含</div>
+                            <ul id="modalExcludes" class="exclude-list mb-0"></ul>
+                        </div>
+                    </div>
                 </div>
+
+                @* ── 預訂資格 ── *@
+                <div class="modal-section mb-3" id="eligibilitySection">
+                    <div class="modal-section-title">預訂資格</div>
+                    <ul id="modalEligibility" class="include-list mb-0"></ul>
+                </div>
+
+                @* ── 活動介紹 ── *@
+                <div class="modal-section mb-3">
+                    <div class="modal-section-title">活動介紹</div>
+                    <div id="modalContentDetails" class="modal-section-body"></div>
+                </div>
+
+                @* ── 注意事項 ── *@
+                <div class="modal-section mb-3">
+                    <div class="modal-section-title">注意事項</div>
+                    <div id="modalUsageInstructions" class="modal-section-body"></div>
+                </div>
+
+                @* ── 功能標籤 ── *@
+                <div class="mb-3">
+                    <div class="modal-section-title mb-2">功能標籤</div>
+                    <div id="modalTagsContainer"></div>
+                </div>
+
+                @* ── 內部備註（明顯區隔） ── *@
+                <div class="notes-badge">
+                    <i class="fas fa-lock me-1"></i>
+                    <strong>內部備註（不對外顯示）：</strong>
+                    <span id="modalNotes"></span>
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
@@ -211,73 +262,64 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // === 新增：監聽 TempData 並跳出卡片 ===
-               $(document).ready(function () {
-            // 1. 使用 Html.Raw 配合 JavaScriptEncoder 處理編碼問題
-            // 這樣能確保中文正常顯示，且不會因為字串內有引號或換行導致 JS 噴錯
+        $(document).ready(function () {
             const successMsg = @Html.Raw(Json.Serialize(TempData["SuccessMessage"] ?? ""));
-            const errorMsg = @Html.Raw(Json.Serialize(TempData["ErrorMessage"] ?? ""));
+            const errorMsg   = @Html.Raw(Json.Serialize(TempData["ErrorMessage"]   ?? ""));
 
-            if (successMsg && successMsg !== "") {
-                Swal.fire({
-                    icon: 'success',
-                    title: '操作成功',
-                    text: successMsg, // 現在這裡是正確的中文了
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-
-            if (errorMsg && errorMsg !== "") {
-                Swal.fire({
-                    icon: 'error',
-                    title: '發生錯誤',
-                    text: errorMsg
-                });
-            }
+            if (successMsg) Swal.fire({ icon: 'success', title: '操作成功', text: successMsg, timer: 2000, showConfirmButton: false });
+            if (errorMsg)   Swal.fire({ icon: 'error',   title: '發生錯誤', text: errorMsg });
         });
+
+        // 工具：將換行文字轉為 <li> 清單
+        function toListItems(text, $ul) {
+            $ul.empty();
+            if (!text || !text.trim()) {
+                $ul.html('<li class="not-filled">未填寫</li>');
+                return;
+            }
+            text.split('\n').map(s => s.trim()).filter(s => s).forEach(line => {
+                $ul.append($('<li>').text(line));
+            });
+        }
+
         function showProductDetails(id) {
-            const $tagContainer = $('#modalTagsContainer');
-            $tagContainer.empty();
-            $('#modalContentDetails, #modalUsageInstructions, #modalNotes').text('載入中...');
+            // 清空所有欄位
+            ['#modalContentDetails','#modalUsageInstructions','#modalNotes',
+             '#modalValidityDays','#modalValidityNote','#modalCancelPolicy']
+                .forEach(sel => $(sel).html('<span class="text-muted">載入中...</span>'));
+            $('#modalTagsContainer, #modalIncludes, #modalExcludes, #modalEligibility').empty();
 
             $.ajax({
                 url: '/Attractions/AttractionTicket/GetDetails/' + id,
                 type: 'GET',
                 success: function (data) {
-                    $('#modalContentDetails').text(data.contentDetails || "尚無資料");
-                    $('#modalUsageInstructions').text(data.usageInstructions || "尚無資料");
-                    $('#modalNotes').text(data.notes || "無備註");
+                    const na = '<span class="not-filled">未填寫</span>';
 
+                    // 基本文字欄位
+                    $('#modalValidityDays').html(data.validityDays ? data.validityDays + ' 天' : na);
+                    $('#modalCancelPolicy').html(data.cancelPolicy || na);
+                    $('#modalValidityNote').html(data.validityNote || na);
+                    $('#modalContentDetails').text(data.contentDetails || '');
+                    $('#modalUsageInstructions').text(data.usageInstructions || '');
+                    $('#modalNotes').text(data.notes || '無');
+
+                    // 清單欄位
+                    toListItems(data.includes,     $('#modalIncludes'));
+                    toListItems(data.excludes,     $('#modalExcludes'));
+                    toListItems(data.eligibility,  $('#modalEligibility'));
+
+                    // 標籤
+                    const $tc = $('#modalTagsContainer').empty();
                     if (data.tags && data.tags.length > 0) {
-                        let html = ''; // 這次不包額外的 div，直接放進已設定好的 container
-                        data.tags.forEach(function(t) {
-                            html += `<span class="force-left-tag"># ${t}</span>`;
-                        });
-                        $tagContainer.html(html);
+                        data.tags.forEach(t => $tc.append(`<span class="force-left-tag"># ${t}</span>`));
                     } else {
-                        $tagContainer.html('<span class="text-muted small">尚未設定標籤</span>');
+                        $tc.html('<span class="not-filled">尚未設定標籤</span>');
                     }
+
                     $('#detailsModal').modal('show');
                 }
             });
-        }
-
-        // --- 以下為狀態變更與刪除邏輯 ---
-        function quickPost(action, data) {
-            const form = document.createElement('form');
-            form.method = 'POST'; form.action = action;
-            const token = document.querySelector('input[name="__RequestVerificationToken"]');
-            if (token) form.appendChild(token.cloneNode());
-            for (const key in data) {
-                const input = document.createElement('input');
-                input.type = 'hidden'; input.name = key; input.value = data[key];
-                form.appendChild(input);
-            }
-            document.body.appendChild(form);
-            form.submit();
         }
 
         function toggleActive(id, newStatus, title) {
@@ -303,13 +345,22 @@
         }
 
         function confirmDelete(id, name) {
-            Swal.fire({ title: '確定刪除？', text: name, icon: 'warning', showCancelButton: true }).then((result) => {
-                if (result.isConfirmed) document.getElementById('delete-form-' + id).submit();
-            });
+            Swal.fire({ title: '確定刪除？', text: name, icon: 'warning', showCancelButton: true })
+                .then((result) => { if (result.isConfirmed) document.getElementById('delete-form-' + id).submit(); });
         }
 
-
-
-
+        function quickPost(action, data) {
+            const form = document.createElement('form');
+            form.method = 'POST'; form.action = action;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) form.appendChild(token.cloneNode());
+            for (const key in data) {
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = key; input.value = data[key];
+                form.appendChild(input);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
 }

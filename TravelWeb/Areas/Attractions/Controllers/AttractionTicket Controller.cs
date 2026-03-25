@@ -44,9 +44,11 @@ namespace TravelWeb.Areas.Attractions.Controllers
         // GET: Create
         public IActionResult Create()
         {
-            var attractions = _context.Attractions.Where(a => !a.IsDeleted).ToList();
-            ViewBag.AttractionList = new SelectList(attractions, "AttractionId", "Name");
-            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName");
+            ViewBag.AttractionList = new SelectList(
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name");
+            ViewBag.TicketTypeList = new SelectList(
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName");
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
             return View();
         }
 
@@ -68,46 +70,29 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
                     product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
 
-                    _context.Add(product);
-                    await _context.SaveChangesAsync();
+                    // 先把 detail 切開，避免 EF cascade 自動 INSERT
+                    var detailToSave = product.AttractionProductDetail;
+                    product.AttractionProductDetail = null;
 
-                    if (product.AttractionProductDetail != null)
+                    _context.Add(product);
+                    await _context.SaveChangesAsync(); // 此時 product.ProductId 已生成
+
+                    // 再手動 INSERT detail 一次
+                    if (detailToSave != null)
                     {
-                        var detail = product.AttractionProductDetail;
-                        detail.ProductId = product.ProductId;
-                        detail.LastUpdatedAt = DateTime.Now;
-                        _context.Add(detail);
+                        detailToSave.ProductId = product.ProductId;
+                        detailToSave.LastUpdatedAt = DateTime.Now;
+                        _context.Add(detailToSave);
                         await _context.SaveChangesAsync();
                     }
 
-                    var realTagIds = new List<int>();
-                    foreach (var tagId in TagIds ?? Array.Empty<string>())
-                    {
-                        if (tagId.StartsWith("NEW:"))
-                        {
-                            var tagName = tagId.Substring(4).Trim();
-                            if (string.IsNullOrEmpty(tagName)) continue;
+                    // Chip 選擇只傳數字 id
+                    var realTagIds = (TagIds ?? Array.Empty<string>())
+                        .Where(t => int.TryParse(t, out _))
+                        .Select(int.Parse)
+                        .Distinct();
 
-                            var existingTag = await _context.Tags
-                                .FirstOrDefaultAsync(t => t.TagName == tagName);
-
-                            if (existingTag != null)
-                                realTagIds.Add(existingTag.TagId);
-                            else
-                            {
-                                var newTag = new Tag { TagName = tagName };
-                                _context.Tags.Add(newTag);
-                                await _context.SaveChangesAsync();
-                                realTagIds.Add(newTag.TagId);
-                            }
-                        }
-                        else if (int.TryParse(tagId, out int existingId))
-                        {
-                            realTagIds.Add(existingId);
-                        }
-                    }
-
-                    foreach (var tagId in realTagIds.Distinct())
+                    foreach (var tagId in realTagIds)
                     {
                         _context.AttractionProductTags.Add(new AttractionProductTag
                         {
@@ -125,10 +110,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
                         LastUpdatedAt = DateTime.Now
                     });
                     await _context.SaveChangesAsync();
-
                     await transaction.CommitAsync();
 
-                    TempData["SuccessMessage"] = $"票券「{product.Title}」與詳細內容已成功建立！";
+                    TempData["SuccessMessage"] = $"票券「{product.Title}」已成功建立！";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -138,12 +122,11 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 }
             }
 
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            foreach (var error in errors)
-                System.Diagnostics.Debug.WriteLine("驗證錯誤: " + error);
-
-            ViewBag.AttractionList = new SelectList(_context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
-            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AttractionList = new SelectList(
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
+            ViewBag.TicketTypeList = new SelectList(
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
 
             return View(product);
         }
@@ -155,17 +138,23 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
             var product = await _context.AttractionProducts
                 .Include(p => p.AttractionProductDetail)
+                .Include(p => p.AttractionProductTags)
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null) return NotFound();
 
-            ViewBag.AttractionList = new SelectList(_context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
-            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AttractionList = new SelectList(
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
+            ViewBag.TicketTypeList = new SelectList(
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
+            ViewBag.CurrentTagIds = product.AttractionProductTags
+                .Select(pt => pt.TagId).ToList();
 
             return View(product);
         }
 
-        // POST: Edit ← 核心修正在這裡
+        // POST: Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, AttractionProduct product, string[] TagIds)
@@ -185,22 +174,19 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 {
                     product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
                     product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
+                    // ↓ 這兩行是新增的
+                    var detailToUpdate = product.AttractionProductDetail;
+                    product.AttractionProductDetail = null;
 
                     _context.Update(product);
 
-                    // ── 詳情更新（修正重點）──────────────────────────────
-                    if (product.AttractionProductDetail != null)
+                    if (detailToUpdate != null)
                     {
-                        // 直接用 SQL 查詢，繞過 EF 追蹤問題
                         var existingDetail = await _context.AttractionProductDetails
-                            .FromSqlRaw(
-                                "SELECT TOP 1 * FROM [Attractions].[AttractionProductDetails] WHERE product_id = {0} ORDER BY last_updated_at DESC",
-                                id)
-                            .FirstOrDefaultAsync();
+                            .FirstOrDefaultAsync(d => d.ProductId == id);
 
                         if (existingDetail != null)
                         {
-                            // 有舊資料：直接用 SQL UPDATE，避免 HasNoKey 無法追蹤的問題
                             await _context.Database.ExecuteSqlRawAsync(
                                 @"UPDATE [Attractions].[AttractionProductDetails]
                                   SET content_details    = {0},
@@ -210,63 +196,41 @@ namespace TravelWeb.Areas.Attractions.Controllers
                                       excludes           = {4},
                                       eligibility        = {5},
                                       cancel_policy      = {6},
-                                      last_updated_at    = {7}
-                                  WHERE product_id = {8}",
-                                product.AttractionProductDetail.ContentDetails,
-                                product.AttractionProductDetail.Notes,
-                                product.AttractionProductDetail.UsageInstructions,
-                                product.AttractionProductDetail.Includes,
-                                product.AttractionProductDetail.Excludes,
-                                product.AttractionProductDetail.Eligibility,
-                                product.AttractionProductDetail.CancelPolicy,
-                                DateTime.Now,
-                                id);
+                                      validity_note      = {7},
+                                      last_updated_at    = {8}
+                                  WHERE product_id = {9}",
+                           detailToUpdate.ContentDetails,      // ← 改成 detailToUpdate
+            detailToUpdate.Notes,
+            detailToUpdate.UsageInstructions,
+            detailToUpdate.Includes,
+            detailToUpdate.Excludes,
+            detailToUpdate.Eligibility,
+            detailToUpdate.CancelPolicy,
+            detailToUpdate.ValidityNote,
+            DateTime.Now,
+            id);
                         }
                         else
                         {
-                            // 第一次新增才 INSERT
-                            var newDetail = product.AttractionProductDetail;
+                            var newDetail = detailToUpdate;         // ← 改成 detailToUpdate
                             newDetail.ProductId = id;
                             newDetail.LastUpdatedAt = DateTime.Now;
                             _context.Add(newDetail);
                             await _context.SaveChangesAsync();
                         }
                     }
-                    // ────────────────────────────────────────────────────
 
-                    // 標籤處理
-                    var realTagIds = new List<int>();
-                    foreach (var tagId in TagIds ?? Array.Empty<string>())
-                    {
-                        if (tagId.StartsWith("NEW:"))
-                        {
-                            var tagName = tagId.Substring(4).Trim();
-                            if (string.IsNullOrEmpty(tagName)) continue;
-
-                            var existingTag = await _context.Tags
-                                .FirstOrDefaultAsync(t => t.TagName == tagName);
-
-                            if (existingTag != null)
-                                realTagIds.Add(existingTag.TagId);
-                            else
-                            {
-                                var newTag = new Tag { TagName = tagName };
-                                _context.Tags.Add(newTag);
-                                await _context.SaveChangesAsync();
-                                realTagIds.Add(newTag.TagId);
-                            }
-                        }
-                        else if (int.TryParse(tagId, out int existingId))
-                        {
-                            realTagIds.Add(existingId);
-                        }
-                    }
+                    // Chip 選擇只傳數字 id
+                    var realTagIds = (TagIds ?? Array.Empty<string>())
+                        .Where(t => int.TryParse(t, out _))
+                        .Select(int.Parse)
+                        .Distinct();
 
                     var oldTags = _context.AttractionProductTags.Where(pt => pt.ProductId == id);
                     _context.AttractionProductTags.RemoveRange(oldTags);
                     await _context.SaveChangesAsync();
 
-                    foreach (var tagId in realTagIds.Distinct())
+                    foreach (var tagId in realTagIds)
                     {
                         _context.AttractionProductTags.Add(new AttractionProductTag
                         {
@@ -278,7 +242,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    TempData["SuccessMessage"] = "更新成功！產品資料與標籤已同步存檔。";
+                    TempData["SuccessMessage"] = "更新成功！";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -295,37 +259,27 @@ namespace TravelWeb.Areas.Attractions.Controllers
             }
 
             ViewBag.AttractionList = new SelectList(
-                _context.Attractions.Where(a => !a.IsDeleted),
-                "AttractionId", "Name", product.AttractionId);
-
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
             ViewBag.TicketTypeList = new SelectList(
-                _context.TicketTypes.OrderBy(t => t.SortOrder),
-                "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
-
-            var currentTagIds = (TagIds ?? Array.Empty<string>())
-                .Where(t => int.TryParse(t, out _))
-                .Select(int.Parse)
-                .ToList();
-
-            ViewBag.CurrentTags = await _context.Tags
-                .Where(t => currentTagIds.Contains(t.TagId))
-                .Select(t => new SelectListItem
-                {
-                    Value = t.TagId.ToString(),
-                    Text = t.TagName,
-                    Selected = true
-                })
-                .ToListAsync();
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
+            ViewBag.CurrentTagIds = (TagIds ?? Array.Empty<string>())
+                .Where(t => int.TryParse(t, out _)).Select(int.Parse).ToList();
 
             return View(product);
         }
 
-        // GET: GetDetails（修正：取最新一筆，並回傳新欄位）
         [HttpGet]
         public async Task<IActionResult> GetDetails(int id)
         {
+            // 同時查 product（取 validity_days）和 detail
+            var product = await _context.AttractionProducts
+                .Where(p => p.ProductId == id)
+                .Select(p => new { p.ValidityDays })
+                .FirstOrDefaultAsync();
+
             var details = await _context.AttractionProductDetails
-                .OrderByDescending(d => d.LastUpdatedAt)  // ← 改為取最新一筆
+                .OrderByDescending(d => d.LastUpdatedAt)
                 .FirstOrDefaultAsync(d => d.ProductId == id);
 
             var tagNames = await _context.AttractionProductTags
@@ -335,18 +289,19 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
             return Json(new
             {
-                contentDetails = details?.ContentDetails ?? "尚無資料",
+                validityDays = product?.ValidityDays,          // ← 新增
+                contentDetails = details?.ContentDetails ?? "",
                 notes = details?.Notes ?? "無備註",
-                usageInstructions = details?.UsageInstructions ?? "尚無資料",
+                usageInstructions = details?.UsageInstructions ?? "",
                 includes = details?.Includes ?? "",
                 excludes = details?.Excludes ?? "",
                 eligibility = details?.Eligibility ?? "",
                 cancelPolicy = details?.CancelPolicy ?? "",
+                validityNote = details?.ValidityNote ?? "",
                 tags = tagNames ?? new List<string>()
             });
         }
 
-        // 狀態切換
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id, int isActive)
@@ -361,10 +316,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
             {
                 _context.Update(product);
                 await _context.SaveChangesAsync();
-
                 TempData["SuccessMessage"] = isActive == 1
-                    ? $"票券「{product.Title}」已連動更新為：正式發布並上架！"
-                    : $"票券「{product.Title}」已連動更新為：草稿並下架。";
+                    ? $"票券「{product.Title}」已上架！"
+                    : $"票券「{product.Title}」已下架。";
             }
             catch (Exception ex)
             {
@@ -374,7 +328,6 @@ namespace TravelWeb.Areas.Attractions.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // 系統狀態變更
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, string status)
@@ -390,9 +343,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
             {
                 _context.Update(product);
                 await _context.SaveChangesAsync();
-
-                string msg = cleanStatus == "ACTIVE" ? "票券已正式發佈並開始銷售！" : "狀態已更新，銷售已停止。";
-                TempData["SuccessMessage"] = msg;
+                TempData["SuccessMessage"] = cleanStatus == "ACTIVE" ? "票券已發佈！" : "狀態已更新。";
             }
             catch (Exception ex)
             {
@@ -402,7 +353,6 @@ namespace TravelWeb.Areas.Attractions.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // 軟刪除
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -419,7 +369,6 @@ namespace TravelWeb.Areas.Attractions.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // 加入最愛
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddFavorite(int productId)
@@ -444,7 +393,6 @@ namespace TravelWeb.Areas.Attractions.Controllers
             return Ok(new { success = true });
         }
 
-        // 移除最愛
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveFavorite(int productId)
