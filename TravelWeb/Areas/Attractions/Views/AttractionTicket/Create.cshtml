@@ -60,8 +60,8 @@
 <div class="row">
     <div class="col-md-7">
         <form asp-action="Create">
-            <div asp-validation-summary="All" class="text-danger"></div>
-
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+       
             @* 所屬景點 *@
             <div class="form-group mb-3">
                 <label asp-for="AttractionId" class="control-label">所屬景點</label>
@@ -74,8 +74,16 @@
             @* 產品代碼 *@
             <div class="form-group mb-3">
                 <label asp-for="ProductCode" class="control-label">產品代碼</label>
-                <input asp-for="ProductCode" class="form-control" placeholder="例如: TKT-101-001" />
-                <span asp-validation-for="ProductCode" class="text-danger"></span>
+                <div class="input-group">
+                    <span class="input-group-text text-muted" style="font-size:0.9rem">TKT-</span>
+                    <input id="productCodeInput"
+                           asp-for="ProductCode"
+                           class="form-control"
+                           placeholder="例如：101 或 TAIPEI-01"
+                           autocomplete="off" />
+                </div>
+                <small class="text-muted">開頭的 TKT- 會自動補上，請直接輸入後段編號</small>
+                <span asp-validation-for="ProductCode" class="text-danger d-block mt-1"></span>
             </div>
 
             @* 票券名稱 *@
@@ -256,6 +264,29 @@
 
 @section Scripts {
     <script>
+         // ── ProductCode TKT- 前綴強制處理 ───────────────────────────
+        const codeInput = document.getElementById('productCodeInput');
+
+        // 頁面載入：若欄位已有值（例如表單驗證失敗回傳），去掉 TKT- 前綴只顯示後段
+        if (codeInput.value.toUpperCase().startsWith('TKT-')) {
+            codeInput.value = codeInput.value.substring(4);
+        }
+
+        // 送出前：把 TKT- 加回去存入欄位
+        codeInput.closest('form').addEventListener('submit', function () {
+            const raw = codeInput.value.trim();
+            // 避免重複加前綴
+            if (!raw.toUpperCase().startsWith('TKT-')) {
+                codeInput.value = 'TKT-' + raw;
+            }
+        });
+
+        // 即時提示：使用者輸入時如果不小心自己打了 TKT- 就自動去掉，讓 UI 保持乾淨
+        codeInput.addEventListener('input', function () {
+            if (this.value.toUpperCase().startsWith('TKT-')) {
+                this.value = this.value.substring(4);
+            }
+        });
         // ── 有效天數自動帶入說明 ─────────────────────────────────
         const validityDescriptions = {
             '30':  '憑證使用期為訂單確認日起 30 天內，於最後一天 23:59 到期',

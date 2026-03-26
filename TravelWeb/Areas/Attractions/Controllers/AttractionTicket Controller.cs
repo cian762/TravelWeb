@@ -60,7 +60,27 @@ namespace TravelWeb.Areas.Attractions.Controllers
             ModelState.Remove("Attraction");
             ModelState.Remove("TicketType");
             ModelState.Remove("AttractionProductDetail");
-
+            // ── ProductCode 驗證 ──────────────────────────────────
+            // 1. 強制 TKT- 開頭
+            if (string.IsNullOrWhiteSpace(product.ProductCode) ||
+                !product.ProductCode.StartsWith("TKT-", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("ProductCode", "產品代碼必須以 TKT- 開頭，例如：TKT-101");
+            }
+            // 2. TKT- 後面不能是空的
+            else if (product.ProductCode.Trim().Length <= 4)
+            {
+                ModelState.AddModelError("ProductCode", "TKT- 後面請填入代碼編號，例如：TKT-101");
+            }
+            // 3. 重複檢查（跨全系統唯一）
+            else
+            {
+                var isDuplicate = await _context.AttractionProducts
+                    .AnyAsync(p => p.ProductCode == product.ProductCode && !p.IsDeleted);
+                if (isDuplicate)
+                    ModelState.AddModelError("ProductCode", $"「{product.ProductCode}」已被使用，請換一個代碼");
+            }
+            // ─────────────────────────────────────────────────────
             if (ModelState.IsValid)
             {
                 using var transaction = await _context.Database.BeginTransactionAsync();
@@ -166,7 +186,29 @@ namespace TravelWeb.Areas.Attractions.Controllers
             ModelState.Remove("AttractionProductDetail");
             ModelState.Remove("AttractionProductTags");
             ModelState.Remove("Tags");
-
+            // ── ProductCode 驗證 ──────────────────────────────────
+            // 1. 強制 TKT- 開頭
+            if (string.IsNullOrWhiteSpace(product.ProductCode) ||
+                !product.ProductCode.StartsWith("TKT-", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("ProductCode", "產品代碼必須以 TKT- 開頭，例如：TKT-101");
+            }
+            // 2. TKT- 後面不能是空的
+            else if (product.ProductCode.Trim().Length <= 4)
+            {
+                ModelState.AddModelError("ProductCode", "TKT- 後面請填入代碼編號，例如：TKT-101");
+            }
+            // 3. 重複檢查（排除自己這筆）
+            else
+            {
+                var isDuplicate = await _context.AttractionProducts
+                    .AnyAsync(p => p.ProductCode == product.ProductCode
+                                && p.ProductId != product.ProductId
+                                && !p.IsDeleted);
+                if (isDuplicate)
+                    ModelState.AddModelError("ProductCode", $"「{product.ProductCode}」已被其他票券使用，請換一個代碼");
+            }
+            // ─────────────────────────────────────────────────────
             if (ModelState.IsValid)
             {
                 using var transaction = await _context.Database.BeginTransactionAsync();
