@@ -235,7 +235,7 @@
 
                     <div class="form-group mb-3">
                         <label class="fw-bold">
-                            活動介紹
+                            活動亮點
                             <small class="text-muted fw-normal">顯示在前台票券詳情頁</small>
                         </label>
                         <textarea name="AttractionProductDetail.ContentDetails"
@@ -261,6 +261,63 @@
 
                 </div>
             </div>
+
+            <!-- ── 活動介紹（景點層級，顯示在售票區所有票券下方）──-->
+            <div class="card mt-4 mb-3">
+                <div class="card-header bg-light fw-bold">
+                    📝 活動介紹（顯示於前台售票區所有票券下方）
+                </div>
+                <div class="card-body">
+                    <textarea name="AttractionActivityIntro" class="form-control" rows="6"
+                              placeholder="請輸入活動介紹文字，將顯示在售票區所有票券下方，支援換行分段...">@ViewBag.ActivityIntro</textarea>
+                    <small class="form-text text-muted mt-1 d-block">此介紹文字屬於景點層級，該景點所有票種下方都會共用同一段介紹</small>
+                </div>
+            </div>
+
+            <!-- ── 活動介紹圖片管理 ───────────────────────────────-->
+            <div class="card mt-4 mb-3">
+                <div class="card-header bg-light fw-bold">
+                    🖼️ 活動介紹圖片（顯示於前台售票區下方）
+                </div>
+                <div class="card-body">
+
+                    <!-- 現有圖片-->
+                    @if (Model.AttractionProductImages != null && Model.AttractionProductImages.Any())
+                    {
+                        <div class="mb-3">
+                            <label class="fw-bold mb-2 d-block">現有圖片</label>
+                            <div class="d-flex flex-wrap gap-3" id="existingProductImages">
+                                @foreach (var img in Model.AttractionProductImages.OrderBy(i => i.SortOrder))
+                                {
+                                    <div class="border rounded p-2 text-center" style="width:200px;" id="pi-@img.ImageId">
+                                        <img src="@img.ImagePath" style="width:180px;height:120px;object-fit:cover;border-radius:4px;">
+                                        <div class="mt-1 text-muted small">@(string.IsNullOrEmpty(img.Caption) ? "（無說明）" : img.Caption)</div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-1 btn-del-pi"
+                                                data-id="@img.ImageId">
+                                            ✕ 刪除
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- 新增圖片-->
+                    <label class="fw-bold mb-2 d-block">上傳新圖片</label>
+                    <div id="newImageList">
+                        <div class="new-img-row d-flex align-items-center gap-2 mb-2">
+                            <input type="file" name="productImageFiles" class="form-control" style="max-width:280px;" accept="image/*">
+                            <input type="text" name="productImageCaptions" class="form-control" placeholder="圖片說明（可留空）" style="max-width:320px;">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addImgRow">
+                        ＋ 再加一張
+                    </button>
+                    <small class="form-text text-muted d-block mt-1">支援 jpg / png / webp，每張圖可附說明文字</small>
+
+                </div>
+            </div>
+            <!-- ───────────────────────────────────────────────────-->
 
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">儲存變更</button>
@@ -346,5 +403,36 @@
                 area.style.display = 'none';
             }
         }
+
+        // ── 活動介紹圖片：新增一列 ──────────────────────────────
+        document.getElementById('addImgRow').addEventListener('click', function () {
+            const row = document.createElement('div');
+            row.className = 'new-img-row d-flex align-items-center gap-2 mb-2';
+            row.innerHTML = `
+                <input type="file" name="productImageFiles" class="form-control" style="max-width:280px;" accept="image/*">
+                <input type="text" name="productImageCaptions" class="form-control" placeholder="圖片說明（可留空）" style="max-width:320px;">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.new-img-row').remove()">✕</button>
+            `;
+            document.getElementById('newImageList').appendChild(row);
+        });
+
+        // ── 活動介紹圖片：刪除現有圖片 ──────────────────────────
+        document.querySelectorAll('.btn-del-pi').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                if (!confirm('確定要刪除這張圖片嗎？')) return;
+                const imgId = this.dataset.id;
+                const resp = await fetch('@Url.Action("DeleteProductImage")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${imgId}&__RequestVerificationToken=${document.querySelector('[name=__RequestVerificationToken]').value}`
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    document.getElementById('pi-' + imgId).remove();
+                } else {
+                    alert('刪除失敗：' + result.message);
+                }
+            });
+        });
     </script>
 }

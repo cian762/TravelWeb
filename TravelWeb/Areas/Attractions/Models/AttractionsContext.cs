@@ -15,6 +15,7 @@ public partial class AttractionsContext : DbContext
     public virtual DbSet<AttractionProduct> AttractionProducts { get; set; }
     public virtual DbSet<AttractionProductDetail> AttractionProductDetails { get; set; }
     public virtual DbSet<AttractionProductFavorite> AttractionProductFavorites { get; set; }
+    public virtual DbSet<AttractionProductImage> AttractionProductImages { get; set; }  // ← 新增
     public virtual DbSet<AttractionTypeCategory> AttractionTypeCategories { get; set; }
     public virtual DbSet<AttractionTypeMapping> AttractionTypeMappings { get; set; }
     public virtual DbSet<Image> Images { get; set; }
@@ -48,6 +49,8 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(50).HasColumnName("phone");
             entity.Property(e => e.RegionId).HasColumnName("RegionID");
             entity.Property(e => e.TransportInfo).HasColumnName("transport_info");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.ActivityIntro).HasColumnName("activity_intro");  // ← 新增
             entity.Property(e => e.Website).HasMaxLength(500).HasColumnName("website");
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
 
@@ -104,7 +107,7 @@ public partial class AttractionsContext : DbContext
             entity.Property(e => e.Excludes).HasColumnName("excludes");
             entity.Property(e => e.Eligibility).HasColumnName("eligibility");
             entity.Property(e => e.CancelPolicy).HasMaxLength(500).HasColumnName("cancel_policy");
-            entity.Property(e => e.ValidityNote).HasMaxLength(500).HasColumnName("validity_note"); // ← 新增
+            entity.Property(e => e.ValidityNote).HasMaxLength(500).HasColumnName("validity_note");
             entity.Property(e => e.LastUpdatedAt).HasColumnName("last_updated_at");
 
             entity.HasOne(d => d.Product)
@@ -127,6 +130,25 @@ public partial class AttractionsContext : DbContext
                 .HasForeignKey(d => d.AttractionId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Images_Attractions");
+        });
+
+        // ── 4b. 票券活動介紹圖片表 ───────────────────────────────  ← 新增
+        modelBuilder.Entity<AttractionProductImage>(entity =>
+        {
+            entity.ToTable("AttractionProductImages", "Attractions");
+            entity.HasKey(e => e.ImageId);
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.ImagePath).HasMaxLength(500).HasColumnName("image_path");
+            entity.Property(e => e.Caption).HasMaxLength(500).HasColumnName("caption");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.AttractionProductImages)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_AttractionProductImages_AttractionProducts");
         });
 
         // ── 5. 區域標籤表 ────────────────────────────────────────
@@ -221,14 +243,14 @@ public partial class AttractionsContext : DbContext
                 .HasConstraintName("FK_StockInRecords_AttractionProducts");
         });
 
-        // ── 11. 標籤表（補 description）─────────────────────────
+        // ── 11. 標籤表 ───────────────────────────────────────────
         modelBuilder.Entity<Tag>(entity =>
         {
             entity.HasKey(e => e.TagId);
             entity.ToTable("Tags", "Attractions");
             entity.Property(e => e.TagId).HasColumnName("tag_id");
             entity.Property(e => e.TagName).HasMaxLength(50).HasColumnName("tag_name");
-            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description"); // ← 新增
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
         });
 
         // ── 12. 票種表 ───────────────────────────────────────────

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 using System.Security.Claims;
 using TravelWeb.Areas.Attractions.Models;
 using TravelWeb.Models;
@@ -11,10 +12,12 @@ namespace TravelWeb.Areas.Attractions.Controllers
     public class AttractionTicketController : Controller
     {
         private readonly AttractionsContext _context;
+        private readonly IWebHostEnvironment _hostEnvironment;
 
-        public AttractionTicketController(AttractionsContext context)
+        public AttractionTicketController(AttractionsContext context, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            _hostEnvironment = hostEnvironment;
         }
 
         public async Task<IActionResult> Index(string? keyword, int? isActive)
@@ -55,7 +58,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
         // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(AttractionProduct product, string[] TagIds)
+        public async Task<IActionResult> Create(AttractionProduct product, string[] TagIds,
+            List<IFormFile> productImageFiles, List<string> productImageCaptions,
+            string? AttractionActivityIntro)
         {
             ModelState.Remove("Attraction");
             ModelState.Remove("TicketType");
@@ -132,6 +137,44 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
+                    // ── 圖片上傳（活動介紹圖片）──────────────────────────
+                    if (productImageFiles != null && productImageFiles.Count > 0)
+                    {
+                        string uploadDir = Path.Combine(_hostEnvironment.WebRootPath, "uploads", "attraction-products");
+                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+                        int sortOrder = 0;
+                        for (int i = 0; i < productImageFiles.Count; i++)
+                        {
+                            var file = productImageFiles[i];
+                            if (file == null || file.Length == 0) continue;
+                            string fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                            string filePath = Path.Combine(uploadDir, fileName);
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                                await file.CopyToAsync(stream);
+                            string caption = (productImageCaptions != null && i < productImageCaptions.Count)
+                                ? productImageCaptions[i] : "";
+                            _context.AttractionProductImages.Add(new AttractionProductImage
+                            {
+                                ProductId = product.ProductId,
+                                ImagePath = "/uploads/attraction-products/" + fileName,
+                                Caption = caption,
+                                SortOrder = ++sortOrder
+                            });
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // ── 更新景點的活動介紹（activity_intro）────────────
+                    if (!string.IsNullOrEmpty(AttractionActivityIntro))
+                    {
+                        await _context.Database.ExecuteSqlRawAsync(
+                            @"UPDATE [Attractions].[Attractions]
+                              SET [activity_intro] = {0}
+                              WHERE [attraction_id] = {1}",
+                            AttractionActivityIntro, product.AttractionId);
+                    }
+                    // ─────────────────────────────────────────────────────
+
                     TempData["SuccessMessage"] = $"票券「{product.Title}」已成功建立！";
                     return RedirectToAction(nameof(Index));
                 }
@@ -159,6 +202,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
             var product = await _context.AttractionProducts
                 .Include(p => p.AttractionProductDetail)
                 .Include(p => p.AttractionProductTags)
+                .Include(p => p.AttractionProductImages.OrderBy(img => img.SortOrder))
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null) return NotFound();
@@ -170,6 +214,10 @@ namespace TravelWeb.Areas.Attractions.Controllers
             ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
             ViewBag.CurrentTagIds = product.AttractionProductTags
                 .Select(pt => pt.TagId).ToList();
+            ViewBag.ActivityIntro = (await _context.Attractions
+                .Where(a => a.AttractionId == product.AttractionId)
+                .Select(a => a.ActivityIntro)
+                .FirstOrDefaultAsync()) ?? "";
 
             return View(product);
         }
@@ -177,7 +225,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
         // POST: Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, AttractionProduct product, string[] TagIds)
+        public async Task<IActionResult> Edit(int id, AttractionProduct product, string[] TagIds,
+            List<IFormFile> productImageFiles, List<string> productImageCaptions,
+            string? AttractionActivityIntro)
         {
             if (id != product.ProductId) return NotFound();
 
@@ -283,6 +333,53 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
+
+                    // ── 圖片上傳（活動介紹圖片）──────────────────────────
+                    if (productImageFiles != null && productImageFiles.Count > 0)
+                    {
+                        string uploadDir = Path.Combine(_hostEnvironment.WebRootPath, "uploads", "attraction-products");
+                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+
+                        // 取目前最大 sort_order
+                        int maxSort = await _context.AttractionProductImages
+                            .Where(img => img.ProductId == id)
+                            .Select(img => (int?)img.SortOrder)
+                            .MaxAsync() ?? 0;
+
+                        for (int i = 0; i < productImageFiles.Count; i++)
+                        {
+                            var file = productImageFiles[i];
+                            if (file == null || file.Length == 0) continue;
+
+                            string fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                            string filePath = Path.Combine(uploadDir, fileName);
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                                await file.CopyToAsync(stream);
+
+                            string caption = (productImageCaptions != null && i < productImageCaptions.Count)
+                                ? productImageCaptions[i] : "";
+
+                            _context.AttractionProductImages.Add(new AttractionProductImage
+                            {
+                                ProductId = id,
+                                ImagePath = "/uploads/attraction-products/" + fileName,
+                                Caption = caption,
+                                SortOrder = ++maxSort
+                            });
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // ── 更新景點的活動介紹（activity_intro）────────────
+                    if (AttractionActivityIntro != null)
+                    {
+                        await _context.Database.ExecuteSqlRawAsync(
+                            @"UPDATE [Attractions].[Attractions]
+                              SET [activity_intro] = {0}
+                              WHERE [attraction_id] = {1}",
+                            AttractionActivityIntro, product.AttractionId);
+                    }
+                    // ─────────────────────────────────────────────────────
 
                     TempData["SuccessMessage"] = "更新成功！";
                     return RedirectToAction(nameof(Index));
@@ -457,6 +554,30 @@ namespace TravelWeb.Areas.Attractions.Controllers
         private bool ProductExists(int id)
         {
             return _context.AttractionProducts.Any(e => e.ProductId == id);
+        }
+
+        // ── 刪除活動介紹圖片 ──────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> DeleteProductImage(int id)
+        {
+            var img = await _context.AttractionProductImages.FindAsync(id);
+            if (img == null) return Json(new { success = false, message = "找不到圖片" });
+
+            try
+            {
+                string physicalPath = Path.Combine(_hostEnvironment.WebRootPath,
+                    img.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                if (System.IO.File.Exists(physicalPath))
+                    System.IO.File.Delete(physicalPath);
+
+                _context.AttractionProductImages.Remove(img);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 }

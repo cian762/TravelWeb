@@ -59,9 +59,9 @@
 
 <div class="row">
     <div class="col-md-7">
-        <form asp-action="Create">
+        <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-       
+
             @* 所屬景點 *@
             <div class="form-group mb-3">
                 <label asp-for="AttractionId" class="control-label">所屬景點</label>
@@ -225,7 +225,7 @@
 
                     <div class="form-group mb-3">
                         <label class="fw-bold">
-                            活動介紹
+                            活動亮點
                             <small class="text-muted fw-normal">顯示在前台票券詳情頁</small>
                         </label>
                         <textarea name="AttractionProductDetail.ContentDetails"
@@ -251,6 +251,38 @@
                                placeholder="例如：2026年夏季促銷用..." />
                     </div>
 
+                </div>
+            </div>
+
+            <!-- ── 活動介紹（景點層級）──-->
+            <div class="card mt-4 mb-3">
+                <div class="card-header bg-light fw-bold">
+                    📝 活動介紹（顯示於前台售票區所有票券下方）
+                </div>
+                <div class="card-body">
+                    <textarea name="AttractionActivityIntro" class="form-control" rows="6"
+                              placeholder="請輸入活動介紹文字，將顯示在售票區所有票券下方，支援換行分段..."></textarea>
+                    <small class="form-text text-muted mt-1 d-block">此介紹文字屬於景點層級，該景點所有票種下方都會共用同一段介紹</small>
+                </div>
+            </div>
+
+            <!-- ── 活動介紹圖片 ──-->
+            <div class="card mt-4 mb-3">
+                <div class="card-header bg-light fw-bold">
+                    🖼️ 活動介紹圖片（顯示於前台售票區下方）
+                </div>
+                <div class="card-body">
+                    <label class="fw-bold mb-2 d-block">上傳圖片</label>
+                    <div id="newImageList">
+                        <div class="new-img-row d-flex align-items-center gap-2 mb-2">
+                            <input type="file" name="productImageFiles" class="form-control" style="max-width:280px;" accept="image/*">
+                            <input type="text" name="productImageCaptions" class="form-control" placeholder="圖片說明（可留空）" style="max-width:320px;">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addImgRow">
+                        ＋ 再加一張
+                    </button>
+                    <small class="form-text text-muted d-block mt-1">支援 jpg / png / webp，每張圖可附說明文字</small>
                 </div>
             </div>
 
@@ -333,5 +365,17 @@
                 area.style.display = 'none';
             }
         }
+
+        // ── 活動介紹圖片：新增一列 ──────────────────────────────
+        document.getElementById('addImgRow').addEventListener('click', function () {
+            const row = document.createElement('div');
+            row.className = 'new-img-row d-flex align-items-center gap-2 mb-2';
+            row.innerHTML = `
+                <input type="file" name="productImageFiles" class="form-control" style="max-width:280px;" accept="image/*">
+                <input type="text" name="productImageCaptions" class="form-control" placeholder="圖片說明（可留空）" style="max-width:320px;">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.new-img-row').remove()">✕</button>
+            `;
+            document.getElementById('newImageList').appendChild(row);
+        });
     </script>
 }
