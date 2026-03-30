@@ -34,6 +34,7 @@ public partial class Attraction
     public string? ClosedDaysNote { get; set; }
 
     public string? TransportInfo { get; set; }
+    public string? Description { get; set; }  // 景點介紹文字
 
     // 增加軟刪除標記
     public bool IsDeleted { get; set; } = false;
