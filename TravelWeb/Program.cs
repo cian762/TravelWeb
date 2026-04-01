@@ -38,6 +38,8 @@ builder.Services.AddScoped<ITripproducts, Tripproducts>();
 builder.Services.AddScoped<ITripItineraryItem, STripItineraryItem>();
 //行程檔期連線用DI
 builder.Services.AddScoped<ITripSchedules, STripSchedules>();
+//訂單用連線DI
+builder.Services.AddScoped<IOrder, SOrder>();
 
 
 builder.Services.AddDbContext<TravelContext>(options =>
@@ -123,7 +125,7 @@ app.MapControllerRoute(
 // Area ��ѳ]�w (��{�ӫ~)
 app.MapControllerRoute(
      name: "Trip",
-     pattern: "{area:exists}/{controler=Trip}/{action=index}/{id?}"
+     pattern: "{area:exists}/{controller=Trip}/{action=index}/{id?}"
     );
 
 // �쥻���w�]���

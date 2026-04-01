@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 using System.Security.Claims;
 using TravelWeb.Areas.Attractions.Models;
 using TravelWeb.Models;
@@ -8,16 +9,17 @@ using TravelWeb.Models;
 namespace TravelWeb.Areas.Attractions.Controllers
 {
     [Area("Attractions")]
-    public class AttractionTicketController : Controller 
+    public class AttractionTicketController : Controller
     {
-        private readonly AttractionsContext _context; 
+        private readonly AttractionsContext _context;
+        private readonly IWebHostEnvironment _hostEnvironment;
 
-        public AttractionTicketController(AttractionsContext context)
+        public AttractionTicketController(AttractionsContext context, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            _hostEnvironment = hostEnvironment;
         }
 
-        // 只保留這一個 Index 方法
         public async Task<IActionResult> Index(string? keyword, int? isActive)
         {
             var query = _context.AttractionProducts
@@ -26,11 +28,9 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 .Where(p => !p.IsDeleted)
                 .AsQueryable();
 
-            // 依所屬景點名稱搜尋
             if (!string.IsNullOrWhiteSpace(keyword))
                 query = query.Where(p => p.Attraction.Name.Contains(keyword));
 
-            // 依銷售狀態篩選
             if (isActive.HasValue)
                 query = query.Where(p => p.IsActive == isActive.Value);
 
@@ -43,239 +43,191 @@ namespace TravelWeb.Areas.Attractions.Controllers
 
             return View(tickets);
         }
-        // GET: Attractions/AttractionTicket/Create
+
+        // GET: Create
         public IActionResult Create()
         {
-            var attractions = _context.Attractions.Where(a => !a.IsDeleted).ToList();
-            ViewBag.AttractionList = new SelectList(attractions, "AttractionId", "Name");
-            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName");
+            ViewBag.AttractionList = new SelectList(
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name");
+            ViewBag.TicketTypeList = new SelectList(
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName");
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
             return View();
         }
 
-        // POST: Attractions/AttractionTicket/Create
+        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(AttractionProduct product, string[] TagIds)
+        public async Task<IActionResult> Create(AttractionProduct product, string[] TagIds,
+            List<IFormFile> productImageFiles, List<string> productImageCaptions,
+            string? AttractionActivityIntro)
         {
-            // 1. 移除不必要的模型驗證，避免導覽屬性為空導致驗證失敗
             ModelState.Remove("Attraction");
             ModelState.Remove("TicketType");
-            ModelState.Remove("AttractionProductDetail"); // 手動處理詳情，故移除驗證
-
+            ModelState.Remove("AttractionProductDetail");
+            // ── ProductCode 驗證 ──────────────────────────────────
+            // 1. 強制 TKT- 開頭
+            if (string.IsNullOrWhiteSpace(product.ProductCode) ||
+                !product.ProductCode.StartsWith("TKT-", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("ProductCode", "產品代碼必須以 TKT- 開頭，例如：TKT-101");
+            }
+            // 2. TKT- 後面不能是空的
+            else if (product.ProductCode.Trim().Length <= 4)
+            {
+                ModelState.AddModelError("ProductCode", "TKT- 後面請填入代碼編號，例如：TKT-101");
+            }
+            // 3. 重複檢查（跨全系統唯一）
+            else
+            {
+                var isDuplicate = await _context.AttractionProducts
+                    .AnyAsync(p => p.ProductCode == product.ProductCode && !p.IsDeleted);
+                if (isDuplicate)
+                    ModelState.AddModelError("ProductCode", $"「{product.ProductCode}」已被使用，請換一個代碼");
+            }
+            // ─────────────────────────────────────────────────────
             if (ModelState.IsValid)
             {
-                // 使用事務 (Transaction) 確保兩張表同步寫入成功
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    try
+                    product.CreatedAt = DateTime.Now;
+                    product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
+                    product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
+
+                    // 先把 detail 切開，避免 EF cascade 自動 INSERT
+                    var detailToSave = product.AttractionProductDetail;
+                    product.AttractionProductDetail = null;
+
+                    _context.Add(product);
+                    await _context.SaveChangesAsync(); // 此時 product.ProductId 已生成
+
+                    // 再手動 INSERT detail 一次
+                    if (detailToSave != null)
                     {
-                        // 2. 自動補上建立時間
-                        product.CreatedAt = DateTime.Now;
+                        detailToSave.ProductId = product.ProductId;
+                        detailToSave.LastUpdatedAt = DateTime.Now;
+                        _context.Add(detailToSave);
+                        await _context.SaveChangesAsync();
+                    }
 
-                        // 3. 處理 Status 字串標準化與 IsActive 的連動邏輯
-                        product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
-                        product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
+                    // Chip 選擇只傳數字 id
+                    var realTagIds = (TagIds ?? Array.Empty<string>())
+                        .Where(t => int.TryParse(t, out _))
+                        .Select(int.Parse)
+                        .Distinct();
 
-                        // 4. 先儲存主表 (AttractionProducts)
-                        _context.Add(product);
-                        await _context.SaveChangesAsync(); // 此時 product.ProductId 會被自動生成
-
-                        // 5. 處理詳情資料表 (AttractionProductDetails)
-                        if (product.AttractionProductDetail != null)
+                    foreach (var tagId in realTagIds)
+                    {
+                        _context.AttractionProductTags.Add(new AttractionProductTag
                         {
-                            var detail = product.AttractionProductDetail;
-                            detail.ProductId = product.ProductId; // 關鍵：綁定剛產生的 ProductId
-                            detail.LastUpdatedAt = DateTime.Now;
+                            ProductId = product.ProductId,
+                            TagId = tagId
+                        });
+                    }
+                    await _context.SaveChangesAsync();
 
-                            _context.Add(detail);
-                            await _context.SaveChangesAsync();
-                        }
+                    _context.ProductInventoryStatuses.Add(new ProductInventoryStatus
+                    {
+                        ProductId = product.ProductId,
+                        InventoryMode = "UNLIMITED",
+                        SoldQuantity = 0,
+                        LastUpdatedAt = DateTime.Now
+                    });
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
-                        // 解析並建立標籤關聯
-                        var realTagIds = new List<int>();
-                        foreach (var tagId in TagIds ?? Array.Empty<string>())
+                    // ── 圖片上傳（活動介紹圖片）──────────────────────────
+                    if (productImageFiles != null && productImageFiles.Count > 0)
+                    {
+                        string uploadDir = Path.Combine(_hostEnvironment.WebRootPath, "uploads", "attraction-products");
+                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+                        int sortOrder = 0;
+                        for (int i = 0; i < productImageFiles.Count; i++)
                         {
-                            if (tagId.StartsWith("NEW:"))
-                            {
-                                var tagName = tagId.Substring(4).Trim();
-                                if (string.IsNullOrEmpty(tagName)) continue;
-
-                                var existingTag = await _context.Tags
-                                    .FirstOrDefaultAsync(t => t.TagName == tagName);
-
-                                if (existingTag != null)
-                                    realTagIds.Add(existingTag.TagId);
-                                else
-                                {
-                                    var newTag = new Tag { TagName = tagName };
-                                    _context.Tags.Add(newTag);
-                                    await _context.SaveChangesAsync();
-                                    realTagIds.Add(newTag.TagId);
-                                }
-                            }
-                            else if (int.TryParse(tagId, out int existingId))
-                            {
-                                realTagIds.Add(existingId);
-                            }
-                        }
-
-                        foreach (var tagId in realTagIds.Distinct())
-                        {
-                            _context.AttractionProductTags.Add(new AttractionProductTag
+                            var file = productImageFiles[i];
+                            if (file == null || file.Length == 0) continue;
+                            string fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                            string filePath = Path.Combine(uploadDir, fileName);
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                                await file.CopyToAsync(stream);
+                            string caption = (productImageCaptions != null && i < productImageCaptions.Count)
+                                ? productImageCaptions[i] : "";
+                            _context.AttractionProductImages.Add(new AttractionProductImage
                             {
                                 ProductId = product.ProductId,
-                                TagId = tagId
+                                ImagePath = "/uploads/attraction-products/" + fileName,
+                                Caption = caption,
+                                SortOrder = ++sortOrder
                             });
                         }
                         await _context.SaveChangesAsync();
-
-                        // ↓ 在這裡加入，建立庫存狀態紀錄
-                        _context.ProductInventoryStatuses.Add(new ProductInventoryStatus
-                        {
-                            ProductId = product.ProductId,
-                            InventoryMode = "UNLIMITED",
-                            SoldQuantity = 0,
-                            LastUpdatedAt = DateTime.Now
-                        });
-                        await _context.SaveChangesAsync();
-                        // 提交事務
-                        await transaction.CommitAsync();
-
-                        TempData["SuccessMessage"] = $"票券「{product.Title}」與詳細內容已成功建立！";
-                        return RedirectToAction(nameof(Index));
                     }
-                    catch (Exception ex)
+
+                    // ── 更新景點的活動介紹（activity_intro）────────────
+                    if (!string.IsNullOrEmpty(AttractionActivityIntro))
                     {
-                        // 發生錯誤，復原資料庫狀態
-                        await transaction.RollbackAsync();
-                        ModelState.AddModelError("", "存檔至資料庫時發生錯誤：" + ex.Message);
+                        await _context.Database.ExecuteSqlRawAsync(
+                            @"UPDATE [Attractions].[Attractions]
+                              SET [activity_intro] = {0}
+                              WHERE [attraction_id] = {1}",
+                            AttractionActivityIntro, product.AttractionId);
                     }
+                    // ─────────────────────────────────────────────────────
+
+                    TempData["SuccessMessage"] = $"票券「{product.Title}」已成功建立！";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    ModelState.AddModelError("", "存檔至資料庫時發生錯誤：" + ex.Message);
                 }
             }
 
-            // --- 若失敗，重新準備選單與偵錯訊息 ---
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            foreach (var error in errors)
-            {
-                System.Diagnostics.Debug.WriteLine("驗證錯誤: " + error);
-            }
-
-            ViewBag.AttractionList = new SelectList(_context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
-            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AttractionList = new SelectList(
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
+            ViewBag.TicketTypeList = new SelectList(
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
 
             return View(product);
         }
 
-        // --- 狀態切換功能 (IsActive) ---
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleActive(int id, int isActive)
-        {
-            var product = await _context.AttractionProducts.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            // 1. 設定銷售狀態 (0 或 1)
-            product.IsActive = isActive;
-
-            // 2. 【核心連動邏輯】同步更新系統狀態
-            if (isActive == 1)
-            {
-                // 如果手動切換為「上架」，系統狀態強制變更為「正式發布」
-                product.Status = "ACTIVE";
-            }
-            else
-            {
-                // 如果手動切換為「下架」，系統狀態自動變更為「草稿」
-                // 這樣就不會出現「已下架」但系統狀態還在「ACTIVE」的矛盾情況
-                product.Status = "DRAFT";
-            }
-
-            try
-            {
-                _context.Update(product);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = isActive == 1
-                    ? $"票券「{product.Title}」已連動更新為：正式發布並上架！"
-                    : $"票券「{product.Title}」已連動更新為：草稿並下架。";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "切換狀態時發生錯誤：" + ex.Message;
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // --- 系統狀態變更 (Status) ---
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(int id, string status)
-        {
-            var product = await _context.AttractionProducts.FindAsync(id);
-            if (product == null) return NotFound();
-
-            string cleanStatus = status.ToUpper().Trim();
-            product.Status = cleanStatus;
-
-            // --- 嚴謹連動邏輯開始 ---
-            if (cleanStatus == "ACTIVE")
-            {
-                // 只有狀態為 ACTIVE 時，銷售狀態才設為 1 (銷售中)
-                product.IsActive = 1;
-            }
-            else
-            {
-                // 只要不是 ACTIVE (包含 DRAFT, INACTIVE, ARCHIVED)，一律設為 0 (已下架)
-                product.IsActive = 0;
-            }
-            // --- 嚴謹連動邏輯結束 ---
-
-            try
-            {
-                _context.Update(product);
-                await _context.SaveChangesAsync();
-
-                string msg = cleanStatus == "ACTIVE" ? "票券已正式發佈並開始銷售！" : "狀態已更新，銷售已停止。";
-                TempData["SuccessMessage"] = msg;
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "同步失敗：" + ex.Message;
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-
-        // GET: AttractionTicket/Edit/5
+        // GET: Edit
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            // 抓取產品資料
             var product = await _context.AttractionProducts
-          .Include(p => p.AttractionProductDetail)
-          .FirstOrDefaultAsync(m => m.ProductId == id);
+                .Include(p => p.AttractionProductDetail)
+                .Include(p => p.AttractionProductTags)
+                .Include(p => p.AttractionProductImages.OrderBy(img => img.SortOrder))
+                .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null) return NotFound();
 
-            // 準備景點下拉選單 (過濾掉被軟刪除的)
-            ViewBag.AttractionList = new SelectList(_context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
-
-            // 準備票種下拉選單
-            ViewBag.TicketTypeList = new SelectList(_context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AttractionList = new SelectList(
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
+            ViewBag.TicketTypeList = new SelectList(
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
+            ViewBag.CurrentTagIds = product.AttractionProductTags
+                .Select(pt => pt.TagId).ToList();
+            ViewBag.ActivityIntro = (await _context.Attractions
+                .Where(a => a.AttractionId == product.AttractionId)
+                .Select(a => a.ActivityIntro)
+                .FirstOrDefaultAsync()) ?? "";
 
             return View(product);
         }
 
-
+        // POST: Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, AttractionProduct product, string[] TagIds)
+        public async Task<IActionResult> Edit(int id, AttractionProduct product, string[] TagIds,
+            List<IFormFile> productImageFiles, List<string> productImageCaptions,
+            string? AttractionActivityIntro)
         {
             if (id != product.ProductId) return NotFound();
 
@@ -284,75 +236,93 @@ namespace TravelWeb.Areas.Attractions.Controllers
             ModelState.Remove("AttractionProductDetail");
             ModelState.Remove("AttractionProductTags");
             ModelState.Remove("Tags");
-
+            // ── ProductCode 驗證 ──────────────────────────────────
+            // 1. 強制 TKT- 開頭
+            if (string.IsNullOrWhiteSpace(product.ProductCode) ||
+                !product.ProductCode.StartsWith("TKT-", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("ProductCode", "產品代碼必須以 TKT- 開頭，例如：TKT-101");
+            }
+            // 2. TKT- 後面不能是空的
+            else if (product.ProductCode.Trim().Length <= 4)
+            {
+                ModelState.AddModelError("ProductCode", "TKT- 後面請填入代碼編號，例如：TKT-101");
+            }
+            // 3. 重複檢查（排除自己這筆）
+            else
+            {
+                var isDuplicate = await _context.AttractionProducts
+                    .AnyAsync(p => p.ProductCode == product.ProductCode
+                                && p.ProductId != product.ProductId
+                                && !p.IsDeleted);
+                if (isDuplicate)
+                    ModelState.AddModelError("ProductCode", $"「{product.ProductCode}」已被其他票券使用，請換一個代碼");
+            }
+            // ─────────────────────────────────────────────────────
             if (ModelState.IsValid)
             {
                 using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    // 1. 標準化狀態與連動銷售狀態
                     product.Status = product.Status?.ToUpper().Trim() ?? "DRAFT";
                     product.IsActive = (product.Status == "ACTIVE") ? 1 : 0;
+                    // ↓ 這兩行是新增的
+                    var detailToUpdate = product.AttractionProductDetail;
+                    product.AttractionProductDetail = null;
 
-                    // 2. 更新產品基本資料表
                     _context.Update(product);
 
-                    // 3. 處理詳情資料表
-                    var existingDetail = await _context.AttractionProductDetails
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(d => d.ProductId == id);
-
-                    if (product.AttractionProductDetail != null)
+                    if (detailToUpdate != null)
                     {
-                        product.AttractionProductDetail.ProductId = id;
-                        product.AttractionProductDetail.LastUpdatedAt = DateTime.Now;
+                        var existingDetail = await _context.AttractionProductDetails
+                            .FirstOrDefaultAsync(d => d.ProductId == id);
 
                         if (existingDetail != null)
-                            _context.Update(product.AttractionProductDetail);
+                        {
+                            await _context.Database.ExecuteSqlRawAsync(
+                                @"UPDATE [Attractions].[AttractionProductDetails]
+                                  SET content_details    = {0},
+                                      notes              = {1},
+                                      usage_instructions = {2},
+                                      includes           = {3},
+                                      excludes           = {4},
+                                      eligibility        = {5},
+                                      cancel_policy      = {6},
+                                      validity_note      = {7},
+                                      last_updated_at    = {8}
+                                  WHERE product_id = {9}",
+                           detailToUpdate.ContentDetails,      // ← 改成 detailToUpdate
+            detailToUpdate.Notes,
+            detailToUpdate.UsageInstructions,
+            detailToUpdate.Includes,
+            detailToUpdate.Excludes,
+            detailToUpdate.Eligibility,
+            detailToUpdate.CancelPolicy,
+            detailToUpdate.ValidityNote,
+            DateTime.Now,
+            id);
+                        }
                         else
-                            _context.Add(product.AttractionProductDetail);
-                    }
-
-                    // 4. ★ 解析標籤：區分現有標籤 (數字 id) 與新建標籤 (NEW:名稱) ★
-                    var realTagIds = new List<int>();
-
-                    foreach (var tagId in TagIds ?? Array.Empty<string>())
-                    {
-                        if (tagId.StartsWith("NEW:"))
                         {
-                            var tagName = tagId.Substring(4).Trim();
-                            if (string.IsNullOrEmpty(tagName)) continue;
-
-                            // 先確認 Tags 表有沒有同名標籤，避免重複建立
-                            var existingTag = await _context.Tags
-                                .FirstOrDefaultAsync(t => t.TagName == tagName);
-
-                            if (existingTag != null)
-                            {
-                                realTagIds.Add(existingTag.TagId);
-                            }
-                            else
-                            {
-                                var newTag = new Tag { TagName = tagName };
-                                _context.Tags.Add(newTag);
-                                await _context.SaveChangesAsync(); // 立即存取得 TagId
-                                realTagIds.Add(newTag.TagId);
-                            }
-                        }
-                        else if (int.TryParse(tagId, out int existingId))
-                        {
-                            realTagIds.Add(existingId);
+                            var newDetail = detailToUpdate;         // ← 改成 detailToUpdate
+                            newDetail.ProductId = id;
+                            newDetail.LastUpdatedAt = DateTime.Now;
+                            _context.Add(newDetail);
+                            await _context.SaveChangesAsync();
                         }
                     }
 
-                    // 5. 先刪除舊的標籤關聯
-                    var oldTags = _context.AttractionProductTags
-                        .Where(pt => pt.ProductId == id);
+                    // Chip 選擇只傳數字 id
+                    var realTagIds = (TagIds ?? Array.Empty<string>())
+                        .Where(t => int.TryParse(t, out _))
+                        .Select(int.Parse)
+                        .Distinct();
+
+                    var oldTags = _context.AttractionProductTags.Where(pt => pt.ProductId == id);
                     _context.AttractionProductTags.RemoveRange(oldTags);
                     await _context.SaveChangesAsync();
 
-                    // 6. 寫入新的標籤關聯 (去除重複，避免複合主鍵衝突)
-                    foreach (var tagId in realTagIds.Distinct())
+                    foreach (var tagId in realTagIds)
                     {
                         _context.AttractionProductTags.Add(new AttractionProductTag
                         {
@@ -364,7 +334,54 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    TempData["SuccessMessage"] = "更新成功！產品資料與標籤已同步存檔。";
+                    // ── 圖片上傳（活動介紹圖片）──────────────────────────
+                    if (productImageFiles != null && productImageFiles.Count > 0)
+                    {
+                        string uploadDir = Path.Combine(_hostEnvironment.WebRootPath, "uploads", "attraction-products");
+                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+
+                        // 取目前最大 sort_order
+                        int maxSort = await _context.AttractionProductImages
+                            .Where(img => img.ProductId == id)
+                            .Select(img => (int?)img.SortOrder)
+                            .MaxAsync() ?? 0;
+
+                        for (int i = 0; i < productImageFiles.Count; i++)
+                        {
+                            var file = productImageFiles[i];
+                            if (file == null || file.Length == 0) continue;
+
+                            string fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                            string filePath = Path.Combine(uploadDir, fileName);
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                                await file.CopyToAsync(stream);
+
+                            string caption = (productImageCaptions != null && i < productImageCaptions.Count)
+                                ? productImageCaptions[i] : "";
+
+                            _context.AttractionProductImages.Add(new AttractionProductImage
+                            {
+                                ProductId = id,
+                                ImagePath = "/uploads/attraction-products/" + fileName,
+                                Caption = caption,
+                                SortOrder = ++maxSort
+                            });
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // ── 更新景點的活動介紹（activity_intro）────────────
+                    if (AttractionActivityIntro != null)
+                    {
+                        await _context.Database.ExecuteSqlRawAsync(
+                            @"UPDATE [Attractions].[Attractions]
+                              SET [activity_intro] = {0}
+                              WHERE [attraction_id] = {1}",
+                            AttractionActivityIntro, product.AttractionId);
+                    }
+                    // ─────────────────────────────────────────────────────
+
+                    TempData["SuccessMessage"] = "更新成功！";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -380,65 +397,115 @@ namespace TravelWeb.Areas.Attractions.Controllers
                 }
             }
 
-            // 失敗時重新準備下拉選單
             ViewBag.AttractionList = new SelectList(
-                _context.Attractions.Where(a => !a.IsDeleted),
-                "AttractionId", "Name", product.AttractionId);
-
+                _context.Attractions.Where(a => !a.IsDeleted), "AttractionId", "Name", product.AttractionId);
             ViewBag.TicketTypeList = new SelectList(
-                _context.TicketTypes.OrderBy(t => t.SortOrder),
-                "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
-
-            // 重新載入標籤預填 (已選的 + 新建的都要顯示)
-            var currentTagIds = (TagIds ?? Array.Empty<string>())
-                .Where(t => int.TryParse(t, out _))
-                .Select(int.Parse)
-                .ToList();
-
-            ViewBag.CurrentTags = await _context.Tags
-                .Where(t => currentTagIds.Contains(t.TagId))
-                .Select(t => new SelectListItem
-                {
-                    Value = t.TagId.ToString(),
-                    Text = t.TagName,
-                    Selected = true
-                })
-                .ToListAsync();
+                _context.TicketTypes.OrderBy(t => t.SortOrder), "TicketTypeCode", "TicketTypeName", product.TicketTypeCode);
+            ViewBag.AllTags = _context.Tags.OrderBy(t => t.TagId).ToList();
+            ViewBag.CurrentTagIds = (TagIds ?? Array.Empty<string>())
+                .Where(t => int.TryParse(t, out _)).Select(int.Parse).ToList();
 
             return View(product);
         }
 
-
-
         [HttpGet]
         public async Task<IActionResult> GetDetails(int id)
         {
-            // 1. 抓取詳情資料
+            // 同時查 product（取 validity_days）和 detail
+            var product = await _context.AttractionProducts
+                .Where(p => p.ProductId == id)
+                .Select(p => new { p.ValidityDays })
+                .FirstOrDefaultAsync();
+
             var details = await _context.AttractionProductDetails
-                                        .FirstOrDefaultAsync(d => d.ProductId == id);
+                .OrderByDescending(d => d.LastUpdatedAt)
+                .FirstOrDefaultAsync(d => d.ProductId == id);
 
-            // 2. 抓取標籤資料 (根據資料庫 image_5c2da5.png 的結構)
-            // 這裡直接透過 AttractionProductTags 串接 Tag 抓取名稱
             var tagNames = await _context.AttractionProductTags
-                                         .Where(pt => pt.ProductId == id)
-                                         .Select(pt => pt.Tag.TagName) // 假設 Tag 表中存名稱的欄位是 TagName
-                                         .ToListAsync();
+                .Where(pt => pt.ProductId == id)
+                .Select(pt => pt.Tag.TagName)
+                .ToListAsync();
 
-            // 3. 統一回傳內容
             return Json(new
             {
-                // 如果 details 是 null，給予預設文字
-                contentDetails = details?.ContentDetails ?? "尚無資料",
-                usageInstructions = details?.UsageInstructions ?? "尚無資料",
+                validityDays = product?.ValidityDays,          // ← 新增
+                contentDetails = details?.ContentDetails ?? "",
                 notes = details?.Notes ?? "無備註",
-                // 回傳標籤陣列，若無則傳空陣列 []
+                usageInstructions = details?.UsageInstructions ?? "",
+                includes = details?.Includes ?? "",
+                excludes = details?.Excludes ?? "",
+                eligibility = details?.Eligibility ?? "",
+                cancelPolicy = details?.CancelPolicy ?? "",
+                validityNote = details?.ValidityNote ?? "",
                 tags = tagNames ?? new List<string>()
             });
         }
 
-        private bool ProductExists(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleActive(int id, int isActive)
         {
-            return _context.AttractionProducts.Any(e => e.ProductId == id);
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null) return NotFound();
+
+            product.IsActive = isActive;
+            product.Status = isActive == 1 ? "ACTIVE" : "DRAFT";
+
+            try
+            {
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = isActive == 1
+                    ? $"票券「{product.Title}」已上架！"
+                    : $"票券「{product.Title}」已下架。";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "切換狀態時發生錯誤：" + ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, string status)
+        {
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null) return NotFound();
+
+            string cleanStatus = status.ToUpper().Trim();
+            product.Status = cleanStatus;
+            product.IsActive = cleanStatus == "ACTIVE" ? 1 : 0;
+
+            try
+            {
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = cleanStatus == "ACTIVE" ? "票券已發佈！" : "狀態已更新。";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "同步失敗：" + ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var product = await _context.AttractionProducts.FindAsync(id);
+            if (product == null) return NotFound();
+
+            product.IsDeleted = true;
+            product.IsActive = 0;
+            product.Status = "ARCHIVED";
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"票券「{product.Title}」已封存刪除。";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
@@ -448,7 +515,6 @@ namespace TravelWeb.Areas.Attractions.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            // 避免重複收藏（DB 雖有唯一約束，但先在程式層擋掉比較乾淨）
             var exists = await _context.AttractionProductFavorites
                 .AnyAsync(f => f.UserId == userId && f.ProductId == productId);
 
@@ -485,23 +551,33 @@ namespace TravelWeb.Areas.Attractions.Controllers
             return Ok(new { success = true });
         }
 
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        private bool ProductExists(int id)
         {
-            var product = await _context.AttractionProducts.FindAsync(id);
-            if (product == null) return NotFound();
+            return _context.AttractionProducts.Any(e => e.ProductId == id);
+        }
 
-            // 軟刪除：只標記，不真的刪除資料
-            product.IsDeleted = true;
-            product.IsActive = 0;
-            product.Status = "ARCHIVED";
+        // ── 刪除活動介紹圖片 ──────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> DeleteProductImage(int id)
+        {
+            var img = await _context.AttractionProductImages.FindAsync(id);
+            if (img == null) return Json(new { success = false, message = "找不到圖片" });
 
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = $"票券「{product.Title}」已封存刪除。";
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                string physicalPath = Path.Combine(_hostEnvironment.WebRootPath,
+                    img.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                if (System.IO.File.Exists(physicalPath))
+                    System.IO.File.Delete(physicalPath);
+
+                _context.AttractionProductImages.Remove(img);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
-   
-    }
+}
