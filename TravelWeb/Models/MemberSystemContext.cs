@@ -31,16 +31,16 @@ public partial class MemberSystemContext : DbContext
 
     public virtual DbSet<MemberList> MemberLists { get; set; }
 
-    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //    => optionsBuilder.UseSqlServer("Server=.;Database=Member_System;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer("Server=.;Database=travel;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Administrator>(entity =>
         {
             entity.HasKey(e => e.AdminId);
-
-            entity.ToTable("Administrator");
+            // 🔥 補上 "Member"
+            entity.ToTable("Administrator", "Member");
 
             entity.Property(e => e.AdminId).HasMaxLength(50);
             entity.Property(e => e.Email).HasMaxLength(100);
@@ -51,7 +51,8 @@ public partial class MemberSystemContext : DbContext
 
         modelBuilder.Entity<Authorization>(entity =>
         {
-            entity.ToTable("Authorization");
+            // 🔥 補上 "Member"
+            entity.ToTable("Authorization", "Member");
 
             entity.Property(e => e.AuthorizationId).ValueGeneratedNever();
             entity.Property(e => e.AdminId).HasMaxLength(50);
@@ -74,8 +75,8 @@ public partial class MemberSystemContext : DbContext
         modelBuilder.Entity<Blocked>(entity =>
         {
             entity.HasKey(e => e.MemberId);
-
-            entity.ToTable("blocked");
+            // 🔥 補上 "Member"
+            entity.ToTable("blocked", "Member");
 
             entity.Property(e => e.MemberId).HasMaxLength(50);
             entity.Property(e => e.BlockedId).HasMaxLength(50);
@@ -85,8 +86,8 @@ public partial class MemberSystemContext : DbContext
         modelBuilder.Entity<ComplaintRecord>(entity =>
         {
             entity.HasKey(e => e.ComplaintId);
-
-            entity.ToTable("Complaint_Record");
+            // 🔥 補上 "Member"
+            entity.ToTable("Complaint_Record", "Member");
 
             entity.Property(e => e.ComplaintId).HasMaxLength(50);
             entity.Property(e => e.AdminId).HasMaxLength(50);
@@ -107,9 +108,9 @@ public partial class MemberSystemContext : DbContext
 
         modelBuilder.Entity<LogInRecord>(entity =>
         {
-            entity.ToTable("Log_in_record");
+            // 🔥 補上 "Member"
+            entity.ToTable("Log_in_record", "Member");
 
-            entity.Property(e => e.LoginRecordId).ValueGeneratedNever();
             entity.Property(e => e.LoginAt).HasColumnType("datetime");
             entity.Property(e => e.MemberCode).HasMaxLength(50);
 
@@ -121,8 +122,8 @@ public partial class MemberSystemContext : DbContext
         modelBuilder.Entity<MemberComplaint>(entity =>
         {
             entity.HasKey(e => e.ComplaintId);
-
-            entity.ToTable("Member_Complaint");
+            // 🔥 補上 "Member"
+            entity.ToTable("Member_Complaint", "Member");
 
             entity.Property(e => e.ComplaintId).HasMaxLength(50);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -144,6 +145,7 @@ public partial class MemberSystemContext : DbContext
         {
             entity.HasKey(e => e.MemberId);
 
+            // 這裡原本就有，正確！
             entity.ToTable("Member_Information", "Member");
 
             entity.Property(e => e.MemberId).HasMaxLength(50);
@@ -151,16 +153,6 @@ public partial class MemberSystemContext : DbContext
             entity.Property(e => e.MemberCode).HasMaxLength(50);
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(50);
-
-            entity.HasOne(d => d.MemberCodeNavigation).WithMany(p => p.MemberInformations)
-                .HasForeignKey(d => d.MemberCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_Information_Member_List");
-
-            entity.HasOne(d => d.Member).WithOne(p => p.MemberInformation)
-                .HasForeignKey<MemberInformation>(d => d.MemberId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_Information_blocked");
 
             entity.HasMany(d => d.Followeds).WithMany(p => p.Followers)
                 .UsingEntity<Dictionary<string, object>>(
@@ -176,7 +168,8 @@ public partial class MemberSystemContext : DbContext
                     j =>
                     {
                         j.HasKey("FollowerId", "FollowedId").HasName("PK_Member_Following_1");
-                        j.ToTable("Member_Following");
+                        // 🔥 補上中介表的 "Member"
+                        j.ToTable("Member_Following", "Member");
                         j.IndexerProperty<string>("FollowerId").HasMaxLength(50);
                         j.IndexerProperty<string>("FollowedId").HasMaxLength(50);
                     });
@@ -195,7 +188,8 @@ public partial class MemberSystemContext : DbContext
                     j =>
                     {
                         j.HasKey("FollowerId", "FollowedId").HasName("PK_Member_Following_1");
-                        j.ToTable("Member_Following");
+                        // 🔥 補上中介表的 "Member"
+                        j.ToTable("Member_Following", "Member");
                         j.IndexerProperty<string>("FollowerId").HasMaxLength(50);
                         j.IndexerProperty<string>("FollowedId").HasMaxLength(50);
                     });
@@ -204,10 +198,9 @@ public partial class MemberSystemContext : DbContext
         modelBuilder.Entity<MemberList>(entity =>
         {
             entity.HasKey(e => e.MemberCode);
+            // 這裡原本就有，正確！
+            entity.ToTable("Member_List", "Member");
 
-            entity.ToTable("Member_List");
-
-            entity.Property(e => e.MemberCode).HasMaxLength(50);
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.Phone).HasMaxLength(20);

@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TravelWeb.Models;
 
+[Table("Member_List", Schema = "Member")]
 public partial class MemberList
 {
-    [DisplayName("識別碼")]
     public string MemberCode { get; set; } = null!;
 
-    [DisplayName("郵件")]
     public string? Email { get; set; }
 
-    [DisplayName("密碼")]
     public string? PasswordHash { get; set; }
 
     [DisplayName("電話")]

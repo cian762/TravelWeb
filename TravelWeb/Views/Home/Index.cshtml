@@ -1,8 +1,65 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "首頁";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-5 text-center">
+
+                    <!-- 判斷是否有登入 -->
+                    @if (ViewBag.IsLoggedIn == true)
+                    {
+                        // ===================================
+                        // 🟢 已登入：顯示歡迎字樣與個人大頭貼
+                        // ===================================
+                        if (!string.IsNullOrEmpty(ViewBag.AvatarUrl))
+                        {
+                            <img src="@ViewBag.AvatarUrl" alt="User Avatar" class="rounded-circle mb-3 shadow" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #f8f9fa;" />
+                        }
+
+                        <!-- 🔥 您要的客製化文字：歡迎回來，(Name) -->
+                        <h1 class="display-5 text-primary fw-bold">歡迎回來，@ViewBag.UserName</h1>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <!-- 管理資料按鈕 -->
+                            <a asp-controller="MemberInformations" asp-action="Edit" class="btn btn-primary btn-lg px-4 rounded-pill shadow-sm">
+                                <i class="bi bi-person-gear"></i> 管理個人資料
+                            </a>
+
+                            <!-- 登出按鈕 (點擊後會觸發 AuthController 的 Logout) -->
+                            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger btn-lg px-4 rounded-pill">
+                                <i class="bi bi-box-arrow-right"></i> 登出
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        // ===================================
+                        // 🔴 未登入：顯示登入按鍵
+                        // ===================================
+                        <i class="bi bi-globe-americas text-primary mb-3 d-block" style="font-size: 5rem;"></i>
+                        <h1 class="display-5 text-dark fw-bold">歡迎來到 TravelWeb</h1>
+                        <p class="text-muted mt-3 mb-4">請先登入以享受專屬的會員服務與行程管理。</p>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <!-- 🔥 您要求的「新增登入鍵」在這裡 -->
+                            <a asp-controller="Auth" asp-action="Login" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
+                                <i class="bi bi-box-arrow-in-right"></i> 登入會員
+                            </a>
+                            <a asp-controller="MemberAccount" asp-action="Create" class="btn btn-outline-secondary btn-lg px-4 rounded-pill">
+                                註冊新帳號
+                            </a>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

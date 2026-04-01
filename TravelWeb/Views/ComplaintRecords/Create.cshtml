@@ -1,0 +1,73 @@
+﻿@model TravelWeb.Models.ComplaintRecord
+
+@{
+    ViewData["Title"] = "新增/處理客訴案件";
+    var userRole = ViewBag.Role as string;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white border-0 py-3 rounded-top-4">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square"></i> 填寫客訴案件</h4>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Create" method="post">
+
+                        <!-- 顯示錯誤訊息 (如果有缺少必要欄位) -->
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+
+                        <!-- ⚠️ 提示：ComplaintId 和 MemberCode 會由系統自動產生，不需要輸入框 -->
+                        <div class="alert alert-info rounded-3 mb-4">
+                            <i class="bi bi-info-circle-fill"></i> 案件編號與申請人將由系統自動建檔綁定。
+                        </div>
+
+                        <!-- 狀態下拉選單 (使用 Controller 傳來的 ViewBag.StatusList) -->
+                        <div class="mb-4">
+                            <label asp-for="Status" class="form-label fw-bold text-secondary">處理狀態</label>
+                            <select asp-for="Status" asp-items="ViewBag.StatusList" class="form-select form-select-lg shadow-sm border-light">
+                                <option value="">-- 請選擇狀態 (預設: 已檢視) --</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+
+                        <!-- 指派管理員下拉選單 (使用 Controller 傳來的 ViewBag.AdminList) -->
+                        <div class="mb-4">
+                            <label asp-for="AdminId" class="form-label fw-bold text-secondary">指派處理專員 (Admin)</label>
+                            <select asp-for="AdminId" asp-items="ViewBag.AdminList" class="form-select form-select-lg shadow-sm border-light">
+                                <option value="">-- 暫不指派 / 留空 --</option>
+                            </select>
+                            <span asp-validation-for="AdminId" class="text-danger"></span>
+                        </div>
+
+                        <!-- 詳細內容 / 補償方案填寫區 -->
+                        <div class="mb-4">
+                            <label asp-for="Compensation" class="form-label fw-bold text-secondary">客訴詳細內容 / 處理方案</label>
+                            <textarea asp-for="Compensation" class="form-control shadow-sm border-light" rows="8" placeholder="請詳細描述案件狀況或後續補償方案..."></textarea>
+                            <span asp-validation-for="Compensation" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4 text-muted">
+
+                        <!-- 送出與返回按鈕 -->
+                        <div class="d-flex justify-content-end gap-3">
+                            <a asp-action="Index" class="btn btn-light border shadow-sm px-4 rounded-pill">取消返回</a>
+                            <button type="submit" class="btn btn-primary shadow px-5 rounded-pill fw-bold">送出儲存</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
