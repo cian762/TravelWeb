@@ -25,6 +25,8 @@ public partial class TripProduct
 
     public int? RegionId { get; set; }
 
+    public virtual ICollection<ItineraryProductCollection> ItineraryProductCollections { get; set; } = new List<ItineraryProductCollection>();
+
     public virtual CancellationPolicy? Policy { get; set; }
 
     public virtual TripRegion? Region { get; set; }

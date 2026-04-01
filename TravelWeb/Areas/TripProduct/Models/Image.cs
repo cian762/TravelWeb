@@ -9,5 +9,7 @@ public partial class Image
 
     public string? ImagePath { get; set; }
 
+    public int ImageId { get; set; }
+
     public virtual Attraction? Attraction { get; set; }
 }
