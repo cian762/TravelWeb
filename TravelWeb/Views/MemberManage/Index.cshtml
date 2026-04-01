@@ -119,8 +119,11 @@
                             };
 
                             <tr>
-                                <!-- 1. MemberCode -->
-                                <td class="ps-4 fw-bold text-primary">@item.MemberCode</td>
+                                <td class="ps-4 fw-bold">
+                                    <a asp-action="Details" asp-route-id="@item.MemberCode" class="text-primary text-decoration-none" title="點擊查看詳細資料">
+                                        <i class="bi bi-box-arrow-up-right small me-1"></i>@item.MemberCode
+                                    </a>
+                                </td>
 
                                 <!-- 2. Email -->
                                 <td class="text-muted">@item.Email</td>
