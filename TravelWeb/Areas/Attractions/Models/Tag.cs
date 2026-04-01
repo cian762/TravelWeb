@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using TravelWeb.Models;
 
-namespace TravelWeb.Models; // 建議統一命名空間
+namespace TravelWeb.Areas.Attractions.Models;
 
 public partial class Tag
 {
     public int TagId { get; set; }
-
     public string TagName { get; set; } = null!;
+    public string? Description { get; set; }        // 標籤說明文字（顯示在 drawer）
 
-    // 這是對接中間表的集合
-    public virtual ICollection<AttractionProductTag> AttractionProductTags { get; set; } = new HashSet<AttractionProductTag>();
+    public virtual ICollection<AttractionProductTag> AttractionProductTags { get; set; }
+        = new List<AttractionProductTag>();
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System.IO;
 using TravelWeb.Areas.Attractions.Models;
-
+//0401更新
 namespace TravelWeb.Areas.Attractions.Controllers
 {
     [Area("Attractions")]
@@ -24,7 +24,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
         {
             var query = _context.Attractions
                                 .Include(a => a.Region)
-                                .Where(a => !a.IsDeleted)
+                                .Where(a => !a.IsDeleted && a.RegionId != 1000)
                                 .AsQueryable();
 
             // 景點名稱關鍵字搜尋
@@ -91,7 +91,7 @@ namespace TravelWeb.Areas.Attractions.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                 // 3. 處理圖片上傳
+                // 3. 處理圖片上傳
                 if (imageFiles != null && imageFiles.Count > 0)
                 {
                     // 設定儲存路徑：wwwroot/uploads/attractions
