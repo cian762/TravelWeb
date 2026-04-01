@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TravelWeb.Models;
 
+[Table("Blocked", Schema = "Member")]
 public partial class Blocked
 {
     public string MemberId { get; set; } = null!;
@@ -12,4 +14,6 @@ public partial class Blocked
     public DateOnly? BlockedDate { get; set; }
 
     public string? Reason { get; set; }
+
+    public virtual MemberInformation? MemberInformation { get; set; }
 }

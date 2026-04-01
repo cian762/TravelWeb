@@ -1,0 +1,102 @@
+﻿@model TravelWeb.ViewModels.MemberEditViewModel
+
+@{
+    ViewData["Title"] = "編輯會員資料";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white border-0 py-3 rounded-top-4 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square"></i> 編輯會員資料</h4>
+                    <span class="badge bg-light text-primary rounded-pill px-3 py-2">狀態：@Model.Status</span>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Edit" method="post">
+
+                        <!-- 系統錯誤訊息顯示區塊 -->
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-4 fw-bold"></div>
+
+                        <!-- ⚠️ 隱藏並不可修改的欄位 (唯讀顯示) -->
+                        <div class="row g-3 mb-4 p-3 bg-light rounded-3 border">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">系統識別碼 (不可修改)</label>
+                                <input asp-for="MemberCode" class="form-control bg-transparent border-0 fw-bold text-primary p-0" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">會員代號 (不可修改)</label>
+                                <input asp-for="MemberId" class="form-control bg-transparent border-0 fw-bold text-dark p-0" readonly />
+                            </div>
+                        </div>
+
+                        <!-- 保留 Status 的值讓 POST 能接住，但畫面上不顯示輸入框 -->
+                        <input type="hidden" asp-for="Status" />
+
+                        <hr class="mb-4 text-muted">
+
+                        <!-- 可編輯欄位：姓名 -->
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label fw-bold text-secondary">真實姓名</label>
+                            <input asp-for="Name" class="form-control shadow-sm" placeholder="請輸入姓名" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 可編輯欄位：登入信箱 -->
+                        <div class="mb-4">
+                            <label asp-for="Email" class="form-label fw-bold text-secondary">登入信箱 (Email)</label>
+                            <input asp-for="Email" class="form-control shadow-sm" placeholder="example@email.com" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 可編輯欄位：電話 -->
+                        <div class="mb-4">
+                            <label asp-for="Phone" class="form-label fw-bold text-secondary">聯絡電話</label>
+                            <input asp-for="Phone" class="form-control shadow-sm" placeholder="09xx-xxxxxx" />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 兩欄式設計：性別 與 生日 -->
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-6">
+                                <label asp-for="Gender" class="form-label fw-bold text-secondary">性別</label>
+                                <select asp-for="Gender" class="form-select shadow-sm">
+                                    <option value="">-- 未設定 --</option>
+                                    <option value="1">男</option>
+                                    <option value="2">女</option>
+                                </select>
+                                <span asp-validation-for="Gender" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="BirthDate" class="form-label fw-bold text-secondary">出生年月日</label>
+                                <!-- type="date" 適用於 DateOnly 型別 -->
+                                <input asp-for="BirthDate" type="date" class="form-control shadow-sm" />
+                                <span asp-validation-for="BirthDate" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- 底部按鈕 -->
+                        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.MemberCode" class="btn btn-light border shadow-sm px-4 rounded-pill">
+                                取消返回
+                            </a>
+                            <button type="submit" class="btn btn-primary shadow px-5 rounded-pill fw-bold">
+                                <i class="bi bi-save"></i> 儲存修改
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

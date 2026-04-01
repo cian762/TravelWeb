@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TravelWeb.Models;
 
+[Table("MemberComplaint", Schema = "Member")]
 public partial class MemberComplaint
 {
     public string MemberId { get; set; } = null!;
