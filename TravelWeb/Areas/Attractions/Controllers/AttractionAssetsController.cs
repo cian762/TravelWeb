@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System.IO;
 using TravelWeb.Areas.Attractions.Models;
-
+//0401更新
 namespace TravelWeb.Areas.Attractions.Controllers
 {
     [Area("Attractions")]
