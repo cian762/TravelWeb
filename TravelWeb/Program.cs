@@ -108,9 +108,7 @@ app.UseSession();
 
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}"); // 這是我們剛剛改好的預設進入登入頁
+
 
 app.UseAuthorization();
 
@@ -128,9 +126,9 @@ app.MapControllerRoute(
      pattern: "{area:exists}/{controller=Trip}/{action=index}/{id?}"
     );
 
-// �쥻���w�]���
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}");
+    pattern: "{controller=Auth}/{action=Login}/{id?}"); // 這是我們剛剛改好的預設進入登入頁
+
 
 app.Run();

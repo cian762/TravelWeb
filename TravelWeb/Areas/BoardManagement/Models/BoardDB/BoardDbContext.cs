@@ -301,8 +301,7 @@ public partial class BoardDbContext : DbContext
 
             entity.HasIndex(e => e.TagName, "IX_TagsList").IsUnique();
 
-            entity.Property(e => e.TagId)
-                .ValueGeneratedNever()
+            entity.Property(e => e.TagId)                
                 .HasColumnName("TagID");
             entity.Property(e => e.TagName).HasMaxLength(10);
         });
