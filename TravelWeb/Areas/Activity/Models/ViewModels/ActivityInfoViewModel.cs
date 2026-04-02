@@ -6,7 +6,7 @@ using TravelWeb.Areas.Activity.Models.EFModel;
 
 namespace TravelWeb.Areas.Activity.Models.ViewModels
 {
-    public class ActivityEditViewModel
+    public class ActivityInfoViewModel
     {
         [ValidateNever]
         public int ActivityId { get; set; }

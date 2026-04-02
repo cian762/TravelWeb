@@ -2,6 +2,8 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
+using TravelWeb.Areas.Activity.Repository.ActivityRepositories;
+using TravelWeb.Areas.Activity.Repository.IActivityRepositories;
 using TravelWeb.Areas.Activity.Service.ActivityServices;
 using TravelWeb.Areas.Activity.Service.IActivityServices;
 using TravelWeb.Areas.Attractions.Models;
@@ -70,16 +72,18 @@ builder.Services.AddDbContext<AttractionsContext>(options =>
 
 
 //ActivityDBcontext 服務註冊
-builder.Services.AddDbContext<ActivityDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
-);
+builder.Services.AddDbContext<ActivityDbContext>(options => 
+options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+builder.Services.AddScoped<IActivityInfoRepository, ActivityInfoRepository>();
+builder.Services.AddScoped<IActivityInfoService, ActivityInfoService>();
+
 
 //Member
 builder.Services.AddDbContext<MemberSystemContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 
 //Cloudinary 服務註冊
-builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinaryGFC"));
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 
 

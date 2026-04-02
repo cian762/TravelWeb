@@ -874,8 +874,6 @@
 
   <ItemGroup>
     <Folder Include="Areas\Activity\Data\" />
-    <Folder Include="Areas\Activity\Repository\IActivityRepositories\" />
-    <Folder Include="Areas\Activity\Repository\ActivityRepositories\" />
     <Folder Include="Areas\Attractions\Views\Shared\" />
     <Folder Include="Areas\BoardManagement\Models\IRepository\" />
     <Folder Include="Areas\Itinerary\Data\" />
