@@ -1,0 +1,164 @@
+﻿@model IEnumerable<TravelWeb.Areas.BoardManagement.Models.ViewModel.Tag>
+@{
+    ViewData["Title"] = "TagManager";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .tag-btn {
+            display: inline-block;
+            background-color: white;
+            color: #4cd3e3;
+            border: 0.8px solid #4cd3e3;
+            border-radius: 20px;
+            padding: 2px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+            .tag-btn:hover {
+                background-color: #4cd3e3;
+                color: #fff;
+                border-color: #4cd3e3;
+            }
+    </style>
+}
+<div class="container">
+    <h1>標籤管理員</h1>
+    <a href="#" class="btn btn-sm btn-primary mb-3"
+       data-bs-toggle="modal" data-bs-target="#tagModal"
+       onclick="openCreate()">新增</a>
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Icon</th>
+                <th>名稱</th>
+                <th>文章數</th>
+                <th>編輯</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ID</td>
+                    <td><i class="@item.Icon"></i></td>
+                    <td>@item.Name</td>
+                    <td>@item.ArticleCount</td>
+                    <td>
+                        <a href="#" class="btn btn-sm btn-primary"
+                           data-bs-toggle="modal" data-bs-target="#tagModal"
+                           onclick="openEdit(@item.ID, '@item.Icon', '@item.Name', @item.ArticleCount)">編輯</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">標籤</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="tagId" />
+                <div class="mb-3">
+                    <label class="form-label">Icon</label>
+                    <input type="text" class="form-control" id="tagIcon" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">名稱</label>
+                    <input type="text" class="form-control" id="tagName" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">預覽</label>
+                    <div style="background-color:#f9f9ff; border-radius:8px; padding:16px;">
+                        <button class="tag-btn" id="tagPreview">
+                            <i id="previewIcon"></i>
+                            <span id="previewName">標籤名稱</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger d-none" id="btnDelete" onclick="deleteTag()">刪除</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveTag()">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentArticleCount = 0;
+
+        function openCreate() {
+            document.getElementById('modalTitle').textContent = '新增標籤';
+            document.getElementById('tagId').value = '';
+            document.getElementById('tagIcon').value = '';
+            document.getElementById('tagName').value = '';
+            document.getElementById('btnDelete').classList.add('d-none');
+        }
+
+        function openEdit(id, icon, name, articleCount) {
+            currentArticleCount = articleCount;
+            document.getElementById('modalTitle').textContent = '編輯標籤';
+            document.getElementById('tagId').value = id;
+            document.getElementById('tagIcon').value = icon;
+            document.getElementById('tagName').value = name;
+
+            const btnDelete = document.getElementById('btnDelete');
+            if (articleCount === 0) {
+                btnDelete.classList.remove('d-none');
+            } else {
+                btnDelete.classList.add('d-none');
+            }
+        }
+
+        function saveTag() {
+            const id = document.getElementById('tagId').value;
+            const icon = document.getElementById('tagIcon').value;
+            const name = document.getElementById('tagName').value;
+            const url = id ? '/BoardManagement/Board/EditTag' : '/BoardManagement/Board/CreateTag';
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ TagId: parseInt(id) || 0, icon, TagName:name })
+            }).then(r => r.json()).then(res => {
+                if (res.success) location.reload();
+                else alert(res.message);
+            });
+        }
+
+        function deleteTag() {
+            const id = document.getElementById('tagId').value;
+            if (!confirm('確定刪除此標籤？')) return;
+
+            fetch(`/BoardManagement/Board/DeleteTag?id=${id}`, {
+            method: 'POST'
+               }).then(r => r.json()).then(res => {
+                if (res.success) location.reload();
+                else alert(res.message);
+            });
+        }
+
+                function updatePreview() {
+            const icon = document.getElementById('tagIcon').value;
+            const name = document.getElementById('tagName').value;
+            document.getElementById('previewIcon').className = icon;
+            document.getElementById('previewName').textContent = name || '標籤名稱';
+        }
+    </script>
+}

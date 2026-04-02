@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Humanizer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TravelWeb.Areas.Attractions.Models;
 using TravelWeb.Areas.BoardManagement.Models.BoardDB;
 using TravelWeb.Areas.BoardManagement.Models.IService;
 using TravelWeb.Areas.BoardManagement.Models.Service;
 using TravelWeb.Areas.BoardManagement.Models.ViewModel;
 using TravelWeb.Models;
 using static TravelWeb.Areas.BoardManagement.Models.ViewModel.PostCardModel;
+
 
 namespace TravelWeb.Areas.BoardManagement.Controllers
 {
@@ -140,26 +143,67 @@ namespace TravelWeb.Areas.BoardManagement.Controllers
         }
 
 
-        public IActionResult TestPost()
+        public IActionResult  TagManager()
         {
-            var articles = _DbContext.Articles.ToList();
-            var members = _memberDb.MemberInformations.ToList();
+            var tags = _DbContext.TagsLists.ToList();
+            var articleTag = _DbContext.ArticleTags
+                .GroupBy(x => x.TagId)
+                .Select(g => new { TagId = g.Key, ArticleCount = g.Count() })
+                .ToList();
+            
+            var viewModel = tags
+                .GroupJoin(articleTag,
+                    t => t.TagId,
+                    at => at.TagId,
+                    (t, at) => new BoardManagement.Models.ViewModel.Tag
+                    {
+                        ID = t.TagId,
+                        Name = t.TagName,
+                        Icon = t.icon,
+                        ArticleCount = at.FirstOrDefault()?.ArticleCount ?? 0
+                    })
+                .ToList();
 
-            var viewModel = 
-
-            // 使用 LINQ 把兩邊的資料合在一起
-            articles.Select(a => new PostCardModel
-            {
-                ArticleID = a.ArticleId,
-                Title = a.Title ?? "無標題",
-                ArticlePhoto = a.PhotoUrl,
-                // 去 Member 清單找誰是這篇文章的作者
-                AuthorName = members.FirstOrDefault(m => m.MemberId == a.UserId)?.Name ?? "未命名",
-                AuthorAvatar = members.FirstOrDefault(m => m.MemberId == a.UserId)?.AvatarUrl
-            }).ToList();
 
             return View(viewModel);
-        } 
+        }
+
+
+        [HttpPost]
+        public IActionResult CreateTag([FromBody] TagsList dto)
+        {
+            var tag = new TagsList { icon = dto.icon, TagName = dto.TagName };
+            _DbContext.TagsLists.Add(tag);
+            _DbContext.SaveChanges();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public IActionResult EditTag([FromBody] TagsList dto)
+        {
+            var tag = _DbContext.TagsLists.FirstOrDefault(t=>t.TagId==dto.TagId);
+            if (tag == null) return Json(new { success = false, message = "找不到標籤" });
+
+            tag.icon = dto.icon;
+            tag.TagName = dto.TagName;
+            _DbContext.SaveChanges();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public IActionResult DeleteTag(int id)
+        {
+            var articleCount = _DbContext.ArticleTags.Count(x => x.TagId == id);
+            if (articleCount > 0)
+                return Json(new { success = false, message = "此標籤仍有文章，無法刪除" });
+
+            var tag = _DbContext.TagsLists.FirstOrDefault(t => t.TagId == id);
+            if (tag == null) return Json(new { success = false, message = "找不到標籤" });
+
+            _DbContext.TagsLists.Remove(tag);
+            _DbContext.SaveChanges();
+            return Json(new { success = true });
+        }
 
     }
 }
