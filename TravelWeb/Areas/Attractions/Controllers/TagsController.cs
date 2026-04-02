@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Attractions.Models;
+using TravelWeb.Filters;
 using TravelWeb.Models;
 
 namespace TravelWeb.Areas.Attractions.Controllers
 {
+    [AdminAuthorize]
     [Route("Attractions/[controller]/[action]")]
     public class TagsController : Controller
     {

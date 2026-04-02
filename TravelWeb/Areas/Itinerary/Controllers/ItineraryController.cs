@@ -2,9 +2,11 @@
 using System.Threading.Tasks;
 using TravelWeb.Areas.Itinerary.Models.Service;
 using TravelWeb.Areas.Itinerary.Models.ViewModel;
+using TravelWeb.Filters;
 
 namespace TravelWeb.Areas.Itinerary
 {
+    [AdminAuthorize]
     [Area("Itinerary")]
     public class ItineraryController : Controller
     {

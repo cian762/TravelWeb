@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Attractions.Models;
+using TravelWeb.Filters;
 
 namespace TravelWeb.Areas.Attractions.Controllers
 {
+    [AdminAuthorize]
     [Area("Attractions")]
     public class RecycleBinController : Controller
     {

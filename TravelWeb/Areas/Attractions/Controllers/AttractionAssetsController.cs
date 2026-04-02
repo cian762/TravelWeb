@@ -6,9 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System.IO;
 using TravelWeb.Areas.Attractions.Models;
+using TravelWeb.Filters;
+
 //0401更新
 namespace TravelWeb.Areas.Attractions.Controllers
 {
+    [AdminAuthorize]
     [Area("Attractions")]
     public class AttractionAssetsController : Controller
     {

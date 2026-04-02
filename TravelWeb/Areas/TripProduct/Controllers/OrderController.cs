@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TravelWeb.Areas.TripProduct.Services.InterSer;
+using TravelWeb.Filters;
 
 namespace TravelWeb.Areas.TripProduct.Controllers
 {
+    [AdminAuthorize]
     [Area("TripProduct")]
     public class OrderController : Controller
     {
+
         private readonly IOrder _order;
         public OrderController(IOrder order)
         {

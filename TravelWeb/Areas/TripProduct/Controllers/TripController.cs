@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using TravelWeb.Areas.TripProduct.Models;
 using TravelWeb.Areas.TripProduct.Models.ViewModels;
 using TravelWeb.Areas.TripProduct.Services.InterSer;
+using TravelWeb.Filters;
 
 namespace TravelWeb.Areas.TripProduct.Controllers
 {
+    [AdminAuthorize]
     [Area("TripProduct")]
     public class TripController : Controller
     {

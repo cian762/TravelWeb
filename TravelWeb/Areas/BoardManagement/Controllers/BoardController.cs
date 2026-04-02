@@ -6,12 +6,14 @@ using TravelWeb.Areas.BoardManagement.Models.BoardDB;
 using TravelWeb.Areas.BoardManagement.Models.IService;
 using TravelWeb.Areas.BoardManagement.Models.Service;
 using TravelWeb.Areas.BoardManagement.Models.ViewModel;
+using TravelWeb.Filters;
 using TravelWeb.Models;
 using static TravelWeb.Areas.BoardManagement.Models.ViewModel.PostCardModel;
 
 
 namespace TravelWeb.Areas.BoardManagement.Controllers
 {
+    [AdminAuthorize]
     [Area("BoardManagement")]
     public class BoardController : Controller
     {

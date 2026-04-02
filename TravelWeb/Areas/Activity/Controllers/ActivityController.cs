@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models.EFModel;
 using TravelWeb.Areas.Activity.Models.ViewModels;
 using TravelWeb.Areas.Activity.Service.IActivityServices;
+using TravelWeb.Filters;
 
 namespace TravelWeb.Areas.Activity.Controllers
 {
+    [AdminAuthorize]
     [Area("Activity")]
     [Route("Act")]
     public class ActivityController : Controller
