@@ -1,4 +1,4 @@
-﻿@model TravelWeb.Models.ComplaintRecord
+﻿@model TravelWeb.Models.MemberComplaint
 
 @{
     ViewData["Title"] = "客訴詳細內容";
@@ -9,7 +9,7 @@
         : "未知日期";
 
     // 判斷目前進度 (用於畫進度條)
-    int progressPercent = Model.Status switch
+    int progressPercent = @Model.Complaint?.Status switch
     {
         "已檢視" => 25,
         "已審核" => 50,
@@ -52,17 +52,17 @@
                                  aria-valuenow="@progressPercent" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                         <div class="text-center mt-2">
-                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">當前狀態：@Model.Status</span>
+                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">當前狀態：@Model.Complaint?.Status</span>
                         </div>
                     </div>
 
                     <hr />
 
                     <div class="mt-4">
-                        <p class="mb-2"><i class="bi bi-person-badge text-secondary"></i> <strong>申請會員：</strong> @Model.MemberCode</p>
+                        <p class="mb-2"><i class="bi bi-person-badge text-secondary"></i> <strong>申請會員：</strong> @Model.Member?.MemberCode</p>
                         <p class="mb-0">
                             <i class="bi bi-person-workspace text-secondary"></i> <strong>負責專員：</strong>
-                            @(string.IsNullOrEmpty(Model.AdminId) ? "尚未指派" : Model.AdminId)
+                            @(string.IsNullOrEmpty(@Model.Complaint?.AdminId) ? "尚未指派" : @Model.Complaint?.AdminId)
                         </p>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                 </div>
                 <div class="card-body px-4 pb-4">
                     <div class="p-4 bg-light rounded-3" style="min-height: 250px; font-size: 1.1rem; line-height: 1.8;">
-                        @if (string.IsNullOrEmpty(Model.Compensation))
+                        @if (string.IsNullOrEmpty(@Model.Complaint?.Compensation))
                         {
                             <div class="text-center text-muted mt-5">
                                 <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
@@ -87,7 +87,7 @@
                         else
                         {
                             <!-- 使用 Html.Raw() 保留換行格式，或用 pre 標籤包住 -->
-                            <span class="text-dark">@Model.Compensation</span>
+                            <span class="text-dark">@Model.Complaint?.Compensation</span>
                         }
                     </div>
                 </div>

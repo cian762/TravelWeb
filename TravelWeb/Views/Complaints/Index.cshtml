@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TravelWeb.Models.ComplaintRecord>
+﻿@model IEnumerable<TravelWeb.Models.MemberComplaint>
 
 @{
     ViewData["Title"] = "客訴案件管理";
@@ -68,7 +68,7 @@
                             : "未知日期";
 
                             // 根據狀態給予不同的顏色標籤 (Badge)
-                            string badgeClass = item.Status switch
+                            string badgeClass = @item.Complaint?.Status switch
                             {
                                 "已檢視" => "bg-secondary",
                                 "已審核" => "bg-warning text-dark",
@@ -80,19 +80,19 @@
                             <tr>
                                 <td class="ps-4 fw-bold text-primary">@item.ComplaintId</td>
                                 <td>@dateStr</td>
-                                <td>@item.MemberCode</td>
+                                <td>@item.Member?.MemberCode</td>
 
                                 <!-- 狀態欄位 -->
                                 <td>
                                     <!-- 如果是管理員，顯示下拉選單讓他可以快速修改 (這裡示範唯讀標籤，修改可另做獨立頁面) -->
                                     <span class="badge @badgeClass fs-6 px-3 py-2 rounded-pill shadow-sm">
-                                        @item.Status
+                                        @item.Complaint?.Status
                                     </span>
                                 </td>
 
                                 <!-- 指派專員 -->
                                 <td class="text-muted">
-                                    @(string.IsNullOrEmpty(item.AdminId) ? "尚未指派" : item.AdminId)
+                                    @(string.IsNullOrEmpty(@item.Complaint?.AdminId) ? "尚未指派" : @item.Complaint?.AdminId)
                                 </td>
 
                                 <!-- 操作按鈕：進入詳細頁面查看 Compensation -->
