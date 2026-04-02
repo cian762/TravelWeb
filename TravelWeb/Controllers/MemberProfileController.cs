@@ -2,134 +2,137 @@
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Models;
 using TravelWeb.ViewModels;
+using TravelWeb.Filters;
 
-public class MemberProfileController : Controller
+namespace TravelWeb.Controllers 
 {
-    private readonly MemberSystemContext _context;
-
-    public MemberProfileController(MemberSystemContext context)
+    [AdminAuthorize]
+    public class MemberProfileController : Controller
     {
-        _context = context;
-    }
+        private readonly MemberSystemContext _context;
 
-    public async Task<IActionResult> Index(string memberCode)
-    {
-        // 🔐 1️⃣ 檢查是否登入
-        var currentUserCode = HttpContext.Session.GetString("UserCode");
-        var role = HttpContext.Session.GetString("Role");
-
-        if (string.IsNullOrEmpty(currentUserCode))
+        public MemberProfileController(MemberSystemContext context)
         {
-            return RedirectToAction("Login", "Auth");
+            _context = context;
         }
 
-        if (string.IsNullOrEmpty(memberCode))
-            return NotFound();
-
-        var memberList = await _context.MemberLists
-            .FirstOrDefaultAsync(m => m.MemberCode == memberCode);
-
-        var memberInfo = await _context.MemberInformations
-            .FirstOrDefaultAsync(m => m.MemberCode == memberCode);
-
-        if (memberList == null || memberInfo == null)
-            return NotFound();
-
-        bool isOwner = currentUserCode == memberCode;
-        bool isAdmin = role == "Admin";
-
-        var viewModel = new MemberProfileViewModel
+        public async Task<IActionResult> Index(string memberCode)
         {
-            MemberId = memberInfo.MemberId,
-            Name = memberInfo.Name,
-            Status = memberInfo.Status,
-            AvatarUrl = memberInfo.AvatarUrl,
+            var currentUserCode = HttpContext.Session.GetString("UserCode");
+            var role = HttpContext.Session.GetString("Role");
 
-            // 🔥 只有本人或管理員可以看到 Email / Phone
-            Email = (isOwner || isAdmin) ? memberList.Email : null,
-            Phone = (isOwner || isAdmin) ? memberList.Phone : null,
+            if (string.IsNullOrEmpty(currentUserCode))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
 
-            IsOwner = isOwner,
-            IsAdmin = isAdmin
-        };
+            if (string.IsNullOrEmpty(memberCode))
+                return NotFound();
 
-        var currentUserId = HttpContext.Session.GetString("UserCode");
-
-        if (currentUserCode != null)
-        {
-            var currentUserInfo = await _context.MemberInformations
-                .FirstOrDefaultAsync(m => m.MemberCode == currentUserCode);
-
-            var targetUserInfo = await _context.MemberInformations
+            var memberList = await _context.MemberLists
                 .FirstOrDefaultAsync(m => m.MemberCode == memberCode);
 
-            if (currentUserInfo != null && targetUserInfo != null)
-            {
-                bool isBlocked = await _context.Blockeds.AnyAsync(b =>
-                    (b.MemberId == currentUserInfo.MemberId && b.BlockedId == targetUserInfo.MemberId) ||
-                    (b.MemberId == targetUserInfo.MemberId && b.BlockedId == currentUserInfo.MemberId));
+            var memberInfo = await _context.MemberInformations
+                .FirstOrDefaultAsync(m => m.MemberCode == memberCode);
 
-                if (isBlocked)
+            if (memberList == null || memberInfo == null)
+                return NotFound();
+
+            bool isOwner = currentUserCode == memberCode;
+            bool isAdmin = (role == "Admin" || role == "SuperAdmin");
+
+            var viewModel = new MemberProfileViewModel
+            {
+                MemberId = memberInfo.MemberId,
+                Name = memberInfo.Name,
+                Status = memberInfo.Status,
+                AvatarUrl = memberInfo.AvatarUrl,
+
+                Email = (isOwner || isAdmin) ? memberList.Email : null,
+                Phone = (isOwner || isAdmin) ? memberList.Phone : null,
+
+                IsOwner = isOwner,
+                IsAdmin = isAdmin
+            };
+
+            var currentUserId = HttpContext.Session.GetString("UserCode");
+
+            if (currentUserCode != null)
+            {
+                var currentUserInfo = await _context.MemberInformations
+                    .FirstOrDefaultAsync(m => m.MemberCode == currentUserCode);
+
+                var targetUserInfo = await _context.MemberInformations
+                    .FirstOrDefaultAsync(m => m.MemberCode == memberCode);
+
+                if (currentUserInfo != null && targetUserInfo != null)
                 {
-                    return View("BlockedView");
+                    bool isBlocked = await _context.Blockeds.AnyAsync(b =>
+                        (b.MemberId == currentUserInfo.MemberId && b.BlockedId == targetUserInfo.MemberId) ||
+                        (b.MemberId == targetUserInfo.MemberId && b.BlockedId == currentUserInfo.MemberId));
+
+                    if (isBlocked)
+                    {
+                        return View("BlockedView");
+                    }
                 }
             }
+
+            return View(viewModel);
         }
 
-        return View(viewModel);
-    }
 
 
-
-    [HttpPost]
-    public async Task<IActionResult> BlockUser(string blockedId, string reason)
-    {
-        var currentUserId = HttpContext.Session.GetString("UserCode");
-
-        if (string.IsNullOrEmpty(currentUserId))
-            return RedirectToAction("Login", "Auth");
-
-        // 防止重複封鎖
-        var alreadyBlocked = await _context.Blockeds.AnyAsync(b =>
-            b.MemberId == currentUserId &&
-            b.BlockedId == blockedId);
-
-        if (alreadyBlocked)
-            return RedirectToAction("Index", new { memberCode = blockedId });
-
-        var block = new Blocked
+        [HttpPost]
+        public async Task<IActionResult> BlockUser(string blockedId, string reason)
         {
-            MemberId = currentUserId,
-            BlockedId = blockedId,
-            BlockedDate = DateOnly.FromDateTime(DateTime.Now),
-            Reason = reason
-        };
+            var currentUserId = HttpContext.Session.GetString("UserCode");
 
-        _context.Blockeds.Add(block);
-        await _context.SaveChangesAsync();
+            if (string.IsNullOrEmpty(currentUserId))
+                return RedirectToAction("Login", "Auth");
 
-        return RedirectToAction("Index", new { memberCode = blockedId });
-    }
+            var alreadyBlocked = await _context.Blockeds.AnyAsync(b =>
+                b.MemberId == currentUserId &&
+                b.BlockedId == blockedId);
 
+            if (alreadyBlocked)
+                return RedirectToAction("Index", new { memberCode = blockedId });
 
-    [HttpPost]
-    public async Task<IActionResult> Unblock(string blockedId)
-    {
-        var currentUserId = HttpContext.Session.GetString("UserCode");
+            var block = new Blocked
+            {
+                MemberId = currentUserId,
+                BlockedId = blockedId,
+                BlockedDate = DateOnly.FromDateTime(DateTime.Now),
+                Reason = reason
+            };
 
-        var block = await _context.Blockeds.FirstOrDefaultAsync(b =>
-            b.MemberId == currentUserId &&
-            b.BlockedId == blockedId);
-
-        if (block != null)
-        {
-            _context.Blockeds.Remove(block);
+            _context.Blockeds.Add(block);
             await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", new { memberCode = blockedId });
         }
 
-        return RedirectToAction("Index", new { memberCode = blockedId });
-    }
 
+        [HttpPost]
+        public async Task<IActionResult> Unblock(string blockedId)
+        {
+            var currentUserId = HttpContext.Session.GetString("UserCode");
+
+            var block = await _context.Blockeds.FirstOrDefaultAsync(b =>
+                b.MemberId == currentUserId &&
+                b.BlockedId == blockedId);
+
+            if (block != null)
+            {
+                _context.Blockeds.Remove(block);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Index", new { memberCode = blockedId });
+        }
+
+
+    }
 
 }
 

@@ -72,7 +72,7 @@ namespace TravelWeb.Controllers
             string role = "Admin";
 
             HttpContext.Session.SetString("UserCode", user.MemberCode);
-            HttpContext.Session.SetString("Role", role);
+            HttpContext.Session.SetString("Role", "Admin");
 
             var loginRecord = new LogInRecord
             {
