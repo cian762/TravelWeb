@@ -11,10 +11,27 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
     public class Tripproducts : ITripproducts
     {
         private readonly TripDbContext _context;
-       public Tripproducts(TripDbContext context)
+        private readonly IWebHostEnvironment _env;
+
+       public Tripproducts(TripDbContext context, IWebHostEnvironment env)
         {
-           _context = context;
+            _context = context;
+            _env = env;
         }
+
+        private string GetImageFolder() 
+        {
+            var folder = Path.Combine(_env.WebRootPath, "PImages");
+
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            return folder;
+        }
+
+
         //這是行程商品新增的方法
         public async Task<int> Create(ViewModelProducts vm)
         {
@@ -27,17 +44,35 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
             trip.Status = "上架";
             trip.RegionId = vm.RegionId;
             trip.PolicyId = vm.PolicyId;
-            if (vm.ImageFile != null)
+
+
+
+            if (vm.ImageFile != null && vm.ImageFile.Length > 0)
             {
-                string folder = Path.Combine("wwwroot", "PImages");
-                string filename=Guid.NewGuid().ToString()+" "+vm.ImageFile.FileName;
-                string filepath= Path.Combine(folder, filename);
-                using (var stream = new FileStream(filepath, FileMode.Create))
+
+                //20260403 陳冠甫修改圖片上傳路徑，確保上雲後能正確存取圖片
+                var folderPath = GetImageFolder();
+                var originalFileName = Path.GetFileName(vm.ImageFile.FileName);
+                var extension = Path.GetExtension(originalFileName);
+                var fileName = $"{Guid.NewGuid():N}{extension}";
+                var filePath = Path.Combine(folderPath, fileName);
+
+                //string folder = Path.Combine("wwwroot", "PImages");
+
+                //string filename=Guid.NewGuid().ToString()+" "+vm.ImageFile.FileName;
+
+                //string filepath= Path.Combine(folder, filename);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                   await vm.ImageFile.CopyToAsync(stream);
                 }
-                trip.CoverImage = filename;
+
+                trip.CoverImage = fileName;
             }
+
+
+
             if (vm.SelectedTags != null && vm.SelectedTags.Any())
             {
                 trip.TravelTags = new List<TravelTag>();
@@ -182,27 +217,40 @@ namespace TravelWeb.Areas.TripProduct.Services.Implementation
             int oldDays = q.DurationDays ?? 1;
 
             // 3. 處理圖片更新與舊圖刪除
-            if (vm.ImageFile != null)
+            if (vm.ImageFile != null && vm.ImageFile.Length > 0)
             {
+
+                var folderPath = GetImageFolder();
+
+
                 // 💡 如果原本有舊圖，先從硬碟刪除，避免浪費空間
                 if (!string.IsNullOrEmpty(q.CoverImage))
                 {
-                    string oldPath = Path.Combine("wwwroot", "PImages", q.CoverImage);
-                    if (System.IO.File.Exists(oldPath))
+                    //20260403 陳冠甫修改圖片刪除路徑，確保上雲後能正確存取圖片
+                    var oldFilePath = Path.Combine(folderPath, q.CoverImage);
+
+                    //string oldPath = Path.Combine("wwwroot", "PImages", q.CoverImage);
+                    if (System.IO.File.Exists(oldFilePath))
                     {
-                        System.IO.File.Delete(oldPath);
+                        System.IO.File.Delete(oldFilePath);
                     }
                 }
 
-                string folder = Path.Combine("wwwroot", "PImages");
-                string filename = Guid.NewGuid().ToString() + "_" + vm.ImageFile.FileName;
-                string filepath = Path.Combine(folder, filename);
+                //20260403 陳冠甫修改圖片刪除路徑，確保上雲後能正確存取圖片
+                var originFileName = Path.GetFileName(vm.ImageFile.FileName);
+                var extension = Path.GetExtension(originFileName);
+                var newFileName = $"{Guid.NewGuid():N}{extension}";
+                var filePath = Path.Combine(folderPath, newFileName);
 
-                using (var stream = new FileStream(filepath, FileMode.Create))
+                //string folder = Path.Combine("wwwroot", "PImages");
+                //string filename = Guid.NewGuid().ToString() + "_" + vm.ImageFile.FileName;
+                //string filepath = Path.Combine(folder, filename);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await vm.ImageFile.CopyToAsync(stream);
                 }
-                q.CoverImage = filename;
+                q.CoverImage = newFileName;
             }
 
             // 4. 更新基本欄位 (放在天數刪除邏輯之後或記錄 oldDays 後)

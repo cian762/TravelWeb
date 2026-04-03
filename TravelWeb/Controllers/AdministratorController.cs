@@ -28,6 +28,8 @@ namespace TravelWeb.Controllers
 
         public IActionResult Profile()
         {
+
+            //20260403 陳冠甫先在資料庫建立假的管理員資料，因為缺乏管理員註冊功能
             var adminId = HttpContext.Session.GetString("AdminId");
 
             if (string.IsNullOrEmpty(adminId))
@@ -38,6 +40,7 @@ namespace TravelWeb.Controllers
             if (admin == null) return NotFound();
 
             return View(admin);
+
         }
     }
 }
