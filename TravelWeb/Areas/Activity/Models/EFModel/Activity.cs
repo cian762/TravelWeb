@@ -21,6 +21,8 @@ public partial class Activity
 
     public DateTime? UpdateAt { get; set; }
 
+    public bool? SoftDelete { get; set; }
+
     public virtual ActivityAnalytic? ActivityAnalytic { get; set; }
 
     public virtual ICollection<ActivityEditLog> ActivityEditLogs { get; set; } = new List<ActivityEditLog>();

@@ -1,4 +1,5 @@
-﻿@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.TripIndexViewModel>
+﻿@using System.Text.Json
+@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.TripIndexViewModel>
 
 @{
     ViewData["Title"] = "行程商品管理";
@@ -95,12 +96,12 @@
                         @* 💡 判斷是否為下架狀態 *@
                         bool isInactive = item.Status != "上架";
 
-                        <tr .style="@(isInactive ? "background-color: #f8f9fa !important; color: #adb5bd !important;" : "")">
+                        <tr style="@(isInactive ? "background-color: #f8f9fa !important; color: #adb5bd !important;" : "")">
                             <td class="ps-3 fw-bold">@item.TripProductId</td>
                             <td>
                                 @if (!string.IsNullOrEmpty(item.ImagePath))
                                 {
-                                    <img src="@item.ImagePath" class="img-thumbnail shadow-sm"
+                                    <img src="@Url.Content(item.ImagePath)" class="img-thumbnail shadow-sm"
                                          style="width: 120px; height: 80px; object-fit: cover; @(isInactive ? "filter: grayscale(100%); opacity: 0.5;" : "")" />
                                 }
                                 else
@@ -160,10 +161,10 @@
                                     @* 刪除：紅色邊框按鈕 *@
                                     <button type="button" class="btn d-flex align-items-center justify-content-center shadow-sm px-2"
                                             style="height: 45px; min-width: 75px; background-color: white; color: #e35d5d; border: 1.5px solid #e35d5d; white-space: nowrap;"
-                                            onclick="confirmDelete(@item.TripProductId, '@item.ProductName')">
+                                            onclick="confirmDelete(@item.TripProductId, @Html.Raw(JsonSerializer.Serialize(item.ProductName)))">
                                         <i class="fas fa-trash-alt me-2"></i><span>刪除</span>
                                     </button>
-                                    <form id="delete-form-@item.TripProductId" asp-action="PDelete" asp-method="post" style="display:none;">
+                                    <form id="delete-form-@item.TripProductId" asp-action="PDelete" method="post" style="display:none;">
                                         <input type="hidden" name="id" value="@item.TripProductId" />
                                         @Html.AntiForgeryToken()
                                     </form>

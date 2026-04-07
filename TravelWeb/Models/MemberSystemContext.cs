@@ -31,9 +31,6 @@ public partial class MemberSystemContext : DbContext
 
     public virtual DbSet<MemberList> MemberLists { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=.;Database=travel;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;");
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Administrator>(entity =>

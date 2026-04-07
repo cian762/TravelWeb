@@ -72,7 +72,11 @@ namespace TravelWeb.Controllers
             string role = "Admin";
 
             HttpContext.Session.SetString("UserCode", user.MemberCode);
-            HttpContext.Session.SetString("Role", "Admin");
+            HttpContext.Session.SetString("Role", role);
+
+            //20260403 陳冠甫在 HTTPContext 中補上一個欄位
+            HttpContext.Session.SetString("AdminId", "A123");
+
 
             var loginRecord = new LogInRecord
             {

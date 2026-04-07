@@ -35,7 +35,7 @@
                 $.getJSON('/Act/GetActivityInfo',{activityId: activityId},function (data)
                 {
                     TimeRanges.empty();
-                    var StartTime = `<label class="me-3 text-danger fs-4">起始時間: ${data.startTime}</label>`;
+                    var StartTime = `<label class="me-3 text-danger fs-4">開始時間: ${data.startTime}</label>`;
                     var EndTime = `<label class="text-danger fs-4">結束時間: ${data.endTime}</label>`;
                     TimeRanges.append(StartTime);
                     TimeRanges.append(EndTime);

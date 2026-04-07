@@ -2,6 +2,8 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
+using TravelWeb.Areas.Activity.Repository.ActivityRepositories;
+using TravelWeb.Areas.Activity.Repository.IActivityRepositories;
 using TravelWeb.Areas.Activity.Service.ActivityServices;
 using TravelWeb.Areas.Activity.Service.IActivityServices;
 using TravelWeb.Areas.Attractions.Models;
@@ -30,6 +32,23 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true; // 提高安全性
     options.Cookie.IsEssential = true;
 });
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontEnd", policy =>
+    {
+        policy.WithOrigins(
+            "https://localhost:7276",
+            "https://taiwanstory.site")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
+
+#region DI服務註冊
 //行程商品連線DI
 builder.Services.AddDbContext<TripDbContext>(O => O.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 //行程商品主頁用DI
@@ -70,18 +89,22 @@ builder.Services.AddDbContext<AttractionsContext>(options =>
 
 
 //ActivityDBcontext 服務註冊
-builder.Services.AddDbContext<ActivityDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
-);
+builder.Services.AddDbContext<ActivityDbContext>(options => 
+options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
+builder.Services.AddScoped<IActivityInfoRepository, ActivityInfoRepository>();
+builder.Services.AddScoped<IActivityInfoService, ActivityInfoService>();
+builder.Services.AddScoped<IActivityTicketReposiotry, ActivityTicketRepository>();
+builder.Services.AddScoped<IActivityTicketService, ActivityTicketService>();
+
 
 //Member
 builder.Services.AddDbContext<MemberSystemContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
 
 //Cloudinary 服務註冊
-builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinaryGFC"));
 builder.Services.AddScoped<IPhotoService, PhotoService>();
-
+#endregion
 
 
 
@@ -91,14 +114,17 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+
+
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseCors("AllowFrontEnd");
 
 // ==========================================
 // 🔥 2. 啟用 Session 中介軟體 (位置非常重要！)
@@ -106,29 +132,17 @@ app.UseRouting();
 // ==========================================
 app.UseSession();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 
-
-app.UseAuthorization();
-
-
-app.MapAreaControllerRoute("app", "Activity", "{controller}/{action}");
-
-// Area ��ѳ]�w (������b�w�]��ѤW��)
 app.MapControllerRoute(
     name: "MyAreas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-// Area ��ѳ]�w (��{�ӫ~)
-app.MapControllerRoute(
-     name: "Trip",
-     pattern: "{area:exists}/{controller=Trip}/{action=index}/{id?}"
-    );
-
+// 沒有 Area 的路由印設
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}"); // 這是我們剛剛改好的預設進入登入頁
-
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

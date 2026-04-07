@@ -4,6 +4,14 @@
     ViewData["Title"] = "活動 | 商品總覽";
 }
 
+@section Styles{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+
+    </style>
+}
+
+
 <div class="container-fluid px-5">
 
     <h1>活動商品總覽</h1>
@@ -14,6 +22,9 @@
     <table id="myTable" class="table table-hover">
         <thead class="thead-dark">
             <tr>
+                <th>
+                    資源操作
+                </th>
                 <th>
                     @Html.DisplayNameFor(model => model[0].ProductCode)
                 </th>
@@ -42,10 +53,22 @@
             {
                 <tr>
                     <td>
-                        <a asp-area="Activity" asp-controller="Activity" asp-action="TicketEdit" asp-route-ProductCode="@item.ProductCode">@item.ProductCode</a>
+                        <div class="fs-4 d-flex justify-content-center align-items-center gap-3">
+                            <a asp-area="Activity" asp-controller="Activity" asp-action="" asp-route-id="@item.ProductCode"
+                               class="text-primary d-inline-flex align-items-center">
+                                <i class="bi bi-info-square"></i>
+                            </a>
+                            <a asp-area="Activity" asp-controller="Activity" asp-action="TicketEdit" asp-route-ProductCode="@item.ProductCode"
+                               class="text-primary d-inline-flex align-items-center">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                        </div>
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.ProductName)
+                        @item.ProductCode
+                    </td>
+                    <td>
+                        <strong>@Html.DisplayFor(modelItem => item.ProductName)</strong>
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.TicketCategoryName)

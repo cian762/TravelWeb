@@ -12,14 +12,24 @@ namespace TravelWeb.Areas.Activity.Controllers
     [Route("Act")]
     public class ActivityController : Controller
     {
+        private readonly ActivityDbContext _dbcontext;
 
-        private readonly ActivityDbContext _dbContext;
-        private readonly IPhotoService _photoService;
+        private readonly IActivityInfoService _activityInfoService;
 
-        public ActivityController(ActivityDbContext dbContext,IPhotoService photoService)
+        private readonly IActivityTicketService _activityTicketService;
+
+        private List<string> TypeNameCollection { get; set; }
+
+        private List<string> RegionNameCollection { get; set; }
+
+        public ActivityController(IActivityInfoService activityInfoService,IActivityTicketService activityTicketService,ActivityDbContext dbcontext)
         {
-            _dbContext = dbContext;
-            _photoService = photoService;
+            _activityInfoService = activityInfoService;
+            _activityTicketService = activityTicketService;
+            _dbcontext = dbcontext;
+
+            TypeNameCollection = _activityInfoService.ProvideTypeTag();
+            RegionNameCollection = _activityInfoService.ProvideRegionTag();
         }
 
 
@@ -27,33 +37,19 @@ namespace TravelWeb.Areas.Activity.Controllers
         [HttpGet("Activities")]
         public async Task<IActionResult> Index()
         {
-            var acts = await _dbContext.Activities.Select(m => new ActivityEditViewModel
-            {
-                ActivityId = m.ActivityId,
-                Title = m.Title,
-                StartTime = m.StartTime,
-                EndTime = m.EndTime,
-                Address = m.Address,
-                Description = m.Description,
-                OfficialLink = m.OfficialLink,
-                UpdateAt = m.UpdateAt,
-                RegionName = m.Regions.Select(r => r.RegionName).ToList(),
-                TypeName = m.Types.Select(t => t.ActivityType).ToList()
-            }).ToListAsync();
+            var data = await _activityInfoService.GetAllActInfoAsync();
 
-            return View(acts);
+            return View(data);
         }
 
 
         //新增活動 GET
         [HttpGet("Activity")]
-        public IActionResult ActivityCreate() 
+        public IActionResult ActivityCreate()
         {
             //Checkbox 填入資料用
-            var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
-            var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
-            ViewData["Type"] = Type;
-            ViewData["Region"] = Region;
+            ViewData["Type"] = TypeNameCollection;
+            ViewData["Region"] = RegionNameCollection;
 
             return View("Create");
         }
@@ -61,82 +57,28 @@ namespace TravelWeb.Areas.Activity.Controllers
         //新增活動 POST
         [HttpPost("Activity")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ActivityCreate(ActivityEditViewModel vm, List<IFormFile> images)
+        public async Task<IActionResult> ActivityCreate(ActivityInfoViewModel vm, List<IFormFile> images)
         {
+            ViewData["Type"] = TypeNameCollection;
+            ViewData["Region"] = RegionNameCollection;
+            
             // 1. 如果驗證失敗，立即準備下拉選單資料並回傳
             if (!ModelState.IsValid)
-            { 
-                ViewData["Type"] = await _dbContext.TagsActivityTypes.Select(m => m.ActivityType).ToListAsync();
-                ViewData["Region"] = await _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName).ToListAsync();
+            {
                 return View("Create", vm);
             }
 
             try
             {
-                // 2. 建立 Entity 實體
-                var act = new Models.EFModel.Activity()
-                {
-                    Title = vm.Title,
-                    StartTime = vm.StartTime,
-                    EndTime = vm.EndTime,
-                    Address = vm.Address,
-                    OfficialLink = vm.OfficialLink,
-                    Description = vm.Description,
-                    UpdateAt = DateTime.Now,
-                };
-
-                // 3. 處理多對多關聯 - 類型
-                if (vm.TypeName != null && vm.TypeName.Any())
-                {
-                    var selectedTypes = await _dbContext.TagsActivityTypes
-                                            .Where(t => vm.TypeName.Contains(t.ActivityType))
-                                            .ToListAsync();
-                    foreach (var t in selectedTypes)
-                    {
-                        act.Types.Add(t);
-                    }
-                }
-
-                // 4. 處理多對多關聯 - 區域
-                if (vm.RegionName != null && vm.RegionName.Any())
-                {
-                    var selectedRegions = await _dbContext.TagsRegions
-                                              .Where(r => vm.RegionName.Contains(r.RegionName))
-                                              .ToListAsync();
-                    foreach (var r in selectedRegions)
-                    {
-                        act.Regions.Add(r); 
-                    }
-                }
-
-                //照片存取到雲端，資料庫只存網址
-                if (images !=null && images.Count > 0) 
-                {
-                    foreach (var image in images)
-                    {
-                        var result = await _photoService.AddPhotoAsync(image);
-
-                        act.ActivityImages.Add(new ActivityImage
-                        {
-                            ImageUrl = result.SecureUrl.AbsoluteUri,
-                            PublicId = result.PublicId,
-                        });
-                    }
-                }
-
-                // 5. 存檔
-                _dbContext.Activities.Add(act);
-                await _dbContext.SaveChangesAsync();
+                await _activityInfoService.CreateActInfoAsync(vm, images);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                // 建議記錄錯誤訊息 ex.Message，方便除錯
+                //// 建議記錄錯誤訊息 ex.Message，方便除錯
                 ModelState.AddModelError("", "資料庫存檔失敗：" + ex.Message);
 
-                // 重新填入 ViewData 供頁面顯示
-                ViewData["Type"] = await _dbContext.TagsActivityTypes.Select(m => m.ActivityType).ToListAsync();
-                ViewData["Region"] = await _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName).ToListAsync();
+                //// 重新填入 ViewData 供頁面顯示
                 return View("Create", vm);
             }
         }
@@ -145,220 +87,117 @@ namespace TravelWeb.Areas.Activity.Controllers
 
         //活動內容修改 GET
         [HttpGet("Activity/{id}")]
-        public IActionResult ActivityEdit(int id) 
+        public async Task<IActionResult> ActivityEdit(int id)
         {
             //Checkbox 填入資料用
-            var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
-            var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
-            ViewData["Type"] = Type;
-            ViewData["Region"] = Region;
+
+            ViewData["Type"] = TypeNameCollection;
+            ViewData["Region"] = RegionNameCollection;
 
             //撈取活動總表資料,並包裝成 ViewModel
-            
-            var act = _dbContext.Activities
-                .Where(m => m.ActivityId == id)
-                .Select(m => new ActivityEditViewModel 
-                {
-                    ActivityId = m.ActivityId,
-                    Title = m.Title,
-                    StartTime = m.StartTime,
-                    EndTime = m.EndTime,
-                    Address = m.Address,
-                    Description = m.Description,
-                    OfficialLink = m.OfficialLink,
-                    RegionName = m.Regions.Select(r => r.RegionName).ToList(),
-                    TypeName = m.Types.Select(t => t.ActivityType).ToList(),
-                    ImgUrls = m.ActivityImages.Where(i => i.ActivityId == m.ActivityId).Select(u => u.ImageUrl).ToList(),
-                }).FirstOrDefault();
 
+            var act = await _activityInfoService.GetActInfoByIdAsync(id);
 
             if (act == null)
             {
                 return NotFound();
             }
 
-            return View("Edit",act);
+            return View("Edit", act);
         }
 
         //活動內容修改 POST
         [HttpPost("Activity/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ActivityEdit(int id, ActivityEditViewModel vm, List<IFormFile> images, List<string> DeletedUrls)
+        public async Task<IActionResult> ActivityEdit(int id, ActivityInfoViewModel vm, List<IFormFile> images, List<string> DeletedUrls)
         {
+            ViewData["Type"] = TypeNameCollection;
+            ViewData["Region"] = RegionNameCollection;
+
             // 1. 安全檢查：確保網址 ID 與表單內容一致
             if (id != vm.ActivityId)
             {
                 return BadRequest();
             }
-            
+
             if (!ModelState.IsValid)
             {
-                var Type = _dbContext.TagsActivityTypes.Select(m => m.ActivityType);
-                var Region = _dbContext.TagsRegions.Where(m => m.Uid == null).Select(m => m.RegionName);
-                ViewData["Type"] = Type;
-                ViewData["Region"] = Region;
                 return View("Edit", vm);
             }
 
-            var act = await _dbContext.Activities
-                    .Include(a => a.Types)
-                    .Include(a => a.Regions)
-                    .Include(a => a.ActivityImages)
-                    .FirstOrDefaultAsync(a => a.ActivityId == vm.ActivityId);
-
-            if (act == null) return NotFound();
-
-            // 2. 更新基本欄位 (解包 ViewModel)
-            act.Title = vm.Title;
-            act.StartTime = vm.StartTime;
-            act.EndTime = vm.EndTime;
-            act.OfficialLink = vm.OfficialLink;
-            act.Address = vm.Address;
-            act.Description = vm.Description;
-
-            // 3. 處理標籤更新 (重要！)
-            // 先清空舊有的關聯 (如果是多對多)
-            act.Types.Clear();
-
-            // 根據 ViewModel 的內容，去資料庫找出對應的標籤物件
-            // 假設 vm.TypeName 現在是 List<string> 或單一字串
-            if (vm.TypeName != null && vm.TypeName.Any()) 
+            try
             {
-                var selectedTypes = await _dbContext.TagsActivityTypes
-                .Where(t => vm.TypeName.Contains(t.ActivityType))
-                .ToListAsync();
-
-                foreach (var t in selectedTypes)
-                {
-                    act.Types.Add(t); // 加入新的關聯
-                }
+                await _activityInfoService.EditActInfoAsync(vm, images, DeletedUrls);
+                return RedirectToAction(nameof(Index));
             }
-
-
-
-            act.Regions.Clear();
-
-            if (vm.RegionName != null && vm.RegionName.Any()) 
+            catch (Exception ex)
             {
-                var selectedRegions = await _dbContext.TagsRegions
-                .Where(r => vm.RegionName.Contains(r.RegionName))
-                .ToListAsync();
+                //// 建議記錄錯誤訊息 ex.Message，方便除錯
+                ModelState.AddModelError("", "資料庫存檔失敗：" + ex.Message);
 
-                foreach (var r in selectedRegions)
-                {
-                    act.Regions.Add(r); // 加入新的關聯
-                }
+                //// 重新填入 ViewData 供頁面顯示
+                return View("Edit", vm);
             }
-
-
-            //以下開始為照片處理
-            
-            //新增照片
-            if (images != null && images.Count > 0)
-            {
-                if (act.ActivityImages == null) 
-                {
-                    act.ActivityImages = new List<ActivityImage>();
-                }
-
-                foreach (var image in images)
-                {
-                    var result = await _photoService.AddPhotoAsync(image);
-                    if (result.Error == null) // 確保上傳成功
-                    {
-                        act.ActivityImages.Add(new ActivityImage
-                        {
-                            ImageUrl = result.SecureUrl.AbsoluteUri,
-                            PublicId = result.PublicId,
-                        });
-                    }
-                }
-            }
-
-            //移除現有照片
-            if (DeletedUrls != null && DeletedUrls.Any())
-            {
-                foreach (var url in DeletedUrls)
-                {
-                    // 從已經 Include 的集合中找，減少資料庫查詢次數
-                    var photoToRemove = act.ActivityImages.FirstOrDefault(u => u.ImageUrl == url);
-
-                    if (photoToRemove != null)
-                    {
-                        //呼叫 Service 刪除圖床中實體檔案
-                        if (!string.IsNullOrEmpty(photoToRemove.PublicId))
-                        {
-                            await _photoService.DeletePhotoAsync(photoToRemove.PublicId);
-                        }
-                        _dbContext.ActivityImages.Remove(photoToRemove);
-                    }
-                }
-            }
-
-            // 4. 儲存
-            act.UpdateAt = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-                
         }
 
 
-
+        //活動軟刪除
+        [HttpPost("Activity/Delete/{id}")]
+        public async Task<IActionResult> ActivitySoftDelete(int id) 
+        {
+            await _activityInfoService.DeleteActInfoAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
 
 
 
         //活動票卷總覽 GET
         [HttpGet("Tickets")]
-        public async Task<IActionResult> TicketManage() 
+        public async Task<IActionResult> TicketManage()
         {
-            var vm = await _dbContext.AcitivityTickets
-                .Select(t => new ActivityTicketViewModel
-                {
-                    ProductCode = t.ProductCode,
-                    ProductName = t.ProductName,
-                    TicketCategoryName = t.TicketCategory!.CategoryName,
-                    StartDate = t.StartDate,
-                    ExpiryDate = t.ExpiryDate,
-                    CurrentPrice = t.CurrentPrice,
-                    Status = t.Status,
-                }).ToListAsync();
-
-            return View("Ticket",vm);
+            var vm = await _activityTicketService.GetAllActTicketsAsync();
+            return View("Ticket", vm);
         }
 
 
 
 
-        //活動票劵新增 GET
+        ////活動票劵新增 GET
         [HttpGet("Ticket")]
-        public async Task<IActionResult> TicketCreate() 
+        public async Task<IActionResult> TicketCreate()
         {
-            var ActivityInfo = await _dbContext.Activities.Select(a => new 
+
+            var act = await _activityInfoService.GetAllActInfoAsync();
+
+            var ActivityInfo = act.Select(a =>
+            new
             {
                 ActivityId = a.ActivityId,
                 ActivityName = a.Title
-            }).ToListAsync();
+            })
+            .ToList();
 
-
-            ViewData["TicketCategory"] = await _dbContext.TicketCategories.Select(c => c.CategoryName).ToListAsync();
-            ViewData["Status"] = new List<string>(){ "預告中","販售中","已售完","已下架" };
+            ViewData["TicketCategory"] = await _activityTicketService.TakeTicketCategoryNames();
             ViewData["ActivityInfo"] = ActivityInfo;
+            ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
             return View();
         }
 
+
+
         //AJAX 拉商品資料用 Action
         [HttpGet("GetProductInfo")]
-        public async Task<IActionResult> GetProductsByActivity(int activityId) 
+        public async Task<IActionResult> GetProductsByActivity(int activityId)
         {
-            var products = await _dbContext.AcitivityTickets
-                .Where(a => a.ActivityTicketDetail!.ActivityId == activityId)
-                .Select(p => new
-                {
-                    name = p.ProductName,
-                    category = p.TicketCategory!.CategoryName,
-                    price = p.CurrentPrice,
-                    status = p.Status
-                }).ToListAsync();
+            var ticket = await _activityTicketService.GetActTicketByActIdAsync(activityId);
+            
+            var products = ticket.Select(p => new
+            {
+                name = p.ProductName,
+                category = p.TicketCategory!.CategoryName,
+                price = p.CurrentPrice,
+                status = p.Status
+            }).ToList();
 
             return Json(products);
         }
@@ -368,15 +207,9 @@ namespace TravelWeb.Areas.Activity.Controllers
         [HttpGet("GetActivityInfo")]
         public async Task<IActionResult> GetTimeByActivity(int activityId)
         {
-            var result = await _dbContext.Activities
-                .Where(a => a.ActivityId == activityId)
-                .Select(a => new
-                {
-                    startTime = a.StartTime,
-                    endTime = a.EndTime
-                }).FirstOrDefaultAsync();
+            var result = await _activityInfoService.GetActInfoByIdAsync(activityId);
 
-            return Json(result);
+            return Json( new { startTime = result?.StartTime, endTime = result?.EndTime } );
         }
 
 
@@ -384,79 +217,26 @@ namespace TravelWeb.Areas.Activity.Controllers
         [HttpPost("Ticket")]
         public async Task<IActionResult> TicketCreate(ActivityTicketViewModel ticket)
         {
+            var act = await _activityInfoService.GetAllActInfoAsync();
+
+            var ActivityInfo = act.Select(a =>
+            new
+            {
+                ActivityId = a.ActivityId,
+                ActivityName = a.Title
+            })
+            .ToList();
+
+            ViewData["TicketCategory"] = await _activityTicketService.TakeTicketCategoryNames();
+            ViewData["ActivityInfo"] = ActivityInfo;
+            ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
+
             if (!ModelState.IsValid)
             {
                 return View(ticket);
             }
 
-            var ActivityInfo = await _dbContext.Activities.Select(a => new
-            {
-                ActivityId = a.ActivityId,
-                ActivityName = a.Title
-            }).ToListAsync();
-
-            ViewData["TicketCategory"] = await _dbContext.TicketCategories.Select(c => c.CategoryName).ToListAsync();
-            ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
-            ViewData["ActivityInfo"] = ActivityInfo;
-            
-
-
-            // 新產品 ProductCode 定義
-            var lastProductCode = await _dbContext.AcitivityTickets
-                .OrderByDescending(p => p.ProductCode)
-                .Select(p => p.ProductCode)
-                .FirstOrDefaultAsync();
-
-
-            string newProductCode;
-
-            if (string.IsNullOrEmpty(lastProductCode))
-            {
-                newProductCode = "ACT-0001";
-            }
-            else 
-            {
-                if (int.TryParse(lastProductCode.Substring(4), out int lastNumber))
-                {
-                    int nextNumber = lastNumber + 1;
-                    newProductCode = $"ACT-{nextNumber:D4}";
-                }
-                else 
-                {
-                    newProductCode = "ACT-0001";
-                }
-            }
-
-            // 將 VM mapping 到 EF model
-
-            var activtiyName = await _dbContext.Activities.Where(a => a.ActivityId == ticket.AcivityId).Select(p => p.Title).FirstOrDefaultAsync();
-
-            var product = new AcitivityTicket()
-            {
-                ProductCode = newProductCode,
-                ProductName = $"{activtiyName} | {ticket.TicketCategoryName}",
-                TicketCategoryId = await _dbContext.TicketCategories.Where(t => t.CategoryName == ticket.TicketCategoryName).Select(p => p.TicketCategoryId).FirstOrDefaultAsync(),
-                StartDate = ticket.StartDate,
-                ExpiryDate = ticket.ExpiryDate,
-                CurrentPrice = ticket.CurrentPrice,
-                Status = ticket.Status
-            };
-
-           
-
-            var productDetail = new ActivityTicketDetail()
-            {
-                ProductCode = newProductCode,
-                ActivityId = await _dbContext.Activities.Where(a => a.ActivityId == ticket.AcivityId).Select(p => p.ActivityId).FirstOrDefaultAsync(),
-                ProdcutDescription = ticket.ProdcutDescription,
-                TermsOfService = ticket.TermsOfService
-            };
-
-
-            //寫回資料庫
-            _dbContext.AcitivityTickets.Add(product);
-            _dbContext.ActivityTicketDetails.Add(productDetail);
-            await _dbContext.SaveChangesAsync();
+            await _activityTicketService.CreateActTicketAsync(ticket);
 
             return RedirectToAction(nameof(TicketCreate));
         }
@@ -467,59 +247,46 @@ namespace TravelWeb.Areas.Activity.Controllers
 
         //活動票券修改 GET
         [HttpGet("Ticket/{ProductCode}")]
-        public async Task<IActionResult> TicketEdit(string ProductCode) 
+        public async Task<IActionResult> TicketEdit(string ProductCode)
         {
-            var ActivityInfo = await _dbContext.Activities.Select(a => new
-            {
+            var act = await _activityInfoService.GetAllActInfoAsync();
+
+            var ActivityInfo = act.Select(a => 
+            new {
                 ActivityId = a.ActivityId,
                 ActivityName = a.Title
-            }).ToListAsync();
+            })
+            .ToList();
 
             ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
             ViewData["ActivityInfo"] = ActivityInfo;
 
+            var product = await _activityTicketService.GetActTicketByProductCodeAsync(ProductCode);
 
-
-            var product = await _dbContext.AcitivityTickets
-                .Where(p => p.ProductCode == ProductCode)
-                .Select(p => new ActivityTicketViewModel
-                {
-                    ProductCode = p.ProductCode,
-                    ProductName = p.ProductName,
-                    TicketCategoryName = p.TicketCategory!.CategoryName,
-                    CurrentPrice = p.CurrentPrice,
-                    Status = p.Status,
-                    StartDate = p.StartDate,
-                    ExpiryDate = p.ExpiryDate,
-                    ProdcutDescription = p.ActivityTicketDetail!.ProdcutDescription,
-                    TermsOfService = p.ActivityTicketDetail.TermsOfService,
-                    AcivityId = p.ActivityTicketDetail.ActivityId,
-                   
-                })
-                .FirstOrDefaultAsync();
-
-            return View("TicketEdit",product);
+            return View("TicketEdit", product);
         }
 
 
         //活動票券修改 POST
         [HttpPost("Ticket/{ProductCode}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TicketEdit(string ProductCode, ActivityTicketViewModel ticket) 
+        public async Task<IActionResult> TicketEdit(string ProductCode, ActivityTicketViewModel ticket)
         {
-            if (ProductCode != ticket.ProductCode) 
+            if (ProductCode != ticket.ProductCode)
             {
                 return BadRequest();
             }
 
-
-            if (!ModelState.IsValid) 
+            if (!ModelState.IsValid)
             {
-                var ActivityInfo = await _dbContext.Activities.Select(a => new
-                {
+                var act = await _activityInfoService.GetAllActInfoAsync();
+
+                var ActivityInfo = act.Select(a =>
+                new {
                     ActivityId = a.ActivityId,
                     ActivityName = a.Title
-                }).ToListAsync();
+                })
+                .ToList();
 
                 ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
                 ViewData["ActivityInfo"] = ActivityInfo;
@@ -527,46 +294,8 @@ namespace TravelWeb.Areas.Activity.Controllers
                 return View("TicketEdit", ticket);
             }
 
+            await _activityTicketService.EditActTicketAsync(ProductCode, ticket);
 
-
-            var OriginTicket = await _dbContext.AcitivityTickets
-                .FirstOrDefaultAsync(t => t.ProductCode == ticket.ProductCode);
-
-            
-            OriginTicket!.CurrentPrice = ticket.CurrentPrice;
-            OriginTicket!.Status = ticket.Status;
-            OriginTicket!.StartDate = ticket.StartDate;
-            OriginTicket!.ExpiryDate = ticket.ExpiryDate;
-
-
-
-            var OriginTicketDetail = await _dbContext.ActivityTicketDetails
-                .FirstOrDefaultAsync(d => d.ProductCode == ticket.ProductCode);
-
-            OriginTicketDetail!.ProdcutDescription = ticket.ProdcutDescription;
-            OriginTicketDetail!.TermsOfService = ticket.TermsOfService;
-
-
-            try
-            {
-                await _dbContext.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                ModelState.AddModelError("", "更新失敗: " + ex.Message);
-
-                var ActivityInfo = await _dbContext.Activities.Select(a => new
-                {
-                    ActivityId = a.ActivityId,
-                    ActivityName = a.Title
-                }).ToListAsync();
-
-                ViewData["Status"] = new List<string>() { "預告中", "販售中", "已售完", "已下架" };
-                ViewData["ActivityInfo"] = ActivityInfo;
-
-                return View("TicketEdit", ticket);
-
-            }
             return RedirectToAction(nameof(TicketManage));
         }
 
@@ -578,16 +307,50 @@ namespace TravelWeb.Areas.Activity.Controllers
 
         // 活動排程設定
         [HttpGet("Schedule")]
-        public IActionResult ActivitySetUp() 
+        public IActionResult ActivitySetUp()
         {
-            return View();
+            var plan = _dbcontext.ActivityPublishStatuses
+                .Include(a => a.Activity)
+                .Select(a => new ActivityScheduleViewModel
+                {
+                    Title = a.Activity.Title,
+                    StartTime = a.Activity.StartTime,
+                    EndTime = a.Activity.EndTime,
+                    PublishTime = a.PublishTime,
+                    UnPublishTime = a.UnPublishTime,
+                    Status = a.Status
+                }).ToList();
+
+            return View("Schedule", plan);
         }
 
-        [HttpPost("Schedule")]
-        public IActionResult ActivitySetUp(int a) 
+
+
+        [HttpGet("GetScheduleInfo")]
+        // AJAX 拉取資料放到 FullCalendar
+        public IActionResult GetScheduleInfo() 
         {
-            return RedirectToAction(nameof(ActivitySetUp));
+            var plan = _dbcontext.ActivityPublishStatuses
+                   .Include(a => a.Activity)
+                   .Select(a => new 
+                   {
+                       title = a.Activity.Title,
+                       start = a.PublishTime,
+                       end = a.UnPublishTime,
+                       allDay = true,
+                   }).ToList();
+            return Json(plan);
         }
+
+
+
+        //[HttpPost("Schedule")]
+        //public IActionResult ActivitySetUp(int a) 
+        //{
+        //    return RedirectToAction(nameof(ActivitySetUp));
+        //}
+
+
 
         //活動熱度分析
 

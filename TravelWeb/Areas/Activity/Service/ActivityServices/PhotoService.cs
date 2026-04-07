@@ -15,31 +15,42 @@ namespace TravelWeb.Areas.Activity.Service.ActivityServices
             _cloudinary = new Cloudinary(acc);
         }
 
-        public async Task<ImageUploadResult> AddPhotoAsync(IFormFile file)
+        public async Task<List<ImageUploadResult>> AddPhotoAsync(List<IFormFile> file)
         {
             var uploadResult = new ImageUploadResult();
-            if (file.Length > 0) 
+            var resultCollection = new List<ImageUploadResult>();
+
+            if (file != null && file.Any()) 
             {
-                using var stream = file.OpenReadStream();
-                var uploadParams = new ImageUploadParams
+                foreach (var f in file) 
                 {
-                    File = new FileDescription(file.FileName, stream),
-                    Transformation = new Transformation().Width(1000).Crop("fit")
-                };
-                uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    using var stream = f.OpenReadStream();
+                    var uploadParams = new ImageUploadParams
+                    {
+                        File = new FileDescription(f.FileName, stream),
+                        Transformation = new Transformation().Width(1000).Crop("fit")
+                    };
+                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    resultCollection.Add(uploadResult);
+                }
             }
-            return uploadResult;
+            return resultCollection;
         }
 
-        public async Task<DeletionResult> DeletePhotoAsync(string publicId)
+        public async Task DeletePhotoAsync(List<string>? publicIds)
         {
-            // 建立刪除參數
-            var deleteParams = new DeletionParams(publicId);
 
-            // 呼叫 Cloudinary API 執行刪除
-            var result = await _cloudinary.DestroyAsync(deleteParams);
+            if (publicIds == null || !publicIds.Any()) return;
 
-            return result;
+            var delParams = new DelResParams()
+            {
+                PublicIds = publicIds,
+                Type = "upload",
+                ResourceType = ResourceType.Image
+            };
+
+            var result = await _cloudinary.DeleteResourcesAsync(delParams);
+
         }
     }
 }

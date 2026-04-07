@@ -3,21 +3,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TravelWeb</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - Taiwan Story</title>
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/TravelWeb.styles.css" asp-append-version="true" />
-    <link rel="icon"
-          href="~/css/assets/img/kaiadmin/favicon.ico"
-          type="image/x-icon" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="icon" href="~/assets/img/kaiadmin/favicon.ico" type="image/x-icon" />
 
     <!-- Fonts and icons -->
-    <link rel="stylesheet" href="~/css/RemixIcon/remixicon.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <script src="~/css/assets/js/plugin/webfont/webfont.min.js"></script>
+    <script src="~/assets/js/plugin/webfont/webfont.min.js"></script>
     <script>
         WebFont.load({
           google: { families: ["Public Sans:300,400,500,600,700"] },
@@ -28,7 +22,7 @@
               "Font Awesome 5 Brands",
               "simple-line-icons",
             ],
-            urls: ["/css/assets/css/fonts.min.css"],
+            urls: ["@Url.Content("~/assets/css/fonts.min.css")"],
           },
           active: function () {
             sessionStorage.fonts = true;
@@ -37,12 +31,10 @@
     </script>
 
     <!-- CSS Files -->
-    <link rel="stylesheet" href="/css/assets/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/css/assets/css/plugins.min.css" />
-    <link rel="stylesheet" href="/css/assets/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="~/assets/css/kaiadmin.min.css" />
     @* 公版修改 *@
-    <!-- CSS Just for demo purpose, don't include it in your project -->
-    <link rel="stylesheet" href="/css/assets/css/demo.css" />
     @RenderSection("Styles", required: false)
 </head>
 
@@ -53,12 +45,8 @@
             <div class="sidebar-logo">
                 <!-- Logo Header -->
                 <div class="logo-header" data-background-color="dark">
-                    <a asp-controller="Home" asp-action="Index" class="logo">
-                        @* 暫時修改為連回主頁 *@
-                        <img src="assets/img/kaiadmin/logo_light.svg"
-                             alt="navbar brand"
-                             class="navbar-brand"
-                             height="20" />
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="logo">
+                        <p class="text-white fs-3">Taiwan Story 後台</p>
                     </a>
                     <div class="nav-toggle">
                         <button class="btn btn-toggle toggle-sidebar">
@@ -86,15 +74,6 @@
                                 <p>Dashboard</p>
                                 <span class="caret"></span>
                             </a>
-                            <div class="collapse" id="dashboard">
-                                <ul class="nav nav-collapse">
-                                    <li>
-                                        <a href="../demo1/index.html">
-                                            <span class="sub-item">Dashboard 1</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
                         </li>
                         <li class="nav-section">
                             <span class="sidebar-mini-icon">
@@ -111,22 +90,22 @@
                             <div class="collapse" id="base">
                                 <ul class="nav nav-collapse">
                                     <li>
-                                        <a asp-controller="MemberManage" asp-action="Index">
+                                        <a asp-area="" asp-controller="MemberManage" asp-action="Index">
                                             <span class="sub-item">會員清單檢視</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a asp-controller="Administrator" asp-action="Profile">
+                                        <a asp-area="" asp-controller="Administrator" asp-action="Profile">
                                             <span class="sub-item">管理員清單檢視</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a asp-controller="LoginRecords" asp-action="Index">
+                                        <a asp-area="" asp-controller="LoginRecords" asp-action="Index">
                                             <span class="sub-item">登入記錄檢視</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a asp-controller="Complaints" asp-action="Index">
+                                        <a asp-area="" asp-controller="Complaints" asp-action="Index">
                                             <span class="sub-item">客訴案件檢視</span>
                                         </a>
                                     </li>
@@ -216,7 +195,6 @@
                                     </li>
                                     <li>
                                         <a class="nav-link text-dark" asp-area="Attractions" asp-controller="RecycleBin" asp-action="Index">
-                                            <i class="fas fa-trash-alt me-1"></i>
                                             <span class="sub-item">資源回收桶</span>
                                         </a>
                                     </li>
@@ -233,7 +211,13 @@
                                 <ul class="nav nav-collapse">
                                     <li>
                                         <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="Index">
-                                            <span class="sub-item">活動總覽</span>
+                                            <span class="sub-item">活動儀表板</span>
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="nav-link text-dark" asp-area="Activity" asp-controller="Activity" asp-action="Index">
+                                            <span class="sub-item">活動查詢列表</span>
                                         </a>
                                     </li>
                                     <li>
@@ -280,11 +264,6 @@
                         </li>
                         <li class="nav-item">
                         <li class="nav-item">
-                            <a href="../../documentation/index.html">
-                                <i class="fas fa-file"></i>
-                                <p>Documentation</p>
-                                <span class="badge badge-secondary">1</span>
-                            </a>
                             <a data-bs-toggle="collapse" href="#order">
                                 <i class="fas fa-plane"></i>
                                 <p>訂單管理</p>
@@ -451,11 +430,11 @@
                             <li class="nav-item topbar-user dropdown hidden-caret">
                                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
                                     <div class="avatar-sm">
-                                        <img src="assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle" />
+                                        <img src="~/uploads/a7187d24-78f0-45a7-8cb1-9d37b20901b7.jpg" alt="..." class="avatar-img rounded-circle" />
                                     </div>
                                     <span class="profile-username">
                                         <span class="op-7">Hi,</span>
-                                        <span class="fw-bold">Hizrian</span>
+                                        <span class="fw-bold">AdminTest</span>
                                     </span>
                                 </a>
                                 <div class="dropdown-user-scroll scrollbar-outer">
@@ -466,7 +445,7 @@
                                                     <img src="assets/img/profile.jpg" alt="image profile" class="avatar-img rounded" />
                                                 </div>
                                                 <div class="u-text">
-                                                    <h4>Hizrian</h4>
+                                                    <h4>AdminTest</h4>
                                                     <p class="text-muted">hello@example.com</p>
                                                     <a href="profile.html" class="btn btn-xs btn-secondary btn-sm">View Profile</a>
                                                 </div>
@@ -498,201 +477,40 @@
         </div>
     </div>
 
-    <!-- Custom template | don't include it in your project! -->
-    <div class="custom-template">
-        <div class="title">Settings</div>
-        <div class="custom-content">
-            <div class="switcher">
-                <div class="switch-block">
-                    <h4>Logo Header</h4>
-                    <div class="btnSwitch">
-                        <button type="button"
-                                class="selected changeLogoHeaderColor"
-                                data-color="dark"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="blue"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="purple"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="light-blue"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="green"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="orange"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="red"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="white"></button>
-                        <br />
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="dark2"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="blue2"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="purple2"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="light-blue2"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="green2"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="orange2"></button>
-                        <button type="button"
-                                class="changeLogoHeaderColor"
-                                data-color="red2"></button>
-                    </div>
-                </div>
-                <div class="switch-block">
-                    <h4>Navbar Header</h4>
-                    <div class="btnSwitch">
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="dark"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="blue"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="purple"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="light-blue"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="green"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="orange"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="red"></button>
-                        <button type="button"
-                                class="selected changeTopBarColor"
-                                data-color="white"></button>
-                        <br />
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="dark2"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="blue2"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="purple2"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="light-blue2"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="green2"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="orange2"></button>
-                        <button type="button"
-                                class="changeTopBarColor"
-                                data-color="red2"></button>
-                    </div>
-                </div>
-                <div class="switch-block">
-                    <h4>Sidebar</h4>
-                    <div class="btnSwitch">
-                        <button type="button"
-                                class="changeSideBarColor"
-                                data-color="white"></button>
-                        <button type="button"
-                                class="selected changeSideBarColor"
-                                data-color="dark"></button>
-                        <button type="button"
-                                class="changeSideBarColor"
-                                data-color="dark2"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @* <div class="custom-toggle">
-            <i class="icon-settings"></i>
-        </div> *@
-    </div>
-    <!-- End Custom template -->
+
     <!--   Core JS Files   -->
-    <script src="assets/js/core/jquery-3.7.1.min.js"></script>
-    <script src="assets/js/core/popper.min.js"></script>
-    <script src="assets/js/core/bootstrap.min.js"></script>
+    <script src="~/assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="~/assets/js/core/popper.min.js"></script>
+    <script src="~/assets/js/core/bootstrap.min.js"></script>
 
     <!-- jQuery Scrollbar -->
-    <script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+    <script src="~/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
 
     <!-- Chart JS -->
-    <script src="assets/js/plugin/chart.js/chart.min.js"></script>
+    <script src="~/assets/js/plugin/chart.js/chart.min.js"></script>
 
     <!-- jQuery Sparkline -->
-    <script src="assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+    <script src="~/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
 
     <!-- Chart Circle -->
-    <script src="assets/js/plugin/chart-circle/circles.min.js"></script>
+    <script src="~/assets/js/plugin/chart-circle/circles.min.js"></script>
 
     <!-- Datatables -->
-    <script src="assets/js/plugin/datatables/datatables.min.js"></script>
+    <script src="~/assets/js/plugin/datatables/datatables.min.js"></script>
 
     <!-- Bootstrap Notify -->
-    <script src="assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+    <script src="~/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
 
     <!-- jQuery Vector Maps -->
-    <script src="assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
-    <script src="assets/js/plugin/jsvectormap/world.js"></script>
+    <script src="~/assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
+    <script src="~/assets/js/plugin/jsvectormap/world.js"></script>
 
     <!-- Sweet Alert -->
-    <script src="assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="~/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
 
     <!-- Kaiadmin JS -->
-    <script src="assets/js/kaiadmin.min.js"></script>
+    <script src="~/assets/js/kaiadmin.min.js"></script>
 
-    <!-- Kaiadmin DEMO methods, don't include it in your project! -->
-    <script src="assets/js/setting-demo.js"></script>
-    <script src="assets/js/demo.js"></script>
-    <script>
-        $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
-          type: "line",
-          height: "70",
-          width: "100%",
-          lineWidth: "2",
-          lineColor: "#177dff",
-          fillColor: "rgba(23, 125, 255, 0.14)",
-        });
-
-        $("#lineChart2").sparkline([99, 125, 122, 105, 110, 124, 115], {
-          type: "line",
-          height: "70",
-          width: "100%",
-          lineWidth: "2",
-          lineColor: "#f3545d",
-          fillColor: "rgba(243, 84, 93, .14)",
-        });
-
-        $("#lineChart3").sparkline([105, 103, 123, 100, 95, 105, 115], {
-          type: "line",
-          height: "70",
-          width: "100%",
-          lineWidth: "2",
-          lineColor: "#ffa534",
-          fillColor: "rgba(255, 165, 52, .14)",
-        });
-    </script>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
