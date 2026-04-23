@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Areas.Activity.Models;
 using TravelWeb.Areas.Activity.Models.EFModel;
@@ -75,7 +74,13 @@ builder.Services.AddScoped<IItineraryService, ItineraryService>();
 builder.Services.AddScoped<IItineraryErrorSevice, ItineraryErrorService>();
 builder.Services.AddScoped<IItineraryCompareService, ItineraryCompareService>();
 
-
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy("Allow5500", p =>
+    {
+        p.WithOrigins("http://127.0.0.1:5500").AllowAnyHeader().AllowAnyMethod();
+    });
+});
 
 // 註冊 BoardDbContext，並指定使用 SQL Server 以及連接字串
 builder.Services.AddDbContext<BoardDbContext>(options =>
@@ -89,13 +94,9 @@ builder.Services.AddDbContext<AttractionsContext>(options =>
 
 
 //ActivityDBcontext 服務註冊
-builder.Services.AddDbContext<ActivityDbContext>(options => 
-options.UseSqlServer(builder.Configuration.GetConnectionString("Travel")));
-builder.Services.AddScoped<IActivityInfoRepository, ActivityInfoRepository>();
-builder.Services.AddScoped<IActivityInfoService, ActivityInfoService>();
-builder.Services.AddScoped<IActivityTicketReposiotry, ActivityTicketRepository>();
-builder.Services.AddScoped<IActivityTicketService, ActivityTicketService>();
-
+builder.Services.AddDbContext<ActivityDbContext>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("Travel"))
+);
 
 //Member
 builder.Services.AddDbContext<MemberSystemContext>(options =>
@@ -134,7 +135,9 @@ app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("Allow5500");
 
+app.MapAreaControllerRoute("app", "Activity", "{controller}/{action}");
 
 app.MapControllerRoute(
     name: "MyAreas",
