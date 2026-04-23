@@ -1,0 +1,111 @@
+﻿@model IEnumerable<TravelWeb.Areas.Attractions.Models.StockInRecord>
+@{
+    ViewData["Title"] = "進貨紀錄";
+    string productCode = ViewBag.ProductCode ?? "";
+    string productTitle = ViewBag.ProductTitle ?? "";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>進貨紀錄</h2>
+            <p class="text-muted mb-0">商品：@productTitle（@productCode）</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#addStockForm">
+                + 新增進貨
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">← 返回庫存總覽</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @* {{-- 新增進貨表單（預設收合）--}} *@
+    <div class="collapse mb-4" id="addStockForm">
+        <div class="card card-body">
+            <h5>新增進貨紀錄</h5>
+            <form asp-action="AddStockIn" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ProductCode" value="@productCode" />
+                <input type="hidden" name="ProductType" value="ATTRACTION" />
+
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">供應商</label>
+                        <input type="text" name="SupplierName" class="form-control" placeholder="供應商名稱" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">單位成本</label>
+                        <input type="number" name="UnitCost" class="form-control" min="0" step="0.01" required />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">進貨數量</label>
+                        <input type="number" name="Quantity" class="form-control" min="1" required />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">剩餘庫存</label>
+                        <input type="number" name="RemainingStock" class="form-control" min="0" required />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">庫存類型</label>
+                        <select name="InventoryType" class="form-select">
+                            <option value="VIRTUAL">虛擬票券</option>
+                            <option value="PHYSICAL">實體票券</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">備註</label>
+                        <input type="text" name="Remarks" class="form-control" placeholder="備註（選填）" />
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">儲存進貨紀錄</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+  @*   {{-- 進貨歷史列表 --}} *@
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">此商品目前尚無進貨紀錄。</div>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>進貨日期</th>
+                    <th>供應商</th>
+                    <th>單位成本</th>
+                    <th>進貨數量</th>
+                    <th>剩餘庫存</th>
+                    <th>庫存類型</th>
+                    <th>備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.StockInDate</td>
+                        <td>@(item.SupplierName ?? "—")</td>
+                        <td>NT$@item.UnitCost</td>
+                        <td>@item.Quantity 張</td>
+                        <td>@item.RemainingStock 張</td>
+                        <td>
+                            <span class="badge @(item.InventoryType == "VIRTUAL" ? "bg-info" : "bg-secondary")">
+                                @(item.InventoryType == "VIRTUAL" ? "虛擬票券" : "實體票券")
+                            </span>
+                        </td>
+                        <td>@(item.Remarks ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

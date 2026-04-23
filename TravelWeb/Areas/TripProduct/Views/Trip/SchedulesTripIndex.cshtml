@@ -1,0 +1,454 @@
+﻿@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelTripSchedule>
+
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "檔期管理";
+    var currentFilter = ViewBag.Filter as string ?? "active";
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold">
+                檔期管理 <span class="text-muted fs-5 ms-2">| @ViewBag.ProductName</span>
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 mt-2">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Trip")">行程商品管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">檔期列表</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button type="button" class="btn btn-success fw-bold shadow-sm px-3"
+                    data-bs-toggle="modal" data-bs-target="#createScheduleModal">
+
+                <i class="fas fa-plus-circle me-1"></i> 新增檔期
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body d-flex justify-content-between align-items-center pb-2 pt-3 bg-light rounded">
+            <div class="btn-group shadow-sm p-1 bg-light rounded-pill font-monospace" role="group" aria-label="Schedule Filter">
+                @* 1. 開放中 *@
+                <a href="@Url.Action("SchedulesIndex", new { id = ViewBag.TripProductId, filter = "active" })"
+                   class="btn btn-sm rounded-pill px-3 fw-bold border-0 @(currentFilter == "active" ? "btn-primary shadow-sm" : "btn-light text-secondary")">
+                    <i class="fa-solid fa-circle-play me-1"></i> 開放中
+                </a>
+                @* 2. 歷史檔期 *@
+                <a href="@Url.Action("SchedulesIndex", new { id = ViewBag.TripProductId, filter = "past" })"
+                   class="btn btn-sm rounded-pill px-3 fw-bold border-0 mx-1 @(currentFilter == "past" ? "btn-secondary shadow-sm" : "btn-light text-secondary")">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> 歷史紀錄
+                </a>
+                @* 3. 全部 *@
+                <a href="@Url.Action("SchedulesIndex", new { id = ViewBag.TripProductId, filter = "all" })"
+                   class="btn btn-sm rounded-pill px-3 fw-bold border-0 @(currentFilter == "all" ? "btn-dark shadow-sm" : "btn-light text-secondary")">
+                   全部
+                </a>
+            </div>
+            <div class="text-muted small">
+                <i class="fa-solid fa-circle-info"></i> 提示：已出發的歷史檔期將轉為唯讀模式，以保護訂單資料。
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>出發日期</th>
+                            <th>回程日期</th>
+                            <th>檔期代碼</th>
+                            <th class="text-end">售價</th>
+                            <th class="text-center" style="width: 200px;">報名狀況 (已售/總量)</th>
+                            <th class="text-center">狀態</th>
+                            <th class="text-center">管理操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="fa-regular fa-calendar-xmark fs-2 mb-2 d-block"></i>
+                                    目前沒有符合條件的檔期資料。
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                // 💡 實務防呆邏輯：判斷過期與額滿
+                                bool isPast = item.EndDate.Date < DateTime.Today;
+                                bool isFull = item.SoldQuantity >= item.MaxCapacity;
+
+                                // 如果過期，整列套用 text-muted 讓它視覺淡化
+                                <tr class="@(isPast ? "table-light text-muted opacity-75" : "")">
+                                    <td class="fw-bold @(isPast ? "" : "text-primary")">
+                                        @item.StartDate.ToString("yyyy/MM/dd (ddd)")
+                                    </td>
+                                    <td>@item.EndDate.ToString("yyyy/MM/dd (ddd)")</td>
+                                    <td><span class="badge bg-light text-dark border font-monospace">@item.ProductCode</span></td>
+                                    <td class="text-end fw-bold text-danger">NT$ @item.Price.ToString("N0")</td>
+
+                                    <td class="text-center">
+                                        <div class="progress position-relative border" style="height: 22px;">
+                                            @{
+                                                var percent = item.MaxCapacity > 0 ? (item.SoldQuantity * 100.0 / item.MaxCapacity) : 0;
+                                                var pColor = percent >= 100 ? "bg-danger" : (percent > 80 ? "bg-warning" : "bg-success");
+                                            }
+                                            <div class="progress-bar @pColor progress-bar-striped" role="progressbar" style="width: @percent%;" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100"></div>
+                                            <span class="position-absolute w-100 text-center fw-bold text-dark" style="font-size: 13px; line-height: 22px; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">
+                                                @item.SoldQuantity / @item.MaxCapacity
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center">
+                                        @if (isPast)
+                                        {
+                                            <span class="badge bg-secondary">已結束</span>
+                                        }
+                                        @* 💡 優先判斷：如果資料庫狀態已經是「已額滿」或「已關閉」，就直接顯示 *@
+                                        else if (item.Status == "已額滿" || isFull)
+                                        {
+                                            <span class="badge bg-danger">已額滿</span>
+                                        }
+                                        else if (item.Status == "已關閉")
+                                        {
+                                            <span class="badge bg-dark">已關閉</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">開放中</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center align-middle">
+                                        <div class="d-flex justify-content-center gap-2">
+
+                                            @* 1. 編輯：使用深藍色 (Primary)，加上 rounded-1 微圓角與 px-3 加寬點擊範圍 *@
+                                            <button type="button" onclick="openEditModal('@item.ProductCode')"
+                                                    class="btn btn-sm btn-primary text-white shadow-sm rounded-1 px-3 @(isPast ? "disabled opacity-50" : "")">
+                                                編輯
+                                            </button>
+
+                                            @* 2. 名單：使用青色 (Info)，文字改白色比較有質感 *@
+                                            <a href="@Url.Action("ScheduleOrders", new { productCode = item.ProductCode })"
+                                               class="btn btn-sm btn-info text-white shadow-sm rounded-1 px-3">
+                                                名單
+                                            </a>
+
+                                            @* 3. 刪除：使用紅色 (Danger)，加上防呆的透明度變化 *@
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger text-white shadow-sm rounded-1 px-3 @(isPast || item.SoldQuantity > 0 ? "disabled opacity-25" : "")"
+                                                    onclick="deleteSchedule('@item.ProductCode')">
+                                                刪除
+                                            </button>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="createScheduleModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="createModalLabel">新增行程檔期 — @ViewBag.ProductName</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-area="TripProduct" asp-action="CreateSchedule" asp-controller="Trip" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <input type="hidden" name="TripProductId" value="@ViewBag.TripProductId" />
+                    <input type="hidden" id="durationDays" value="@(ViewBag.DurationDays ?? 1)" />
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">檔期代碼</label>
+                            <input name="ProductCode" class="form-control" placeholder="系統將自動生成..." required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-primary">
+                                出發日期 <span class="badge bg-soft-primary text-primary ms-1">預售緩衝: 45天</span>
+                            </label>
+                            <input type="date" name="StartDate" id="startDate" class="form-control"
+                                   min="@ViewBag.MinDate" value="@ViewBag.DefaultStartDate" required />
+                            <div class="invalid-feedback">
+                                出發日距今不足 45 天，請確認是否符合退款政策緩衝期！如確定請忽略~
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">回程日期</label>
+                            <input type="date" name="EndDate" id="endDate" class="form-control bg-light" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">售價</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">$</span>
+                                <input name="Price" type="number" class="form-control"
+                                       value="@(ViewBag.DefaultPrice ?? 0)" required />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">成團人數上限</label>
+                            <input name="MaxCapacity" type="number" class="form-control" value="20" required />
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <label class="form-label fw-bold small">票種</label>
+                            <div class="d-flex flex-wrap gap-3 p-2 border rounded bg-light">
+                                @* 💡 這裡直接用 ViewBag 帶過來的票種清單 *@
+                                @foreach (var ticket in (ViewBag.TicketOptions as List<SelectListItem>) ?? new List<SelectListItem>())
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="SelectedTicketIds" value="@ticket.Value" id="modal_tk_@ticket.Value">
+                                        <label class="form-check-label small" for="modal_tk_@ticket.Value">@ticket.Text</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">確認儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editScheduleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">修改行程檔期</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-area="TripProduct" asp-action="UpdateSchedule" asp-controller="Trip" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <input type="hidden" name="TripProductId" id="edit_TripProductId" />
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">檔期代碼 (不可修改)</label>
+                            <input name="ProductCode" id="edit_ProductCode" class="form-control bg-light" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-primary">出發日期</label>
+                            <input type="date" name="StartDate" id="edit_startDate" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">回程日期</label>
+                            <input type="date" name="EndDate" id="edit_endDate" class="form-control bg-light" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">售價</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">$</span>
+                                <input name="Price" id="edit_Price" type="number" class="form-control" required />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">成團人數上限</label>
+                            <input name="MaxCapacity" id="edit_MaxCapacity" type="number" class="form-control" required />
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <label class="form-label fw-bold small">票種</label>
+                            <div class="d-flex flex-wrap gap-3 p-2 border rounded bg-light">
+                                @foreach (var ticket in (ViewBag.TicketOptions as List<SelectListItem>) ?? new List<SelectListItem>())
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input edit-ticket-check" type="checkbox"
+                                               name="SelectedTicketIds" value="@ticket.Value" id="edit_tk_@ticket.Value">
+                                        <label class="form-check-label small" for="edit_tk_@ticket.Value">@ticket.Text</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">檔期狀態</label>
+                            <select name="Status" id="edit_Status" class="form-select">
+                                <option value="開放中">開放中</option>
+                                <option value="已額滿">已額滿</option>
+                                <option value="已關閉">已關閉</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">儲存變更</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // 1. 定義共用變數
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const productCodeInput = document.querySelector('input[name="ProductCode"]');
+        const duration = parseInt(document.getElementById('durationDays').value);
+        const tripId = "@ViewBag.TripProductId";
+
+        // 2. 顯示 SweetAlert 訊息
+              // 2. 顯示 SweetAlert 訊息
+        @if (TempData["SuccessMessage"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: '成功！',
+                    text: `@Html.Raw(TempData["SuccessMessage"])`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                </text>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: '發生錯誤',
+                    html: `@Html.Raw(TempData["ErrorMessage"])`
+                });
+                </text>
+        }
+
+        // 3. 自動連動邏輯 (新增模式)
+        function updateScheduleFields() {
+            if (startDateInput && startDateInput.value) {
+                const start = new Date(startDateInput.value);
+                const today = new Date();
+                const dateVal = startDateInput.value;
+
+                // 緩衝期警告
+                const diffTime = Math.abs(start - today);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays < 45) {
+                    startDateInput.classList.add('is-invalid');
+                } else {
+                    startDateInput.classList.remove('is-invalid');
+                }
+
+                // 計算回程日
+                const end = new Date(start);
+                end.setDate(start.getDate() + duration - 1);
+                endDateInput.value = end.toISOString().split('T')[0];
+
+                // 向後端抓取下一個代碼
+                if (productCodeInput && !productCodeInput.readOnly) {
+                    $.get(`@Url.Action("GetNextCode", "Trip")?tripId=${tripId}&date=${dateVal}`, function(data) {
+                        if (data && data.code) {
+                            productCodeInput.value = data.code;
+                        }
+                    });
+                }
+            }
+        }
+
+        // 4. 💡 編輯按鈕：抓取 JSON 資料並反填彈窗
+                      function openEditModal(code) {
+            console.log("正在抓取檔期：", code);
+
+            $.get(`@Url.Action("GetScheduleData", "Trip")?productCode=${code}`, function (data) {
+                if (data) {
+                    // 基本欄位反填
+                    document.getElementById('edit_TripProductId').value = data.tripProductId;
+                    document.getElementById('edit_ProductCode').value = data.productCode;
+                    document.getElementById('edit_startDate').value = data.startDate.split('T')[0];
+                    document.getElementById('edit_Price').value = data.price;
+                    document.getElementById('edit_MaxCapacity').value = data.maxCapacity;
+
+                    // 💡 處理回程日期反填
+                    if (data.endDate) {
+                        document.getElementById('edit_endDate').value = data.endDate.split('T')[0];
+                    }
+
+                    // 💡 處理狀態下拉選單
+                    if (document.getElementById('edit_Status')) {
+                        document.getElementById('edit_Status').value = data.status;
+                    }
+
+                    // 處理票種勾選
+                    $('.edit-ticket-check').prop('checked', false);
+                    if (data.selectedTicketIds) {
+                        data.selectedTicketIds.forEach(id => {
+                            $(`#edit_tk_${id}`).prop('checked', true);
+                        });
+                    }
+
+                    // 顯示彈窗
+                    var myEditModal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
+                    myEditModal.show();
+                }
+            }).fail(function() {
+                Swal.fire('錯誤', '無法讀取資料', 'error');
+            });
+        }
+        
+
+        // 5. 綁定事件
+        if (startDateInput) {
+            startDateInput.addEventListener('change', updateScheduleFields);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateScheduleFields();
+        });
+         //6.刪除事件
+                         function deleteSchedule(code) {
+            Swal.fire({
+                title: '確定要刪除嗎？',
+                text: `即將刪除檔期：${code}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 💡 直接使用 AJAX，並在失敗時印出 data 內容方便檢查
+                    $.post('@Url.Action("DeleteSchedule", "Trip")', { productCode: code.trim() })
+                        .done(function (res) {
+                            if (res.success) {
+                                Swal.fire('成功', res.message, 'success').then(() => location.reload());
+                            } else {
+                                // 如果出現「代碼不存在」，請在這裡 console.log(code) 檢查傳出去的代碼
+                                Swal.fire('失敗', res.message, 'error');
+                            }
+                        })
+                        .fail(function () {
+                            Swal.fire('錯誤', '系統連線失敗', 'error');
+                        });
+                }
+            });
+        }
+    </script>
+}

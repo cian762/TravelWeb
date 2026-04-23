@@ -4,13 +4,9 @@
     ViewData["Title"] = "貼文檢舉管理中心";
     Layout = "_Layout";
 }
-
+<div class="container">
 <h1>貼文檢舉管理中心</h1>
-
-@* <p>
-    <a asp-action="Create">Create New</a>
-</p> *@
-<table class="table">
+    <table class="table table-hover">
     <thead>
         <tr>
             <th>
@@ -47,7 +43,7 @@
                     @Html.DisplayFor(modelItem => item.TargetId)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.TargetId)
+                    @Html.DisplayFor(modelItem => item.Title)
                 </td>
             <td>
                 @Html.DisplayFor(modelItem => item.ReportCount)
@@ -68,12 +64,27 @@
                     @(item.IsViolation == true ? "違規已隱藏" : "無違規正常")
                 @* @Html.DisplayFor(modelItem => item.IsViolation) *@
             </td>
-            <td>                  
-                <a asp-action="Edit" asp-route-id="@item.TargetId">Edit</a> |
-                <a asp-area="BoardManagement" asp-controller="Board" asp-action="ReportDetails" asp-route-id="@item.TargetId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.TargetId">Delete</a>
-            </td>
+            <td> 
+                <a asp-area="BoardManagement" 
+                asp-controller="Board" 
+                asp-action="ReportDetails" 
+                asp-route-id="@item.TargetId"
+                           class="btn btn-outline-info rounded-pill">查看詳情</a>
+                    </td>
         </tr>
 }
     </tbody>
 </table>
+
+</div>
+
+<script>
+        // 1. 給 test-1 加上兩個 class
+    $('#test-1').addClass('active submenu');
+
+    // 2. 給 sidebarLayouts 加上 show
+    $('#sidebarLayouts').addClass('show');
+
+    // 3. 給 test-3 加上 active
+    $('#test-3').addClass('active');
+</script>

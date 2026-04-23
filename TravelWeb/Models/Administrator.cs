@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TravelWeb.Models;
 
+[Table("Administrator", Schema = "Member")]
 public partial class Administrator
 {
     [DisplayName("管理員ID")]

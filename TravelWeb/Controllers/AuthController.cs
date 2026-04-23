@@ -16,15 +16,15 @@ namespace TravelWeb.Controllers
             _context = context;
         }
 
-        // 顯示登入頁
+        [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
 
-        // 處理登入
         [HttpPost]
-        public IActionResult Login(string account, string password)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(string account, string password)
         {
             if (string.IsNullOrEmpty(account) || string.IsNullOrEmpty(password))
             {
@@ -33,21 +33,19 @@ namespace TravelWeb.Controllers
             }
 
             string hashedPassword = HashPassword(password);
-
             MemberList? user = null;
 
-            // 🔎 判斷是不是 Email
             if (account.Contains("@"))
             {
-                user = _context.MemberLists
-                    .FirstOrDefault(x => x.Email == account
-                                      && x.PasswordHash == hashedPassword);
+                user = await _context.MemberLists
+                    .FirstOrDefaultAsync(x => x.Email == account
+                                           && x.PasswordHash == hashedPassword);
             }
             else
             {
-                user = _context.MemberLists
-                    .FirstOrDefault(x => x.MemberCode == account
-                                      && x.PasswordHash == hashedPassword);
+                user = await _context.MemberLists
+                    .FirstOrDefaultAsync(x => x.MemberCode == account
+                                           && x.PasswordHash == hashedPassword);
             }
 
             if (user == null)
@@ -56,28 +54,30 @@ namespace TravelWeb.Controllers
                 return View();
             }
 
-            // 🔥 判斷角色（依 MemberCode 開頭）
-            string role = "";
+            var info = await _context.MemberInformations
+                .FirstOrDefaultAsync(i => i.MemberCode == user.MemberCode);
 
-            if (user.MemberCode.StartsWith("G"))
+            if (info != null && info.Status == "停權")
             {
-                role = "Admin";
-            }
-            else if (user.MemberCode.StartsWith("M"))
-            {
-                role = "Member";
-            }
-            else
-            {
-                ViewBag.Error = "帳號格式錯誤";
+                ViewBag.Error = "您的帳號已被管理員停權，禁止登入！";
                 return View();
             }
 
-            // 存 Session
+            if (!user.MemberCode.StartsWith("G"))
+            {
+                ViewBag.Error = "此為後台管理系統，僅開放管理員登入！";
+                return View(); 
+            }
+
+            string role = "Admin";
+
             HttpContext.Session.SetString("UserCode", user.MemberCode);
             HttpContext.Session.SetString("Role", role);
 
-            // 🔥 登入成功寫入 LoginRecord
+            //20260403 陳冠甫在 HTTPContext 中補上一個欄位
+            HttpContext.Session.SetString("AdminId", "A123");
+
+
             var loginRecord = new LogInRecord
             {
                 MemberCode = user.MemberCode,
@@ -85,17 +85,9 @@ namespace TravelWeb.Controllers
             };
 
             _context.LogInRecords.Add(loginRecord);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            // 導向不同頁面
-            if (role == "Admin")
-            {
-                return RedirectToAction("Index", "LoginRecords");
-            }
-            else
-            {
-                return RedirectToAction("Index", "Home");
-            }
+            return RedirectToAction("Index", "LoginRecords");
         }
 
         public IActionResult Logout()
@@ -104,7 +96,6 @@ namespace TravelWeb.Controllers
             return RedirectToAction("Login");
         }
 
-        // 密碼雜湊（要跟你註冊時一致）
         private string HashPassword(string password)
         {
             using (SHA256 sha = SHA256.Create())
@@ -113,6 +104,7 @@ namespace TravelWeb.Controllers
                 byte[] hash = sha.ComputeHash(bytes);
                 return Convert.ToBase64String(hash);
             }
+
         }
     }
 }

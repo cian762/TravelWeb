@@ -1,26 +1,40 @@
-﻿@model List<TravelWeb.Areas.Activity.Models.ViewModels.ActivityEditViewModel>
+﻿@model List<TravelWeb.Areas.Activity.Models.ViewModels.ActivityInfoViewModel>
 
 @{
     ViewData["Title"] = "活動 | 活動總覽";
 }
 
-<div class="container-fluid px-5">
+@section Styles{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        a:hover
+        {
+            color:purple;
+        }
+    
+
+    </style>
+}
+
+
+<section class="container-fluid px-5">
 
     <h1>活動總覽</h1>
+    <a asp-action="ActivityCreate" class="btn btn-primary mb-3" style="width:150px">創建新活動</a>
 
-    <p>
-        <a asp-action="ActivityCreate" class="btn btn-primary">創建新活動</a>
-    </p>
-    <table class="table">
-        <thead>
+    <table id="myTable" class="table table-hover">
+        <thead class="table-dark">
             <tr>
                 <th>
+                    資源操作
+                </th>
+                <th style="width:fit-content;">
                     @Html.DisplayNameFor(model => model[0].Title)
                 </th>
-                <th>
+                <th style="width:100px;">
                     @Html.DisplayNameFor(model => model[0].RegionName)
                 </th>
-                <th>
+                <th style="width:100px;">
                     @Html.DisplayNameFor(model => model[0].TypeName)
                 </th>
                 <th>
@@ -32,11 +46,11 @@
                 <th>
                     @Html.DisplayNameFor(model => model[0].Address)
                 </th>
-                <th>
+                <th style="width:30px;">
                     @Html.DisplayNameFor(model => model[0].OfficialLink)
                 </th>
-                <th>
-                    上架狀態
+                <th style="width:30px;">
+                    刊登狀態
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model[0].UpdateAt)
@@ -49,8 +63,27 @@
             {
                 <tr>
                     <td>
-                        <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityEdit" asp-route-id="@item.ActivityId">@Html.DisplayFor(modelItem => item.Title)</a>
-                       
+                        <div class="fs-4 d-flex justify-content-center align-items-center gap-3">
+                            <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityDetails" asp-route-id="@item.ActivityId"
+                               class="text-primary d-inline-flex align-items-center">
+                                <i class="bi bi-info-square"></i>
+                            </a>
+
+                            <a asp-area="Activity" asp-controller="Activity" asp-action="ActivityEdit" asp-route-id="@item.ActivityId"
+                               class="text-primary d-inline-flex align-items-center">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+
+                            <form asp-area="Activity" asp-controller="Activity" asp-action="ActivitySoftDelete" asp-route-id="@item.ActivityId"
+                                  method="post" class="m-0 d-inline-flex align-items-center">
+                                <button type="submit" onclick="Remind()" class="btn btn-link p-0 text-danger border-0 d-inline-flex align-items-center" style="line-height: 1;">
+                                    <i class="bi bi-x-square fs-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                    <td class="fw-bold">
+                        @Html.DisplayFor(modelItem => item.Title)
                     </td>
                     <td>
                         @foreach (var _ in item.RegionName)
@@ -78,11 +111,11 @@
                         <a href="@Html.DisplayFor(modelItem => item.OfficialLink)"  target="_blank">  
                             前往連結
                         </a>
-                       
                     </td>
                     <td>
                         <a asp-action="Delete" asp-route-id="@item.ActivityId">Delete</a>
                     </td>
+
                     <td>
                         @Html.DisplayFor(modelItem => item.UpdateAt)
                     </td>
@@ -90,8 +123,25 @@
             }
         </tbody>
     </table>
+</section>
 
 
-</div>
 
+
+@section Scripts{
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+    
+    <script>
+        $(document).ready(function(){
+            $("#myTable").DataTable()
+        });
+
+        function Remind(){
+            alert("確定要刪除此活動?");
+        }
+
+    </script>
+}
 

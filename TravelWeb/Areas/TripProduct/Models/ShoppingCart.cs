@@ -19,11 +19,5 @@ public partial class ShoppingCart
 
     public virtual MemberInformation Member { get; set; } = null!;
 
-    public virtual AttractionProduct? ProductCode1 { get; set; }
-
-    public virtual TripSchedule? ProductCode2 { get; set; }
-
-    public virtual AcitivityTicket? ProductCodeNavigation { get; set; }
-
     public virtual TicketCategory? TicketCategory { get; set; }
 }

@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelWeb.Models;
 using TravelWeb.ViewModels;
+using TravelWeb.Filters;
 
 namespace TravelWeb.Controllers
 {
+    [AdminAuthorize]
     public class MemberInformationsController : Controller
     {
         private readonly MemberSystemContext _context;
@@ -16,58 +18,57 @@ namespace TravelWeb.Controllers
             _context = context;
         }
 
-        // ==========================
-        // GET: Create
-        // ==========================
-        public IActionResult Create(string memberCode)
+        [HttpGet]
+        public IActionResult Create()
         {
-            // 建立新物件並帶入會員識別碼
-            var model = new MemberInformation
+            var sessionUserCode = HttpContext.Session.GetString("UserCode");
+            if (string.IsNullOrEmpty(sessionUserCode))
             {
-                MemberCode = memberCode
-            };
+                return RedirectToAction("Login", "Auth");
+            }
 
+            var model = new MemberInformation { MemberCode = sessionUserCode };
             return View(model);
         }
 
-        private string GenerateMemberId(string email)
-        {
-            if (string.IsNullOrEmpty(email) || !email.Contains("@"))
-                return null;
-
-            var parts = email.Split('@');
-            string accountPart = parts[0];          // 1245
-            string domainPart = parts[1];           // gmail.com
-
-            string domainFirstChar = domainPart.Substring(0, 1).ToLower();  // g
-
-            return "@" + accountPart + domainFirstChar;
-        }
-
-        // ==========================
-        // POST: Create
-        // ==========================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(MemberInformation model, IFormFile avatarFile)
+        public async Task<IActionResult> Create(MemberInformation model, IFormFile? avatarFile)
         {
+            ModelState.Remove("MemberId");
+            ModelState.Remove("Status");
+            ModelState.Remove("AvatarUrl");
+
+            ModelState.Remove("MemberCodeNavigation"); 
+            ModelState.Remove("Member"); 
+            ModelState.Remove("Followeds");
+            ModelState.Remove("Followers");
+            ModelState.Remove("MemberComplaints");
+
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            // 自動產生 MemberId
-            var member = await _context.MemberLists
-    .FirstOrDefaultAsync(m => m.MemberCode == model.MemberCode);
+            var memberAccount = await _context.MemberLists
+                .FirstOrDefaultAsync(m => m.MemberCode == model.MemberCode);
 
-            if (member != null)
+            if (memberAccount != null && !string.IsNullOrEmpty(memberAccount.Email))
             {
-                model.MemberId = GenerateMemberId(member.Email);
+                var emailParts = memberAccount.Email.Split('@');
+                string accountPrefix = emailParts[0];
+                string randomNum = new Random().Next(100, 999).ToString(); 
+
+                model.MemberId = accountPrefix + randomNum;
+            }
+            else
+            {
+                model.MemberId = "User" + new Random().Next(1000, 9999).ToString();
             }
 
+            model.Status = "正常";
 
-            // 如果有上傳圖片
-            if (avatarFile!= null && avatarFile.Length > 0)
+            if (avatarFile != null && avatarFile.Length > 0)
             {
                 string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
 
@@ -86,39 +87,30 @@ namespace TravelWeb.Controllers
 
                 model.AvatarUrl = "/uploads/" + fileName;
             }
-
+            else
+            {
+                model.AvatarUrl = "/images/default-avatar.png";
+            }
 
             _context.MemberInformations.Add(model);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(
-    "Create",
-    "MemberInformations",
-    new { memberCode = model.MemberCode }
-);
-        }
+            HttpContext.Session.SetString("UserCode", model.MemberCode);
+            HttpContext.Session.SetString("MemberId", model.MemberId);
 
-        // GET: MemberInformation/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var memberInfo = await _context.MemberInformations.FindAsync(id);
-            if (memberInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(memberInfo);
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, MemberInformation model, IFormFile avatarFile)
         {
+            var sessionMemberId = HttpContext.Session.GetString("MemberId");
+            if (id != sessionMemberId)
+            {
+                return Forbid(); 
+            }
+
             if (id != model.MemberId)
             {
                 return NotFound();
@@ -137,11 +129,9 @@ namespace TravelWeb.Controllers
                 return NotFound();
             }
 
-            // 更新基本資料
             existingData.Name = model.Name;
             existingData.Status = model.Status;
 
-            // 如果有上傳新圖片
             if (avatarFile != null && avatarFile.Length > 0)
             {
                 string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
@@ -186,17 +176,15 @@ namespace TravelWeb.Controllers
             if (memberList == null)
                 return NotFound();
 
-            // 🔥 取得登入資訊
             var loginMemberId = HttpContext.Session.GetString("MemberId");
             var role = HttpContext.Session.GetString("Role");
 
-            bool canViewPrivateData = false;
+            bool canViewPrivateData = (loginMemberId == memberId || role == "Admin" || role == "SuperAdmin");
 
-            // 👤 本人
+
             if (loginMemberId == memberId)
                 canViewPrivateData = true;
 
-            // 👑 管理員
             if (role == "Admin" || role == "SuperAdmin")
                 canViewPrivateData = true;
 
@@ -207,7 +195,6 @@ namespace TravelWeb.Controllers
                 Status = memberInfo.Status,
                 AvatarUrl = memberInfo.AvatarUrl,
 
-                // 🔥 只有允許時才給資料
                 Email = canViewPrivateData ? memberList.Email : null,
                 Phone = canViewPrivateData ? memberList.Phone : null
             };

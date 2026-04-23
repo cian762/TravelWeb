@@ -20,4 +20,6 @@ public partial class ViewArticleHideStatus
     public byte? Status { get; set; }
 
     public bool? IsViolation { get; set; }
+
+    public string? Title { get; set; }
 }

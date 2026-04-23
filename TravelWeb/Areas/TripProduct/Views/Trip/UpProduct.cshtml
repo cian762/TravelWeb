@@ -1,0 +1,188 @@
+﻿@model TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelProducts
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "修改旅遊行程";
+}
+
+<style>
+    /* 延用你漂亮的 CSS */
+    .form-container {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 2rem;
+        margin-top: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .form-title {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+        color: #333;
+        font-weight: 700;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 0.5rem;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        min-height: 38px;
+    }
+
+    #image-preview {
+        max-width: 300px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 2px dashed #ddd;
+        padding: 5px;
+    }
+
+    .btn-submit {
+        padding: 0.8rem 2.5rem;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 form-container">
+            <h2 class="form-title"><i class="bi bi-pencil-fill me-2"></i>修改旅遊商品</h2>
+            <div asp-validation-summary="All" class="text-danger"></div>
+            @* 💡 Action 改成 UpProduct *@
+            <form asp-action="UpProduct" method="post" enctype="multipart/form-data">
+
+                @* 💡 關鍵：必須隱藏傳遞 ID，後端才知道改哪一筆 *@
+                <input type="hidden" asp-for="TripProductId" />
+
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        <div class="form-group">
+                            <label asp-for="ProductName"><i class="bi bi-pencil-square me-1"></i> 行程名稱</label>
+                            <input asp-for="ProductName" class="form-control" />
+                            <span asp-validation-for="ProductName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <div class="form-group">
+                            <label asp-for="Description"><i class="bi bi-card-text me-1"></i> 行程描述</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="form-group">
+                            <label asp-for="DurationDays"><i class="bi bi-calendar3 me-1"></i> 行程天數</label>
+                            <div class="input-group">
+                                <input asp-for="DurationDays" class="form-control" type="number" min="1" />
+                                <span class="input-group-text">天</span>
+                            </div>
+                            @* 💡 提醒文字：縮減天數會刪除多餘細項 *@
+                            <small class="text-danger">注意：若縮減天數，系統將自動刪除多出的行程細項。</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="form-group">
+                            <label asp-for="DisplayPrice"><i class="bi bi-currency-dollar me-1"></i> 顯示價格</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="DisplayPrice" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="form-group">
+                            <label asp-for="RegionId"><i class="bi bi-geo-alt me-1"></i> 地區分類</label>
+                            <select asp-for="RegionId" asp-items="Model.RegionOptions" class="form-select"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="form-group">
+                            <label asp-for="PolicyId"><i class="bi bi-shield-check me-1"></i> 退款規定</label>
+                            @* 💡 這裡的 asp-for 必須對應到 PolicyId *@
+                            <select asp-for="PolicyId" asp-items="Model.PolicyOptions" class="form-select">
+                                <option value="">-- 請選擇退款規定 --</option>
+                            </select>
+                            <span asp-validation-for="PolicyId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="form-group">
+                            <label asp-for="Status"><i class="bi bi-toggle-on me-1"></i> 上架狀態</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="上架">上架</option>
+                                <option value="下架">下架</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <div class="form-group">
+                            <label><i class="bi bi-tags me-1"></i> 行程標籤</label>
+                            <select asp-for="SelectedTags" asp-items="Model.TagOptions" class="form-control select2-tag-input" multiple="multiple">
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <div class="form-group">
+                            <label asp-for="ImageFile"><i class="bi bi-image me-1"></i> 行程主圖 (若不更換請留空)</label>
+                            <input asp-for="ImageFile" type="file" id="imgInput" class="form-control" accept="image/*" />
+
+                            @* 💡 預設顯示舊圖 *@
+                            <img id="image-preview"
+                                 src="@(string.IsNullOrEmpty(Model.CoverImage) ? "#" : "/PImages/" + Model.CoverImage)"
+                                 style="display: @(string.IsNullOrEmpty(Model.CoverImage) ? "none" : "block");" />
+                        </div>
+                    </div>
+
+                    <div class="col-12 text-end mt-4">
+                        <hr />
+                        <a asp-action="Index" class="btn btn-light me-2">取消回列表</a>
+                        <button type="submit" class="btn btn-primary btn-submit">
+                            <i class="bi bi-save me-1"></i> 確認修改
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.select2-tag-input').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                width: '100%'
+            });
+
+            $("#imgInput").change(function() {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#image-preview').attr('src', e.target.result).show();
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+    </script>
+}

@@ -1,4 +1,5 @@
-﻿@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.TripIndexViewModel>
+﻿@using System.Text.Json
+@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.TripIndexViewModel>
 
 @{
     ViewData["Title"] = "行程商品管理";
@@ -92,6 +93,7 @@
                 <tbody>
                     @foreach (var item in Model)
                     {
+                        @* 💡 判斷是否為下架狀態 *@
                         bool isInactive = item.Status != "上架";
 
                         <tr style="@(isInactive ? "background-color: #f8f9fa !important; color: #adb5bd !important;" : "")">
@@ -99,7 +101,7 @@
                             <td>
                                 @if (!string.IsNullOrEmpty(item.ImagePath))
                                 {
-                                    <img src="@item.ImagePath" class="img-thumbnail shadow-sm grayscale-img"
+                                    <img src="@Url.Content(item.ImagePath)" class="img-thumbnail shadow-sm"
                                          style="width: 120px; height: 80px; object-fit: cover; @(isInactive ? "filter: grayscale(100%); opacity: 0.5;" : "")" />
                                 }
                                 else
@@ -108,36 +110,64 @@
                                 }
                             </td>
                             <td>
-                                <div class="fw-bold fs-6 @(isInactive ? "" : "text-primary")">@item.ProductName</div>
+                                <div class="fw-bold fs-5 @(isInactive ? "" : "text-primary")">@item.ProductName</div>
                             </td>
                             <td>
-                                <span class="badge @(isInactive ? "bg-secondary text-white" : "bg-info text-dark") p-2">@item.RegionName</span>
+                                   <span class="badge @(isInactive ? "bg-secondary text-white" : "bg-info text-dark") p-2 fs-5">@item.RegionName</span>
                             </td>
-                            <td class="fw-bold fs-6 @(isInactive ? "" : "text-danger")">@item.DisplayPrice</td>
+                            <td class="fw-bold fs-5 @(isInactive ? "" : "text-danger")">@item.DisplayPrice</td>
                             <td>
-                                <span class="badge rounded-pill @(isInactive ? "bg-dark" : "bg-success") px-3 py-2 shadow-sm">
+                                <span class="badge rounded-pill @(isInactive ? "bg-dark" : "bg-success") px-3 py-2 shadow-sm fs-5">
                                     @(isInactive ? "已下架" : "上架中")
                                 </span>
                             </td>
-                            <td class="px-3">
-                                <div class="d-grid px-1 mb-3">
-                                    <button class="btn btn-manage @(isInactive ? "btn-secondary" : "btn-dark") justify-content-center" onclick="openSchedule(@item.TripProductId)">
-                                        <i class="fas fa-clock"></i> 檔期管理
-                                    </button>
+                            <td class="px-3" style="min-width: 320px;">
+                                @* --- 1. 檔期管理：深灰色長方形按鈕 --- *@
+                                <div class="d-grid mb-2">
+                                    @if (isInactive)
+                                    {
+                                        @* 💡 下架時：深黑灰色感 (使用 #343a40 搭配 opacity 呈現灰黑質感) *@
+                                        <button class="btn shadow-sm py-2"
+                                                style="cursor: not-allowed; background-color: #212529; color: #adb5bd; border: none; opacity: 0.7; width: 100%;">
+                                            <i class="fas fa-clock me-2"></i>檔期管理
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        @* 💡 上架時：改成 <a> 標籤，直接跳轉到剛寫好的 SchedulesIndex *@
+                                        <a href="@Url.Action("SchedulesIndex", "Trip", new { id = item.TripProductId })"
+                                           class="btn shadow-sm py-2 text-white"
+                                           style="background-color: #007bff; border: none; width: 100%; font-weight: bold; display: block;">
+                                            <i class="fas fa-clock me-2"></i>檔期管理
+                                        </a>
+                                    }
                                 </div>
-                                <div style="@(isInactive ? "opacity: 0.7;" : "")">
-                                    <div class="d-flex justify-content-center gap-2 mb-2">
-                                        <a asp-area="TripProduct" asp-controller="Trip" asp-action="ItemIndex" asp-route-id="@item.TripProductId" class="btn btn-info text-white btn-manage shadow-sm me-3">
-                                            <i class="fas fa-calendar-alt"></i> 編排細項
-                                        </a>
-                                        <a asp-action="Edit" asp-route-id="@item.TripProductId" class="btn btn-outline-warning btn-manage shadow-sm">
-                                            <i class="fas fa-edit"></i> 修改
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.TripProductId" class="btn btn-outline-danger btn-manage shadow-sm ms-3"
-                                           onclick="return confirm('確定要刪除嗎？')">
-                                            <i class="fas fa-trash-alt"></i> 刪除
-                                        </a>
-                                    </div>
+
+                                @* --- 2. 下方三個橫向按鈕：Icon 在左，文字在右且不換行 --- *@
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a asp-area="TripProduct" asp-controller="Trip" asp-action="ItemIndex" asp-route-id="@item.TripProductId"
+                                       class="btn d-flex align-items-center justify-content-center shadow-sm px-3"
+                                       style="height: 45px; min-width: 100px; background-color: #a2d2ff; color: #003e5c; border: none; white-space: nowrap; font-weight: 500; transition: 0.3s;">
+                                        <i class="fas fa-calendar-alt me-2"></i><span>編排細項</span>
+                                    </a>
+      
+                                    @* 修改：黃色邊框按鈕 *@
+                                    <a asp-action="UpProduct" asp-route-id="@item.TripProductId"
+                                       class="btn d-flex align-items-center justify-content-center shadow-sm px-2"
+                                       style="height: 45px; min-width: 75px; background-color: white; color: #ffc107; border: 1.5px solid #ffc107; white-space: nowrap;">
+                                        <i class="fas fa-edit me-2"></i><span>修改</span>
+                                    </a>
+
+                                    @* 刪除：紅色邊框按鈕 *@
+                                    <button type="button" class="btn d-flex align-items-center justify-content-center shadow-sm px-2"
+                                            style="height: 45px; min-width: 75px; background-color: white; color: #e35d5d; border: 1.5px solid #e35d5d; white-space: nowrap;"
+                                            onclick="confirmDelete(@item.TripProductId, @Html.Raw(JsonSerializer.Serialize(item.ProductName)))">
+                                        <i class="fas fa-trash-alt me-2"></i><span>刪除</span>
+                                    </button>
+                                    <form id="delete-form-@item.TripProductId" asp-action="PDelete" method="post" style="display:none;">
+                                        <input type="hidden" name="id" value="@item.TripProductId" />
+                                        @Html.AntiForgeryToken()
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -150,23 +180,31 @@
         {
             <div class="card-footer bg-white py-4 border-top">
                 <nav aria-label="Page navigation">
-                    <ul class="pagination pagination-lg justify-content-center mb-0">
-                        @* 上一頁 *@
+                    <ul class="pagination justify-content-center mb-0 gap-2">
+                        @* gap-2 讓按鈕分開，不黏在一起 *@
+
+                        @* --- 上一頁 --- *@
                         <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
-                            <a class="page-link shadow-sm px-3" asp-action="Index"
+                            <a class="page-link border-0 rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+                               style="width: 45px; height: 45px; background-color: white; transition: all 0.3s ease;"
+                               asp-action="Index"
                                asp-route-page="@(ViewBag.CurrentPage - 1)"
                                asp-route-keyword="@ViewData["Keyword"]"
                                asp-route-regionId="@ViewData["RegionId"]"
                                asp-route-status="@ViewData["Status"]">
-                                <i class="fas fa-chevron-left"></i>
+                                <i class="fas fa-chevron-left text-primary"></i>
                             </a>
                         </li>
 
-                        @* 💡 這裡就是你直接按 1, 2, 3 跳轉的地方 *@
+                        @* --- 頁碼按鈕 --- *@
                         @for (int i = 1; i <= ViewBag.TotalPages; i++)
                         {
-                            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                                <a class="page-link shadow-sm px-4" asp-action="Index"
+                            bool isActive = (i == ViewBag.CurrentPage);
+                            <li class="page-item @(isActive ? "active" : "")">
+                                <a class="page-link border-0 rounded-circle shadow-sm d-flex align-items-center justify-content-center fw-bold"
+                                   style="width: 45px; height: 45px; transition: all 0.3s ease;
+                                          @(isActive ? "background-color: #0d6efd; color: white;" : "background-color: white; color: #6c757d;")"
+                                   asp-action="Index"
                                    asp-route-page="@i"
                                    asp-route-keyword="@ViewData["Keyword"]"
                                    asp-route-regionId="@ViewData["RegionId"]"
@@ -174,14 +212,16 @@
                             </li>
                         }
 
-                        @* 下一頁 *@
+                        @* --- 下一頁 --- *@
                         <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
-                            <a class="page-link shadow-sm px-3" asp-action="Index"
+                            <a class="page-link border-0 rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+                               style="width: 45px; height: 45px; background-color: white; transition: all 0.3s ease;"
+                               asp-action="Index"
                                asp-route-page="@(ViewBag.CurrentPage + 1)"
                                asp-route-keyword="@ViewData["Keyword"]"
                                asp-route-regionId="@ViewData["RegionId"]"
                                asp-route-status="@ViewData["Status"]">
-                                <i class="fas fa-chevron-right"></i>
+                                <i class="fas fa-chevron-right text-primary"></i>
                             </a>
                         </li>
                     </ul>
@@ -190,9 +230,57 @@
         }
     </div>
 </div>
+@section Scripts {
+    @* 1. 先引入外部套件 (CDN) *@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    function openSchedule(id) {
-        alert('正在開啟商品 ID: ' + id + ' 的檔期管理視窗');
-    }
-</script>
+    @* 2. 再執行你的判斷邏輯 *@
+    <script>
+        $(document).ready(function () {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                    <text>
+                               Swal.fire({
+                title: '成功！',
+                // 💡 使用 Html.Raw 確保中文字不被二次轉碼
+                text: '@Html.Raw(TempData["SuccessMessage"])',
+                icon: 'success',
+                confirmButtonText: '確定',
+                timer: 3000,
+                timerProgressBar: true
+            });
+                    </text>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                    <text>
+                    Swal.fire({
+                        title: '錯誤！',
+                        text: '@TempData["ErrorMessage"]',
+                        icon: 'error',
+                        confirmButtonText: '好'
+                    });
+                    </text>
+            }
+        });
+            
+                function confirmDelete(id, name) {
+            Swal.fire({
+                title: '確定要刪除嗎？',
+                text: `行程「${name}」刪除後將無法恢復，確定執行？`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e35d5d',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '是的，刪除它！',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 💡 找到對應 ID 的隱藏表單並送出
+                    document.getElementById('delete-form-' + id).submit();
+                }
+            })
+        }
+    </script>
+}

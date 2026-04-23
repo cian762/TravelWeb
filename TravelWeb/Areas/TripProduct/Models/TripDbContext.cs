@@ -19,11 +19,15 @@ public partial class TripDbContext : DbContext
 
     public virtual DbSet<Activity> Activities { get; set; }
 
+    public virtual DbSet<ActivityImage> ActivityImages { get; set; }
+
     public virtual DbSet<Attraction> Attractions { get; set; }
 
     public virtual DbSet<AttractionProduct> AttractionProducts { get; set; }
 
     public virtual DbSet<CancellationPolicy> CancellationPolicies { get; set; }
+
+    public virtual DbSet<Image> Images { get; set; }
 
     public virtual DbSet<ItineraryProductCollection> ItineraryProductCollections { get; set; }
 
@@ -55,9 +59,6 @@ public partial class TripDbContext : DbContext
 
     public virtual DbSet<TripSchedule> TripSchedules { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("server=.;database=Travel;Trusted_Connection=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,6 +72,10 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.ProductName).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(10);
             entity.Property(e => e.TicketCategoryId).HasColumnName("TicketCategoryID");
+
+            entity.HasOne(d => d.TicketCategory).WithMany(p => p.AcitivityTickets)
+                .HasForeignKey(d => d.TicketCategoryId)
+                .HasConstraintName("FK_Acitivity_Tickets_TicketCategories");
         });
 
         modelBuilder.Entity<Activity>(entity =>
@@ -82,6 +87,20 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
             entity.Property(e => e.Title).HasMaxLength(50);
             entity.Property(e => e.UpdateAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<ActivityImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageSetId).HasName("PK_活動圖片表");
+
+            entity.ToTable("ActivityImages", "Activity");
+
+            entity.Property(e => e.ImageSetId).HasColumnName("ImageSetID");
+            entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
+
+            entity.HasOne(d => d.Activity).WithMany(p => p.ActivityImages)
+                .HasForeignKey(d => d.ActivityId)
+                .HasConstraintName("FK_活動圖片表_活動表");
         });
 
         modelBuilder.Entity<Attraction>(entity =>
@@ -110,6 +129,7 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.GooglePlaceId)
                 .HasMaxLength(255)
                 .HasColumnName("google_place_id");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             entity.Property(e => e.Latitude)
                 .HasColumnType("decimal(10, 7)")
                 .HasColumnName("latitude");
@@ -144,6 +164,7 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             entity.Property(e => e.MaxPurchaseQuantity).HasColumnName("max_purchase_quantity");
             entity.Property(e => e.PolicyId).HasColumnName("policy_id");
             entity.Property(e => e.Price)
@@ -152,7 +173,6 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.ProductCode)
                 .HasMaxLength(50)
                 .HasColumnName("product_code");
-            entity.Property(e => e.RegionId).HasColumnName("region_id");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValue("DRAFT")
@@ -178,6 +198,23 @@ public partial class TripDbContext : DbContext
             entity.Property(e => e.RefundRate).HasColumnType("decimal(3, 2)");
         });
 
+        modelBuilder.Entity<Image>(entity =>
+        {
+            entity.HasKey(e => e.ImageId).HasName("PK_Attractions_Images");
+
+            entity.ToTable("Images", "Attractions");
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
+            entity.Property(e => e.ImagePath)
+                .HasMaxLength(255)
+                .HasColumnName("image_path");
+
+            entity.HasOne(d => d.Attraction).WithMany(p => p.Images)
+                .HasForeignKey(d => d.AttractionId)
+                .HasConstraintName("FK_Images_Attractions");
+        });
+
         modelBuilder.Entity<ItineraryProductCollection>(entity =>
         {
             entity.HasKey(e => e.FavoriteProductId);
@@ -189,6 +226,10 @@ public partial class TripDbContext : DbContext
             entity.HasOne(d => d.Member).WithMany(p => p.ItineraryProductCollections)
                 .HasForeignKey(d => d.MemberId)
                 .HasConstraintName("FK_ItineraryProductCollection_Member_Information");
+
+            entity.HasOne(d => d.TripProduct).WithMany(p => p.ItineraryProductCollections)
+                .HasForeignKey(d => d.TripProductId)
+                .HasConstraintName("FK_ItineraryProductCollection_TripProducts");
         });
 
         modelBuilder.Entity<MemberInformation>(entity =>
@@ -241,19 +282,6 @@ public partial class TripDbContext : DbContext
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderItems_Orders");
-
-            entity.HasOne(d => d.ProductCodeNavigation).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_OrderItems_Acitivity_Tickets");
-
-            entity.HasOne(d => d.ProductCode1).WithMany(p => p.OrderItems)
-                .HasPrincipalKey(p => p.ProductCode)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_OrderItems_AttractionProducts");
-
-            entity.HasOne(d => d.ProductCode2).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_OrderItems_Schedules");
         });
 
         modelBuilder.Entity<OrderItemTicket>(entity =>
@@ -345,19 +373,6 @@ public partial class TripDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ShoppingCart_Member_Information");
 
-            entity.HasOne(d => d.ProductCodeNavigation).WithMany(p => p.ShoppingCarts)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_ShoppingCart_Acitivity_Tickets");
-
-            entity.HasOne(d => d.ProductCode1).WithMany(p => p.ShoppingCarts)
-                .HasPrincipalKey(p => p.ProductCode)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_ShoppingCart_AttractionProducts");
-
-            entity.HasOne(d => d.ProductCode2).WithMany(p => p.ShoppingCarts)
-                .HasForeignKey(d => d.ProductCode)
-                .HasConstraintName("FK_Cart_Schedules");
-
             entity.HasOne(d => d.TicketCategory).WithMany(p => p.ShoppingCarts)
                 .HasForeignKey(d => d.TicketCategoryId)
                 .HasConstraintName("FK_ShoppingCart_TicketCategories");
@@ -383,7 +398,6 @@ public partial class TripDbContext : DbContext
 
             entity.ToTable("TripItineraryItems", "product");
 
-            entity.Property(e => e.ItineraryItemId).ValueGeneratedNever();
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
             entity.Property(e => e.AttractionId).HasColumnName("attraction_id");
 
@@ -434,22 +448,21 @@ public partial class TripDbContext : DbContext
                     "TravelandProductRelation",
                     r => r.HasOne<TravelTag>().WithMany()
                         .HasForeignKey("TravelTagid")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("FK_TravelandProductRelation_TravelTags"),
                     l => l.HasOne<TripProduct>().WithMany()
                         .HasForeignKey("TripProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("FK_TravelandProductRelation_TripProducts"),
                     j =>
                     {
                         j.HasKey("TripProductId", "TravelTagid");
-                        j.ToTable("TravelandProductRelation");
+                        j.ToTable("TravelandProductRelation","dbo");
                     });
         });
 
         modelBuilder.Entity<TripRegion>(entity =>
         {
-            entity.HasKey(e => e.RegionId).HasName("PK__TripRegi__ACD844436F68D83C");
+            entity.HasKey(e => e.RegionId).HasName("PK__TripRegi__ACD8444348146F8D");
 
             entity.Property(e => e.RegionId).HasColumnName("RegionID");
             entity.Property(e => e.RegionName).HasMaxLength(50);
@@ -488,7 +501,7 @@ public partial class TripDbContext : DbContext
                     j =>
                     {
                         j.HasKey("ProductCode", "TicketCategoryId");
-                        j.ToTable("TripAndTicketRelation");
+                        j.ToTable("TripAndTicketRelation","dbo");
                         j.IndexerProperty<string>("ProductCode").HasMaxLength(50);
                     });
         });

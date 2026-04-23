@@ -5,86 +5,256 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>新增行程細項</h2>
-        <a asp-action="ItemIndex" asp-route-id="@Model.TripProductId" class="btn btn-outline-secondary">返回列表</a>
-    </div>
-    <hr />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
+<style>
+    /* 修正搜尋框在 Bootstrap 中的外觀 */
+    .select2-container .select2-selection--single {
+        height: 45px !important;
+        border: 1px solid #ced4da;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 45px !important;
+        padding-left: 15px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px !important;
+    }
+
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .type-section {
+        transition: all 0.3s ease;
+    }
+
+    /* 確保時間軸容器外觀 */
+    .timeline-container {
+        background-color: #f8f9fa;
+        scrollbar-width: thin;
+    }
+    /* 右側時間軸容器樣式 */
+    .timeline-container {
+        background-color: #f8f9fa; /* 淺灰色底色 */
+        border-radius: 12px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* 天數分段標題 */
+    .day-section h6 {
+        padding: 5px 0;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* 時間軸虛線主體 */
+    .ms-2.border-start {
+        border-left: 2px dashed #0d6efd !important; /* 藍色虛線 */
+        margin-left: 1rem !important;
+        padding-left: 1.5rem !important;
+    }
+
+    /* 時間軸上的小圓點 */
+    .timeline-item .position-absolute {
+        left: -25px; /* 根據邊距調整圓點位置，使其壓在虛線上 */
+        top: 10px;
+        width: 14px;
+        height: 14px;
+        background-color: #0d6efd;
+        border: 3px solid #fff; /* 白色外框讓圓點更明顯 */
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px #0d6efd;
+        z-index: 2;
+    }
+
+    /* 時間軸內的小卡片優化 */
+    .timeline-item .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+    }
+
+        .timeline-item .card:hover {
+            transform: translateX(5px); /* 滑過時往右輕微位移 */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        }
+
+    /* 備註文字樣式 */
+    .timeline-item p.small {
+        line-height: 1.4;
+        color: #6c757d;
+    }
+
+    /* 滾動條美化 (針對 Chrome/Edge) */
+    .timeline-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .timeline-container::-webkit-scrollbar-thumb {
+        background-color: #cbd5e0;
+        border-radius: 10px;
+    }
+
+    .col-md-4 .sticky-top {
+        width: 100%; /* 確保懸浮時寬度依然填滿右側欄位 */
+        z-index: 1020;
+    }
+</style>
+<input type="hidden" id="max-days-limit" value="@Model.MaxDays" />
+<div id="msg-handler"
+     data-success="@TempData["SuccessMessage"]"
+     style="display:none;"></div>
+<div class="container-fluid py-4">
     <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form asp-action="ItemCreate" method="post" enctype="multipart/form-data">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-dark">新增行程細項</h2>
+                <a asp-action="ItemIndex" asp-route-id="@Model.TripProductId" class="btn btn-outline-secondary">返回列表</a>
+            </div>
 
-                        <input type="hidden" asp-for="TripProductId" />
+            <form asp-action="CreateItem" asp-controller="Trip" asp-route-id="@Model.TripProductId" method="post" enctype="multipart/form-data" id="mainForm">
+                <input type="hidden" asp-for="ItineraryItemId" />
+                <input type="hidden" asp-for="TripProductId" />
 
-                        <div class="row mb-3">
-                            <div class="col">
-                                <label asp-for="DayNumber" class="form-label"></label>
-                                <input asp-for="DayNumber" class="form-control" type="number" min="1" />
-                                <span asp-validation-for="DayNumber" class="text-danger"></span>
-                            </div>
-                            <div class="col">
-                                <label asp-for="SortOrder" class="form-label"></label>
-                                <input asp-for="SortOrder" class="form-control" type="number" min="1" />
-                                <span asp-validation-for="SortOrder" class="text-danger"></span>
+                <div class="card border-0">
+                    <div class="card-body p-4">
+
+                        <div class="row g-3 mb-4">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">第幾天</label>
+                                    @* 💡 強制 readonly，並加入 onfocus="this.blur()" 徹底防止點擊輸入 *@
+                                    <input asp-for="DayNumber"
+                                           class="form-control form-control-lg bg-light"
+                                           type="text"
+                                           readonly
+                                           onfocus="this.blur()"
+                                           tabindex="-1" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">目前排序</label>
+                                    @* 💡 修正 type，並同樣加入強制鎖定組合技 *@
+                                    <input asp-for="SortOrder"
+                                           class="form-control form-control-lg bg-light"
+                                           type="number"
+                                           onfocus="this.blur()"
+                                           tabindex="-1" />
+                                </div>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label d-block">行程類型</label>
+                            <label class="form-label d-block fw-bold text-center mb-3">請選擇行程類型</label>
                             <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="typeGroup" id="btnAttraction" checked onclick="toggleType('attraction')">
-                                <label class="btn btn-outline-primary" for="btnAttraction">選擇景點</label>
-
-                                <input type="radio" class="btn-check" name="typeGroup" id="btnActivity" onclick="toggleType('activity')">
-                                <label class="btn btn-outline-primary" for="btnActivity">選擇活動</label>
-
-                                <input type="radio" class="btn-check" name="typeGroup" id="btnCustom" onclick="toggleType('custom')">
-                                <label class="btn btn-outline-primary" for="btnCustom">自定義資源</label>
+                                <input type="radio" class="btn-check" name="typeGroup" id="btnAttraction" checked>
+                                <label class="btn btn-outline-primary py-3 fw-bold" for="btnAttraction">選擇景點</label>
+                                <input type="radio" class="btn-check" name="typeGroup" id="btnActivity">
+                                <label class="btn btn-outline-primary py-3 fw-bold" for="btnActivity">選擇活動</label>
+                                <input type="radio" class="btn-check" name="typeGroup" id="btnCustom">
+                                <label class="btn btn-outline-primary py-3 fw-bold" for="btnCustom">自定義資源</label>
                             </div>
                         </div>
 
-                        <div id="section-attraction" class="type-section mb-3">
-                            <label class="form-label">現有景點清單</label>
-                            <select asp-for="AttractionId" asp-items="Model.AttractionList" class="form-select">
-                                <option value="">-- 請選擇景點 --</option>
-                            </select>
-                        </div>
-
-                        <div id="section-activity" class="type-section mb-3" style="display:none;">
-                            <label class="form-label">現有活動清單</label>
-                            <select asp-for="ActivityId" asp-items="Model.ActivityList" class="form-select">
-                                <option value="">-- 請選擇活動 --</option>
-                            </select>
-                        </div>
-
-                        <div id="section-custom" class="type-section mb-3" style="display:none;">
-                            <div class="p-3 border rounded bg-light">
-                                <div class="mb-3">
-                                    <label asp-for="ResourceName" class="form-label"></label>
-                                    <input asp-for="ResourceName" class="form-control" />
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="FileImage" class="form-label"></label>
-                                    <input asp-for="FileImage" type="file" class="form-control" />
-                                </div>
+                        <div class="mb-4">
+                            <div id="section-attraction" class="type-section">
+                                <label class="form-label fw-bold">🔍 搜尋或選擇景點</label>
+                                <select asp-for="AttractionId" asp-items="Model.AttractionList" class="form-select select2-init" data-type="attraction" style="width: 100%">
+                                    <option value="">-- 請手打關鍵字搜尋景點 --</option>
+                                </select>
+                            </div>
+                            <div id="section-activity" class="type-section" style="display:none;">
+                                <label class="form-label fw-bold">🔍 搜尋或選擇活動</label>
+                                <select asp-for="ActivityId" asp-items="Model.ActivityList" class="form-select select2-init" data-type="activity" style="width: 100%">
+                                    <option value="">-- 請手打關鍵字搜尋活動 --</option>
+                                </select>
+                            </div>
+                            <div id="section-custom" class="type-section" style="display:none;">
+                                <label class="form-label fw-bold">✍️ 自定義資源名稱</label>
+                                <input asp-for="ResourceName" class="form-control form-control-lg shadow-sm" placeholder="例如：某某餐廳下午茶" />
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="CustomText" class="form-label"></label>
-                            <textarea asp-for="CustomText" class="form-control" rows="3"></textarea>
-                            <span asp-validation-for="CustomText" class="text-danger"></span>
+                        <div class="bg-light p-4 rounded-3 mb-4 border border-info shadow-sm">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-primary">📖 內容描述</label>
+                                @* 💡 關鍵：使用 asp-for 綁定 ViewModel 欄位 *@
+                                <textarea asp-for="ResourceDescription" class="form-control" rows="4" placeholder="在這裡編輯景點或活動的通用介紹..."></textarea>
+                                @* 💡 建議加上驗證訊息顯示 *@
+                                <span asp-validation-for="ResourceDescription" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label fw-bold text-secondary">🖼️ 圖片管理 (預覽與上傳)</label>
+                                <div id="imageContainer" class="d-flex flex-wrap gap-2 mb-3">
+                                </div>
+                                <input asp-for="FileImages" type="file" class="form-control" multiple accept="image/*" />
+                            </div>
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">儲存行程細項</button>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-success">📝 本次行程私密小備註 </label>
+                            <textarea asp-for="CustomText" class="form-control" rows="3" placeholder="例如：交通時間 20 分鐘、建議停留 1.5 小時..."></textarea>
                         </div>
-                    </form>
+
+                        <div class="d-grid gap-2 pt-3">
+                            <button type="submit" class="btn btn-primary btn-lg shadow">確認儲存並建立行程</button>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="sticky-top" style="top: 20px;">
+                <h5 class="mb-3"><i class="bi bi-calendar-check"></i> 當前行程進度</h5>
+                <div class="timeline-container p-3 border rounded bg-light" style="max-height: 80vh; overflow-y: auto;">
+                    @if (ViewBag.ExistingItems != null && ((IEnumerable<dynamic>)ViewBag.ExistingItems).Any())
+                    {
+                        var groupedItems = ((IEnumerable<dynamic>)ViewBag.ExistingItems)
+                        .GroupBy(i => i.DayNumber)
+                        .OrderBy(g => g.Key);
+
+                        foreach (var dayGroup in groupedItems)
+                        {
+                            <div class="day-section mb-4">
+                                <h6 class="text-primary fw-bold">第 @dayGroup.Key 天</h6>
+                                <div class="ms-2 border-start ps-3" style="border-left: 2px dashed #0d6efd !important;">
+                                    @foreach (var item in dayGroup.OrderBy(i => i.SortOrder))
+                                    {
+                                        <div class="timeline-item mb-3 position-relative">
+                                            <div class="position-absolute" style="left: -25px; top: 5px; width: 12px; height: 12px; background: #0d6efd; border-radius: 50%;"></div>
+
+                                            <div class="card shadow-sm border-0">
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="fw-bold text-dark">@item.ResourceName</span>
+                                                        <small class="text-muted">#@item.SortOrder</small>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(item.CustomText))
+                                                    {
+                                                        <p class="small text-secondary mb-0 mt-1">@item.CustomText</p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-map h1"></i>
+                            <p>目前還沒安排行程內容</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -92,24 +262,152 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        function toggleType(type) {
-            // 隱藏所有
-            document.querySelectorAll('.type-section').forEach(el => el.style.display = 'none');
-            // 顯示目標
-            document.getElementById('section-' + type).style.display = 'block';
-
-            // 清空非當前選擇的欄位值，避免後端接收到衝突的 ID
-            if (type !== 'attraction') document.getElementById('AttractionId').value = '';
-            if (type !== 'activity') document.getElementById('ActivityId').value = '';
-            if (type !== 'custom') {
-                document.getElementById('ResourceName').value = '';
-                document.getElementById('FileImage').value = '';
+        $(document).ready(function () {
+            // --- 1. 提示訊息處理 ---
+            const success = $('#msg-handler').data('success');
+            if (success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '成功',
+                    text: success,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             }
-        }
+
+            // --- 2. 初始化 Select2 ---
+            $('.select2-init').select2({
+                placeholder: "請輸入關鍵字搜尋...",
+                allowClear: true,
+                width: '100%' // 確保寬度正常
+            });
+
+            // --- 3. 行程類型切換 ---
+            $('input[name="typeGroup"]').on('change', function() {
+                let type = $(this).attr('id').replace('btn', '').toLowerCase();
+                $('.type-section').hide();
+                $('#section-' + type).fadeIn();
+
+                // 清空選單與欄位
+                $('.select2-init').val(null).trigger('change');
+                $('#ResourceName, #ResourceDescription').val('');
+                $('#imageContainer').empty();
+                $('input[type="file"]').val('');
+            });
+
+            // --- 4. AJAX 抓取詳細資料 ---
+                          $('.select2-init').on('select2:select', function (e) {
+            let type = $(this).data('type');
+            let id = e.params.data.id;
+            if (id) {
+                $.get('/TripProduct/Trip/GetResourceDetail', { type: type, id: id }, function (data) {
+                    if (data) {
+                        let finalDescription = data.description || data.Description || "";
+                        $('#ResourceDescription').val(finalDescription);
+
+                        let imgHtml = '';
+                        if (data.images && data.images.length > 0) {
+                            data.images.forEach(path => {
+                                if (!path) return;
+
+                                let finalPath = "";
+
+                                // 核心判斷：如果是雲端網址 (Cloudinary)
+                                if (path.toLowerCase().startsWith('http')) {
+                                    finalPath = path; // 直接使用網址
+                                }
+                                else {
+                                    // 如果是本地路徑，徹底清洗開頭多餘符號
+                                    let cleanPath = path.replace(/^~/, '')         // 移除 ASP.NET 波浪號
+                                                        .replace(/^[\\\/]+/, '')   // 移除開頭所有斜線或反斜線
+                                                        .replace(/\\/g, '/');      // 轉反斜線為斜線
+
+                                    // 統一補上一個斜線，指向地端 wwwroot
+                                    finalPath = '/' + cleanPath;
+                                }
+
+                                console.log("[圖片路徑處理] 原始:", path, " -> 最終:", finalPath);
+
+                                imgHtml += `
+                                    <div class="position-relative d-inline-block me-2 mb-2">
+                                        <img src="${finalPath}" class="img-thumbnail"
+                                             style="width: 120px; height: 90px; object-fit: cover;"
+                                             onerror="this.src='/img/no-image.png'; console.error('載入失敗的路徑:', '${finalPath}');" />
+                                        <span class="position-absolute top-0 start-0 badge bg-secondary" style="font-size:0.5rem">原有圖</span>
+                                    </div>`;
+                            });
+                            $('#imageContainer').html(imgHtml);
+                        } else {
+                            $('#imageContainer').html('<span class="text-muted small">尚無原有圖片</span>');
+                        }
+                    }
+                });
+            }
+        });
+           
+
+            // --- 5. 檔案預覽 ---
+            $('input[type="file"]').on('change', function(e) {
+                const container = $('#imageContainer');
+                const files = e.target.files;
+                for (let i = 0; i < files.length; i++) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        container.append(`
+                            <div class="position-relative d-inline-block me-2 mb-2">
+                                <img src="${event.target.result}" class="img-thumbnail" style="width: 120px; height: 90px; object-fit: cover; border: 2px solid #007bff;" />
+                                <span class="position-absolute top-0 start-0 badge bg-primary">待上傳</span>
+                            </div>`);
+                    };
+                    reader.readAsDataURL(files[i]);
+                }
+            });
+
+            // --- 6. 表單送出檢查 (關鍵修正點) ---
+            $('#mainForm').on('submit', function(e) {
+                let inputDay = parseInt($('#DayNumber').val()) || 0;
+                // 💡 修正：確保天數正確抓取，且不因引號出錯
+                let maxDay = parseInt("@(Model?.MaxDays ?? 1)");
+
+                if (inputDay > maxDay) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '超出天數限制',
+                        text: "這項產品只有 " + maxDay + " 天行程，請勿填寫超過！"
+                    });
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // --- 7. 序號重複檢查 ---
+            $('#SortOrder').on('change keyup', function() {
+                let currentDay = $('#DayNumber').val();
+                let currentSort = $(this).val();
+                let exists = false;
+
+                $('.timeline-item').each(function() {
+                    if ($(this).data('day') == currentDay && $(this).data('sort') == currentSort) {
+                        exists = true;
+                        return false;
+                    }
+                });
+
+                if (exists) {
+                    $(this).addClass('is-invalid');
+                    if($('#sort-error').length == 0) {
+                        $(this).after('<div id="sort-error" class="text-danger small">此序號已存在於第 ' + currentDay + ' 天</div>');
+                    }
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $('#sort-error').remove();
+                }
+            });
+        }); // 這裡才是唯一的 ready 結尾
     </script>
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TravelWeb.Models;
 
+[Table("Authorization", Schema = "Member")]
 public partial class Authorization
 {
     public string AdminId { get; set; } = null!;

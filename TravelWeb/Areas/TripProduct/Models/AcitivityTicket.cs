@@ -23,7 +23,5 @@ public partial class AcitivityTicket
 
     public string? Status { get; set; }
 
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-
-    public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
+    public virtual TicketCategory? TicketCategory { get; set; }
 }

@@ -8,11 +8,11 @@ namespace TravelWeb.Areas.Itinerary.Models.ItineraryDBModel
     {
         [Key]
         public string MemberId {  get; set; }
-        public string MemberCode { get; set; }
+        public string? MemberCode { get; set; }
         public string? Name { get; set; }
-        public byte Gender {  get; set; }
-        public DateTime BirthDate {  get; set; }
-        public string AvatarUrl {  get; set; }
-        public string Status { get; set; }
+        public byte? Gender {  get; set; }
+        public DateTime? BirthDate {  get; set; }
+        public string? AvatarUrl {  get; set; }
+        public string? Status { get; set; }
     }
 }

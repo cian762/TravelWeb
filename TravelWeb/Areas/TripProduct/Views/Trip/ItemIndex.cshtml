@@ -1,116 +1,201 @@
-﻿@model TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelTripItineraryItems
+﻿@model IEnumerable<TravelWeb.Areas.TripProduct.Models.ViewModels.ViewModelTripItineraryItems>
+
 @{
-    ViewData["Title"] = "新增行程細項";
+    ViewData["Title"] = "行程編排總覽";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>批次編排行程細項</h2>
-        <span class="badge bg-info text-dark">總天數：@Model.MaxDays 天</span>
+<div id="msg-data"
+     data-success="@TempData["SuccessMessage"]"
+     data-error="@TempData["ErrorMessage"]"
+     style="display:none;"></div>
+<div class="container py-5">
+    @Html.AntiForgeryToken()
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h2 class="fw-bold text-primary">@ViewBag.ProductName</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-action="Index">商品管理</a></li>
+                    <li class="breadcrumb-item active">行程編排總覽</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-group shadow-sm">
+           <a asp-action="CreateItem" 
+   asp-controller="Trip" 
+   asp-route-id="@Model.FirstOrDefault()?.TripProductId" 
+   class="btn btn-success">新增細項</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> 回商品首頁
+            </a>
+        </div>
     </div>
-    <p class="text-muted">請依天數分頁填寫。若該時段不選景點，可直接在描述欄位填寫內容（如：自由活動）。</p>
 
-    <form asp-action="BatchCreate" method="post" id="batchForm">
-        <input type="hidden" asp-for="TripProductId" />
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+            <div class="card-body">
+                <i class="bi bi-calendar-x display-1 text-light mb-3"></i>
+                <h4 class="text-muted">目前還沒有編排行程</h4>
+                <p class="text-secondary">點擊上方的「新增細項」按鈕開始規劃您的產品內容。</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* 根據資料庫存的天數進行分組排序 *@
+        @foreach (var dayGroup in Model.GroupBy(i => i.DayNumber).OrderBy(g => g.Key))
+        {
+            <div class="day-wrapper mb-5">
+                <div class="d-flex align-items-center mb-4">
+                    <h3 class="badge bg-primary fs-5 p-2 px-4 rounded-pill shadow-sm mb-0">第 @dayGroup.Key 天</h3>
+                    <div class="flex-grow-1 ms-3 border-bottom" style="height: 1px; opacity: 0.2;"></div>
+                </div>
 
-        <ul class="nav nav-pills mb-4 border p-2 rounded bg-light" id="itineraryTabs" role="tablist">
-            @for (int i = 1; i <= Model.MaxDays; i++)
-            {
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @(i == 1 ? "active" : "")"
-                            id="day-tab-@i" data-bs-toggle="tab" data-bs-target="#day-panel-@i"
-                            type="button">
-                        第 @i 天
-                    </button>
-                </li>
-            }
-        </ul>
+                <div class="list-group">
+                    @foreach (var item in dayGroup.OrderBy(i => i.SortOrder))
+                    {
+                        <div class="list-group-item list-group-item-action border-0 shadow-sm mb-3 rounded-4 p-4">
+                            <div class="row align-items-center">
+                                <div class="col-auto text-center border-end pe-4" style="min-width: 90px;">
+                                    <div class="h3 fw-bold text-primary mb-0">#@item.SortOrder</div>
+                                    <small class="text-uppercase text-secondary ls-1">序號</small>
+                                </div>
 
-        <div class="tab-content">
-            @for (int i = 1; i <= Model.MaxDays; i++)
-            {
-                <div class="tab-pane fade @(i == 1 ? "show active" : "")" id="day-panel-@i">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 text-primary">Day @i 行程安排</h5>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="addTimeSlot(@i)">
-                                <i class="bi bi-plus-lg"></i> 新增時段
-                            </button>
-                        </div>
-                        <div class="card-body bg-light">
-                            <div id="slot-container-@i" class="itinerary-slots">
+                                <div class="col ps-4">
+                                    <div class="d-flex align-items-center mb-1">
+                                        @* 💡 直接抓取你在 IGetAny 裡處理好的 ResourceName *@
+                                        <h5 class="fw-bold text-dark mb-0">@item.ResourceName</h5>
+
+                                        <span class="badge bg-light text-secondary border ms-2">
+                                            @(item.AttractionId != null ? "景點" : (item.ActivityId != null ? "活動" : "自定義"))
+                                        </span>
+                                    </div>
+
+                                    <p class="mb-0 text-muted">
+                                        <i class="bi bi-chat-left-dots me-2"></i>
+                                        @(string.IsNullOrEmpty(item.CustomText) ? "尚無備註資訊" : item.CustomText)
+                                    </p>
+                                </div>
+
+                                <div class="col-auto">
+                                    <div class="btn-group">
+                                        <a asp-controller="Trip" asp-action="IUpdataItem" asp-route-id="@item.ItineraryItemId" class="btn btn-sm btn-outline-primary px-3">
+                                            <i class="bi bi-pencil-square"></i> 編輯
+                                        </a>
+                                        <a href="javascript:void(0)"
+                                           class="btn btn-sm btn-outline-danger px-3"
+                                           onclick="confirmDelete(@item.ItineraryItemId)">
+                                            <i class="bi bi-trash"></i> 移除
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
-            }
-        </div>
-
-        <div class="mt-5 border-top pt-3 text-end">
-            <a asp-action="ItemIndex" asp-route-id="@Model.TripProductId" class="btn btn-secondary me-2">取消返回</a>
-            <button type="submit" class="btn btn-success btn-lg px-5">全部存檔並提交</button>
-        </div>
-    </form>
+            </div>
+        }
+    }
 </div>
 
-@section Scripts {
-    <script>
-        let globalIndex = 0; // 確保 List 索引 [0], [1], [2] 不重複
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
 
-        function addTimeSlot(day) {
-            const container = document.getElementById(`slot-container-${day}`);
-            const sortOrder = container.children.length + 1; // 自動計算當天排序
+    .list-group-item {
+        transition: all 0.25s ease;
+        border-left: 6px solid #0d6efd !important;
+    }
 
-            // 💡 建立樣板，並在 Razor 階段就做好 Null 檢查避免警告
-            const template = `
-                <div class="card mb-3 border-0 shadow-sm animate__animated animate__fadeIn">
-                    <div class="card-body py-3">
-                        <div class="row g-2 align-items-end">
-                            <input type="hidden" name="[${globalIndex}].DayNumber" value="${day}" />
-                            <input type="hidden" name="[${globalIndex}].TripProductId" value="@Model.TripProductId" />
-
-                            <div class="col-md-1">
-                                <label class="small text-muted">排序</label>
-                                <input name="[${globalIndex}].SortOrder" value="${sortOrder}" class="form-control form-control-sm text-center bg-light" readonly />
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="small text-muted">選擇景點 (可不選)</label>
-                                <select name="[${globalIndex}].AttractionId" class="form-select form-select-sm">
-                                    <option value="">-- 不指定景點 --</option>
-                                    @if (Model.AttractionList != null)
-                                    {
-                                            @foreach (var item in Model.AttractionList)
-                                            {
-                                                    <option value="@item.Value">@item.Text</option>
-                                            }
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="small text-muted">行程描述</label>
-                                <input name="[${globalIndex}].CustomText" class="form-control form-control-sm" placeholder="例如：午餐自理、自由時間" />
-                            </div>
-
-                            <div class="col-md-1 text-center">
-                                <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="this.closest('.card').remove()">
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-
-            container.insertAdjacentHTML('beforeend', template);
-            globalIndex++;
+        .list-group-item:hover {
+            transform: translateX(8px);
+            background-color: #fff;
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
         }
 
-        // 頁面載入時，自動為每一天生成第一個時段
-        window.onload = () => {
-            for (let d = 1; d <= @Model.MaxDays; d++) {
-                addTimeSlot(d);
+    .ls-1 {
+        letter-spacing: 1px;
+        font-size: 0.7rem;
+    }
+
+    .rounded-4 {
+        border-radius: 1rem !important;
+    }
+</style>
+@section Scripts
+{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // 1. 刪除函數
+        function confirmDelete(id) {
+            // 抓取頁面上的防偽標記
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            Swal.fire({
+                title: '確定要移除嗎？',
+                text: "這將會連同自定義資源與圖片一併刪除，且無法還原！",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '是的，刪除它！',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("ItemDelete", "Trip")',
+                        type: 'POST',
+                        data: {
+                            id: id,
+                            __RequestVerificationToken: token
+                        },
+                        success: function (res) {
+                            // 💡 這裡對接 Controller 回傳的 Json
+                            if (res.success) {
+                                Swal.fire('已刪除！', '行程細項已成功移除。', 'success').then(() => {
+                                    // 💡 只有執行這行，畫面才會重新整理並讓東西消失
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('錯誤', res.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('錯誤', '連線伺服器失敗', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // 2. 處理其他頁面傳來的成功訊息
+        $(document).ready(function () {
+            const msgBox = $('#msg-data');
+            const successMsg = msgBox.data('success');
+            const errorMsg = msgBox.data('error');
+
+            if (successMsg) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '成功！',
+                    text: successMsg,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             }
-        };
+
+            if (errorMsg) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '行程已滿',
+                    text: errorMsg,
+                    confirmButtonText: '我知道了',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+        
     </script>
 }

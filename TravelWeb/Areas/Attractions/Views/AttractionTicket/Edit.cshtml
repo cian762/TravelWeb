@@ -1,0 +1,438 @@
+﻿@model TravelWeb.Areas.Attractions.Models.AttractionProduct
+
+@{
+    ViewData["Title"] = "編輯景點票券";
+    var allTags = ViewBag.AllTags as List<TravelWeb.Areas.Attractions.Models.Tag> ?? new();
+    var currentTagIds = ViewBag.CurrentTagIds as List<int> ?? new();
+}
+
+<style>
+    .custom-textarea:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.1);
+        outline: 0;
+    }
+
+    .tag-chip-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .tag-chip {
+        display: inline-block;
+        padding: 5px 16px;
+        border-radius: 20px;
+        border: 1.5px solid #adb5bd;
+        color: #495057;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.15s;
+        user-select: none;
+        background: #fff;
+    }
+
+        .tag-chip:hover {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+
+        .tag-chip.selected {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+        }
+
+    .tag-desc-box {
+        background: #f0f4ff;
+        border-left: 3px solid #0d6efd;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 0.82rem;
+        color: #444;
+        margin-top: 8px;
+    }
+</style>
+
+<h1>編輯景點票券</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-7">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="ProductId" />
+            <input type="hidden" asp-for="CreatedAt" />
+
+            @* 所屬景點 *@
+            <div class="form-group mb-3">
+                <label asp-for="AttractionId" class="control-label">所屬景點</label>
+                <select asp-for="AttractionId" class="form-control" asp-items="ViewBag.AttractionList">
+                    <option value="">-- 請選擇景點 --</option>
+                </select>
+                <span asp-validation-for="AttractionId" class="text-danger"></span>
+            </div>
+
+            @* 產品代碼 *@
+            <div class="form-group mb-3">
+                <label asp-for="ProductCode" class="control-label">產品代碼</label>
+                <div class="input-group">
+                    <span class="input-group-text text-muted" style="font-size:0.9rem">TKT-</span>
+                    <input id="productCodeInput"
+                           asp-for="ProductCode"
+                           class="form-control"
+                           autocomplete="off" />
+                </div>
+                <small class="text-muted">修改代碼請注意：若有其他購物車資料使用舊代碼，請先確認沒有進行中的訂單</small>
+                <span asp-validation-for="ProductCode" class="text-danger d-block mt-1"></span>
+            </div>
+
+            @* 票券名稱 *@
+            <div class="form-group mb-3">
+                <label asp-for="Title" class="control-label">票券名稱</label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            @* 票種 *@
+            <div class="form-group mb-3">
+                <label asp-for="TicketTypeCode" class="control-label">票種</label>
+                <select asp-for="TicketTypeCode" class="form-control" asp-items="ViewBag.TicketTypeList">
+                    <option value="">-- 請選擇票種 --</option>
+                </select>
+            </div>
+
+            @* 售價 + 原價 *@
+            <div class="row mb-3">
+                <div class="col">
+                    <label asp-for="Price" class="control-label">售價 (NT$)</label>
+                    <input asp-for="Price" class="form-control" type="number" step="0.01" />
+                </div>
+                <div class="col">
+                    <label asp-for="OriginalPrice" class="control-label">
+                        原價 (NT$)
+                        <small class="text-muted fw-normal">劃線用，留空代表無</small>
+                    </label>
+                    <input asp-for="OriginalPrice" class="form-control" type="number" step="0.01" />
+                </div>
+            </div>
+
+            @* 最大購買數 *@
+            <div class="form-group mb-3">
+                <label asp-for="MaxPurchaseQuantity" class="control-label">單筆最大購買數量</label>
+                <input asp-for="MaxPurchaseQuantity" type="number" class="form-control" min="1" />
+            </div>
+
+            @* 票券狀態 *@
+            <div class="form-group mb-4">
+                <label asp-for="Status" class="control-label">系統狀態</label>
+                <select asp-for="Status" class="form-control">
+                    <option value="DRAFT">草稿 (DRAFT)</option>
+                    <option value="ACTIVE">已發佈 (ACTIVE)</option>
+                    <option value="INACTIVE">暫時下架 (INACTIVE)</option>
+                    <option value="ARCHIVED">封存 (ARCHIVED)</option>
+                </select>
+            </div>
+
+            @* ── 有效天數 + 說明 ── *@
+            <div class="row mb-2">
+                <div class="col-md-5">
+                    <label asp-for="ValidityDays" class="control-label">有效天數</label>
+                    <select id="validityDaysSelect" asp-for="ValidityDays" class="form-control">
+                        <option value="">-- 不設定 --</option>
+                        <option value="30">30 天</option>
+                        <option value="90">90 天</option>
+                        <option value="180">180 天</option>
+                        <option value="365">365 天</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group mb-4">
+                <label class="control-label">
+                    有效期說明
+                    <small class="text-muted fw-normal">選擇天數後自動帶入，可手動修改</small>
+                </label>
+                <input id="validityNoteInput"
+                       name="AttractionProductDetail.ValidityNote"
+                       class="form-control"
+                       value="@Model.AttractionProductDetail?.ValidityNote"
+                       placeholder="例如：憑證使用期為訂單確認日起 365 天內..." />
+            </div>
+
+            @* ── 功能標籤 chip ── *@
+            <div class="form-group mb-4">
+                <label class="control-label fw-bold">功能標籤</label>
+                <div class="tag-chip-wrap" id="tagChipWrap">
+                    @foreach (var tag in allTags)
+                    {
+                        var isSelected = currentTagIds.Contains(tag.TagId);
+                        <span class="tag-chip @(isSelected ? "selected" : "")"
+                              data-tag-id="@tag.TagId"
+                              data-description="@(tag.Description ?? "")">
+                            @tag.TagName
+                        </span>
+                    }
+                </div>
+                <div id="tagDescArea" class="tag-desc-box" style="display:none">
+                    <div id="tagDescText"></div>
+                </div>
+                @* 預填已選 tag 的 hidden input *@
+                <div id="selectedTagInputs">
+                    @foreach (var tagId in currentTagIds)
+                    {
+                        <input type="hidden" name="TagIds" value="@tagId" />
+                    }
+                </div>
+                <small class="text-muted">點選標籤即可選取或取消，可複選</small>
+            </div>
+
+            @* ── 票券詳細內容 ── *@
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">票券詳細內容</h5>
+                </div>
+                <div class="card-body">
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">
+                            費用包含
+                            <small class="text-muted fw-normal">每行一項，前台會逐行顯示打勾清單</small>
+                        </label>
+                        <textarea name="AttractionProductDetail.Includes"
+                                  class="form-control custom-textarea" rows="3"
+                                  placeholder="景點門票一張&#10;當日無限次入場">@Model.AttractionProductDetail?.Includes</textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">
+                            費用不包含
+                            <small class="text-muted fw-normal">每行一項</small>
+                        </label>
+                        <textarea name="AttractionProductDetail.Excludes"
+                                  class="form-control custom-textarea" rows="3"
+                                  placeholder="語音導覽&#10;個人餐飲費用">@Model.AttractionProductDetail?.Excludes</textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">
+                            預訂資格
+                            <small class="text-muted fw-normal">每行一項</small>
+                        </label>
+                        <textarea name="AttractionProductDetail.Eligibility"
+                                  class="form-control custom-textarea" rows="3"
+                                  placeholder="持有效身分證件">@Model.AttractionProductDetail?.Eligibility</textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">取消政策</label>
+                        <input name="AttractionProductDetail.CancelPolicy"
+                               class="form-control"
+                               value="@Model.AttractionProductDetail?.CancelPolicy"
+                               placeholder="例如：兌換憑證前可免費取消" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">
+                            活動亮點
+                            <small class="text-muted fw-normal">顯示在前台票券詳情頁</small>
+                        </label>
+                        <textarea name="AttractionProductDetail.ContentDetails"
+                                  class="form-control custom-textarea" rows="5">@Model.AttractionProductDetail?.ContentDetails</textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">注意事項</label>
+                        <textarea name="AttractionProductDetail.UsageInstructions"
+                                  class="form-control custom-textarea" rows="4">@Model.AttractionProductDetail?.UsageInstructions</textarea>
+                    </div>
+
+                    <hr />
+                    <div class="form-group">
+                        <label class="fw-bold text-muted">
+                            內部備註
+                            <small class="fw-normal">僅管理員可見，不會顯示在前台</small>
+                        </label>
+                        <input name="AttractionProductDetail.Notes"
+                               class="form-control form-control-sm"
+                               value="@Model.AttractionProductDetail?.Notes" />
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ── 活動介紹（景點層級，顯示在售票區所有票券下方）──-->
+            <div class="card mt-4 mb-3">
+                <div class="card-header bg-light fw-bold">
+                    📝 活動介紹（顯示於前台售票區所有票券下方）
+                </div>
+                <div class="card-body">
+                    <textarea name="AttractionActivityIntro" class="form-control" rows="6"
+                              placeholder="請輸入活動介紹文字，將顯示在售票區所有票券下方，支援換行分段...">@ViewBag.ActivityIntro</textarea>
+                    <small class="form-text text-muted mt-1 d-block">此介紹文字屬於景點層級，該景點所有票種下方都會共用同一段介紹</small>
+                </div>
+            </div>
+
+            <!-- ── 活動介紹圖片管理 ───────────────────────────────-->
+            <div class="card mt-4 mb-3">
+                <div class="card-header bg-light fw-bold">
+                    🖼️ 活動介紹圖片（顯示於前台售票區下方）
+                </div>
+                <div class="card-body">
+
+                    <!-- 現有圖片-->
+                    @if (Model.AttractionProductImages != null && Model.AttractionProductImages.Any())
+                    {
+                        <div class="mb-3">
+                            <label class="fw-bold mb-2 d-block">現有圖片</label>
+                            <div class="d-flex flex-wrap gap-3" id="existingProductImages">
+                                @foreach (var img in Model.AttractionProductImages.OrderBy(i => i.SortOrder))
+                                {
+                                    <div class="border rounded p-2 text-center" style="width:200px;" id="pi-@img.ImageId">
+                                        <img src="@img.ImagePath" style="width:180px;height:120px;object-fit:cover;border-radius:4px;">
+                                        <div class="mt-1 text-muted small">@(string.IsNullOrEmpty(img.Caption) ? "（無說明）" : img.Caption)</div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-1 btn-del-pi"
+                                                data-id="@img.ImageId">
+                                            ✕ 刪除
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- 新增圖片-->
+                    <label class="fw-bold mb-2 d-block">上傳新圖片</label>
+                    <div id="newImageList">
+                        <div class="new-img-row d-flex align-items-center gap-2 mb-2">
+                            <input type="file" name="productImageFiles" class="form-control" style="max-width:280px;" accept="image/*">
+                            <input type="text" name="productImageCaptions" class="form-control" placeholder="圖片說明（可留空）" style="max-width:320px;">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addImgRow">
+                        ＋ 再加一張
+                    </button>
+                    <small class="form-text text-muted d-block mt-1">支援 jpg / png / webp，每張圖可附說明文字</small>
+
+                </div>
+            </div>
+            <!-- ───────────────────────────────────────────────────-->
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">儲存變更</button>
+                <a asp-action="Index" class="btn btn-outline-secondary ms-2">返回列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+           // ── ProductCode TKT- 前綴強制處理 ───────────────────────────
+        const codeInput = document.getElementById('productCodeInput');
+
+        // 頁面載入：去掉 TKT- 前綴只顯示後段（避免輸入框顯示 TKT-TKT-XXX）
+        if (codeInput.value.toUpperCase().startsWith('TKT-')) {
+            codeInput.value = codeInput.value.substring(4);
+        }
+
+        // 送出前：把 TKT- 加回去
+        codeInput.closest('form').addEventListener('submit', function () {
+            const raw = codeInput.value.trim();
+            if (!raw.toUpperCase().startsWith('TKT-')) {
+                codeInput.value = 'TKT-' + raw;
+            }
+        });
+
+        // 即時：使用者自己打了 TKT- 就自動去掉
+        codeInput.addEventListener('input', function () {
+            if (this.value.toUpperCase().startsWith('TKT-')) {
+                this.value = this.value.substring(4);
+            }
+        });
+        // ── 有效天數自動帶入說明 ─────────────────────────────────
+        const validityDescriptions = {
+            '30':  '憑證使用期為訂單確認日起 30 天內，於最後一天 23:59 到期',
+            '90':  '憑證使用期為訂單確認日起 90 天內，於最後一天 23:59 到期',
+            '180': '憑證使用期為訂單確認日起 180 天內，於最後一天 23:59 到期',
+            '365': '憑證使用期為訂單確認日起 365 天內，於最後一天 23:59 到期'
+        };
+
+        document.getElementById('validityDaysSelect').addEventListener('change', function () {
+            document.getElementById('validityNoteInput').value = validityDescriptions[this.value] || '';
+        });
+
+        // ── Tag chip 選擇 ────────────────────────────────────────
+        // 頁面載入時，先顯示已選 tag 的說明
+        syncTagDescriptions();
+
+        document.querySelectorAll('.tag-chip').forEach(chip => {
+            chip.addEventListener('click', function () {
+                this.classList.toggle('selected');
+                syncTagInputs();
+                syncTagDescriptions();
+            });
+        });
+
+        function syncTagInputs() {
+            const container = document.getElementById('selectedTagInputs');
+            container.innerHTML = '';
+            document.querySelectorAll('.tag-chip.selected').forEach(chip => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'TagIds';
+                input.value = chip.dataset.tagId;
+                container.appendChild(input);
+            });
+        }
+
+        function syncTagDescriptions() {
+            const selected = Array.from(document.querySelectorAll('.tag-chip.selected'));
+            const area = document.getElementById('tagDescArea');
+            const text = document.getElementById('tagDescText');
+            const descs = selected.map(c => c.dataset.description).filter(d => d && d.trim());
+
+            if (descs.length > 0) {
+                text.innerHTML = descs.map(d => `• ${d}`).join('<br>');
+                area.style.display = 'block';
+            } else {
+                area.style.display = 'none';
+            }
+        }
+
+        // ── 活動介紹圖片：新增一列 ──────────────────────────────
+        document.getElementById('addImgRow').addEventListener('click', function () {
+            const row = document.createElement('div');
+            row.className = 'new-img-row d-flex align-items-center gap-2 mb-2';
+            row.innerHTML = `
+                <input type="file" name="productImageFiles" class="form-control" style="max-width:280px;" accept="image/*">
+                <input type="text" name="productImageCaptions" class="form-control" placeholder="圖片說明（可留空）" style="max-width:320px;">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.new-img-row').remove()">✕</button>
+            `;
+            document.getElementById('newImageList').appendChild(row);
+        });
+
+        // ── 活動介紹圖片：刪除現有圖片 ──────────────────────────
+        document.querySelectorAll('.btn-del-pi').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                if (!confirm('確定要刪除這張圖片嗎？')) return;
+                const imgId = this.dataset.id;
+                const resp = await fetch('@Url.Action("DeleteProductImage")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${imgId}&__RequestVerificationToken=${document.querySelector('[name=__RequestVerificationToken]').value}`
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    document.getElementById('pi-' + imgId).remove();
+                } else {
+                    alert('刪除失敗：' + result.message);
+                }
+            });
+        });
+    </script>
+}

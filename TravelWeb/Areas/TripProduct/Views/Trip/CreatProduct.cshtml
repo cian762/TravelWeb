@@ -52,7 +52,6 @@
         box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
     }
 </style>
-
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-9 form-container">
@@ -63,7 +62,7 @@
                     <div class="col-12 mb-4">
                         <div class="form-group">
                             <label asp-for="ProductName"><i class="bi bi-pencil-square me-1"></i> 行程名稱</label>
-                            <input asp-for="ProductName" class="form-control" placeholder="例如：東京五天四夜櫻花季" />
+                            <input asp-for="ProductName" class="form-control" placeholder="例如：阿里山櫻花季" />
                             <span asp-validation-for="ProductName" class="text-danger"></span>
                         </div>
                     </div>
@@ -140,7 +139,7 @@
                         <hr />
                         <a href="javascript:history.back()" class="btn btn-light me-2">取消</a>
                         <button type="submit" class="btn btn-primary btn-submit">
-                            <i class="bi bi-save me-1"></i> 儲存產品
+                            <i class="bi bi-save me-1"></i> 儲存行程
                         </button>
                     </div>
                 </div>
@@ -178,6 +177,7 @@
                     reader.readAsDataURL(input.files[0]);
                 }
             }
+            
         });
     </script>
 }

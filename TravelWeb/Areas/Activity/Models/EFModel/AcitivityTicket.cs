@@ -23,7 +23,7 @@ public partial class AcitivityTicket
 
     public string? Status { get; set; }
 
-    public virtual ActivityTicketDetail ProductCodeNavigation { get; set; } = null!;
+    public virtual ActivityTicketDetail? ActivityTicketDetail { get; set; }
 
     public virtual TicketCategory? TicketCategory { get; set; }
 

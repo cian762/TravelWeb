@@ -1,0 +1,133 @@
+﻿@model List<TravelWeb.Areas.Activity.Models.ViewModels.ActivityScheduleViewModel>
+
+@{
+
+	ViewData["Title"] = "活動 | 排程總覽 ";
+}
+
+
+@section Scripts{
+	<!-- sweetAlert2 origin code-->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+	
+	
+	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+	
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+
+		var calendarEl = document.getElementById('calendar');
+
+				var calendar = new FullCalendar.Calendar(calendarEl, {
+
+			initialView: 'dayGridMonth',
+
+			editable: true,
+			selectable: true,
+
+			eventDurationEditable: true,
+			eventStartEditable: true,
+
+				events: {    url: '/Act/GetScheduleInfo',
+		success: function(data){
+			console.log(data)
+		}},
+
+			eventResize: function(info) {
+				console.log("resize", info.event.start, info.event.end)
+			},
+
+			eventDrop: function(info) {
+				console.log("drop", info.event.start, info.event.end)
+			}
+
+		});
+
+		calendar.render();
+		});
+	</script>
+
+}
+
+@section Styles{
+
+	<style>
+		.fc {
+			background: #ffffff;
+			border-radius: 10px;
+		}
+
+		.fc-toolbar {
+			padding: 10px;
+		}
+
+		.fc-daygrid-day {
+			background: #fafafa;
+		}
+
+		.fc-event {
+			background: #6366f1;
+			border-radius: 6px;
+		}
+
+
+
+	</style>
+
+}
+
+
+
+<div class="container-fluid">
+	<p>
+		排程用
+	</p>
+
+	<div class="row">
+		<p>放搜尋欄</p>
+	</div>
+
+	<div class="row">
+		<div class="col-10">
+			<div id="calendar"></div>
+		</div>
+		<div class="col-2">
+			<div style="height:20%">草稿</div>
+			<div style="height:20%">已排程</div>
+			<div style="height:20%">預熱中</div>
+			<div style="height:20%">刊登中</div>
+			<div style="height:20%">已下架</div>
+		</div>
+	</div>
+
+	<div class="row">
+		
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<th>活動名稱</th>
+						<th>起始時間</th>
+						<th>結束時間</th>
+						<th>發布時間</th>
+						<th>下架時間</th>
+						<th>刊登狀態</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var item in Model)
+					{
+						<tr>
+							<td>@item.Title</td>
+							<td>@item.StartTime</td>
+							<td>@item.EndTime</td>
+							<td>@item.PublishTime</td>
+							<td>@item.UnPublishTime</td>
+							<td>@item.Status</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>

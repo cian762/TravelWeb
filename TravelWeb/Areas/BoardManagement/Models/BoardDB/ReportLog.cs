@@ -23,7 +23,7 @@ public partial class ReportLog
 
     public DateTime CreatedAt { get; set; }
 
-    public byte? ResultType { get; set; }
+    public byte ResultType { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 

@@ -1,0 +1,192 @@
+﻿@model TravelWeb.ViewModels.MemberDetailsViewModel
+
+@{
+    ViewData["Title"] = "會員詳細資料";
+
+    // 根據狀態設定標籤顏色
+    string statusBadgeClass = Model.Status switch
+    {
+        "正常" => "bg-success",
+        "停權" => "bg-danger",
+        "警示" => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="container-fluid mt-4 px-4">
+
+    <!-- 頁面標題與返回按鈕 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="bi bi-person-vcard"></i> 會員詳細資料</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-arrow-left"></i> 返回清單
+        </a>
+    </div>
+
+    <!-- 顯示 Controller 傳來的成功訊息 -->
+    @if (TempData["SuccessMsg"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMsg"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- 顯示 Controller 傳來的警告/錯誤訊息 -->
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- 左側：大頭貼與帳號狀態卡片 -->
+        <div class="col-xl-4">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body text-center p-5">
+
+                    <!-- 顯示頭像 (若無則顯示預設) -->
+                    <img src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/default-avatar.png" : Model.AvatarUrl)"
+                         class="rounded-circle mb-4 shadow" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;" alt="Avatar" />
+
+                    <h3 class="fw-bold text-dark mb-1">@Model.Name</h3>
+                    <p class="text-muted mb-4">@Model.MemberId</p>
+
+                    <div class="mb-4">
+                        <span class="badge @statusBadgeClass rounded-pill px-4 py-2 fs-6 shadow-sm">目前狀態：@Model.Status</span>
+                    </div>
+
+                    <hr class="my-4 text-light">
+
+                    <div class="text-start">
+                        <p class="mb-2 text-muted small fw-bold">系統識別碼 (MemberCode)</p>
+                        <p class="mb-4 fw-semibold">@Model.MemberCode</p>
+
+                        <p class="mb-2 text-muted small fw-bold">最後登入時間</p>
+                        <p class="mb-0 fw-semibold text-primary">
+                            @(Model.LastLoginTime.HasValue? Model.LastLoginTime.Value.ToString("yyyy-MM-dd HH:mm:ss") : "從未登入")
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：詳細資料與操作面板 -->
+        <div class="col-xl-8">
+
+            <!-- 操作面板區塊 (設為管理員 / 編輯 / 更改狀態) -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4 bg-light">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                    <div class="d-flex gap-2">
+                        <!-- 編輯按鈕 -->
+                        <a asp-action="Edit" asp-route-id="@Model.MemberCode" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-pencil-square"></i> 編輯會員資料
+                        </a>
+
+                        <!-- 設為管理員按鈕 (如果是管理員則隱藏或停用) -->
+                        @if (Model.IsAlreadyAdmin)
+                        {
+                            <button class="btn btn-secondary rounded-pill px-4 shadow-sm" disabled>
+                                <i class="bi bi-shield-check"></i> 已是管理員
+                            </button>
+                        }
+                        else
+                        {
+                            <!-- 點擊後跳出確認視窗，避免誤觸 -->
+                            <button type="button" class="btn btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#adminModal">
+                                <i class="bi bi-shield-lock"></i> 升級為管理員
+                            </button>
+                        }
+                    </div>
+
+                    <!-- 狀態更改表單 (下拉選單 + 送出按鈕) -->
+                    <form asp-action="ChangeStatus" method="post" class="d-flex align-items-center gap-2 m-0 p-0">
+                        <input type="hidden" name="memberCode" value="@Model.MemberCode" />
+
+                        <!-- BlockReason 隱藏欄位 (可延伸作法：透過 JS 偵測若選停權跳出輸入框，此處先給預設字串) -->
+                        <input type="hidden" name="blockReason" value="管理員手動調整狀態" />
+
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-white border-end-0 text-muted">變更狀態</span>
+                            <select name="newStatus" asp-items="ViewBag.StatusList" class="form-select border-start-0"></select>
+                            <button type="submit" class="btn btn-danger fw-bold" onclick="return confirm('確定要變更此會員的狀態嗎？若選擇停權將會封禁該帳號！');">
+                                <i class="bi bi-check2-circle"></i> 執行
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- 詳細資料清單區塊 -->
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold text-secondary"><i class="bi bi-card-list"></i> 會員基本資料</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+
+                        <!-- 第一排 -->
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold">登入信箱 (Email)</label>
+                            <div class="fs-5 mt-1">@Model.Email</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold">聯絡電話</label>
+                            <div class="fs-5 mt-1">@(string.IsNullOrEmpty(Model.Phone) ? "未提供" : Model.Phone)</div>
+                        </div>
+
+                        <!-- 第二排 -->
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold">性別</label>
+                            <div class="fs-5 mt-1">@Model.GenderText</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold">出生年月日</label>
+                            <div class="fs-5 mt-1">@(Model.BirthDate.HasValue? Model.BirthDate.Value.ToString("yyyy-MM-dd") : "未提供")</div>
+                        </div>
+
+                        <!-- 第三排 (密碼 Hash，強制截斷顯示避免破壞版面) -->
+                        <div class="col-12">
+                            <label class="text-muted small fw-bold">密碼雜湊值 (加密儲存不可逆)</label>
+                            <div class="mt-1 p-3 bg-light rounded-3 text-break text-secondary font-monospace" style="font-size: 0.9rem;">
+                                @Model.PasswordHash
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 確認升級為管理員的互動視窗 (Modal) -->
+<!-- ========================================== -->
+<div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
+                <h5 class="modal-title fw-bold" id="adminModalLabel"><i class="bi bi-exclamation-octagon-fill"></i> 權限升級確認</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="fs-5 mb-1">確定要將 <strong>@Model.Name</strong> 設為管理員嗎？</p>
+                <p class="text-muted small mb-0">系統將自動產生 <code>G開頭</code> 的管理員編號，並繼承該會員的密碼與基本資料。此操作不可還原。</p>
+            </div>
+            <div class="modal-footer border-0">
+                <form asp-action="SetAsAdmin" method="post">
+                    <input type="hidden" name="memberCode" value="@Model.MemberCode" />
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm">確認升級</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

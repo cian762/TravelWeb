@@ -43,11 +43,6 @@ public partial class ActivityDbContext : DbContext
 
     public virtual DbSet<UserFavorite> UserFavorites { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
-    {
-    }
-
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AcitivityTicket>(entity =>
@@ -60,11 +55,6 @@ public partial class ActivityDbContext : DbContext
             entity.Property(e => e.ProductName).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(10);
             entity.Property(e => e.TicketCategoryId).HasColumnName("TicketCategoryID");
-
-            entity.HasOne(d => d.ProductCodeNavigation).WithOne(p => p.AcitivityTicket)
-                .HasForeignKey<AcitivityTicket>(d => d.ProductCode)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_商品代碼總表_活動商品表細節");
 
             entity.HasOne(d => d.TicketCategory).WithMany(p => p.AcitivityTickets)
                 .HasForeignKey(d => d.TicketCategoryId)
@@ -181,7 +171,6 @@ public partial class ActivityDbContext : DbContext
 
             entity.Property(e => e.ImageSetId).HasColumnName("ImageSetID");
             entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
-            entity.Property(e => e.PublicId).HasColumnName("PublicID");
 
             entity.HasOne(d => d.Activity).WithMany(p => p.ActivityImages)
                 .HasForeignKey(d => d.ActivityId)
@@ -236,7 +225,12 @@ public partial class ActivityDbContext : DbContext
 
             entity.HasOne(d => d.Activity).WithMany(p => p.ActivityTicketDetails)
                 .HasForeignKey(d => d.ActivityId)
-                .HasConstraintName("FK_活動商品表細節_活動表");
+                .HasConstraintName("FK_Activity_TicketDetails_Activities");
+
+            entity.HasOne(d => d.ProductCodeNavigation).WithOne(p => p.ActivityTicketDetail)
+                .HasForeignKey<ActivityTicketDetail>(d => d.ProductCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Activity_TicketDetails_Acitivity_Tickets");
         });
 
         modelBuilder.Entity<ActivityTicketDiscount>(entity =>
@@ -282,7 +276,9 @@ public partial class ActivityDbContext : DbContext
 
             entity.ToTable("Tags_Regions", "Activity");
 
-            entity.Property(e => e.RegionId).HasColumnName("RegionID");
+            entity.Property(e => e.RegionId)
+                .ValueGeneratedNever()
+                .HasColumnName("RegionID");
             entity.Property(e => e.RegionName).HasMaxLength(10);
             entity.Property(e => e.Uid).HasColumnName("UID");
 

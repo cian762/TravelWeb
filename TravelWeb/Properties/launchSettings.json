@@ -30,6 +30,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
+      "launchUrl": "BoardManagement/Board/ReportManager", // 記得改回來
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
